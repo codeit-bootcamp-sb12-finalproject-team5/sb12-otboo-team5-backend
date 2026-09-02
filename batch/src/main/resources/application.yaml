@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: batch
+
+  config:
+    import: optional:file:../.env
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:otboo}
+    username: ${POSTGRES_USER:admin}
+    password: ${POSTGRES_PASSWORD:secret}

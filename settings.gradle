@@ -1,0 +1,4 @@
+rootProject.name = 'otboo'
+include 'domain'
+include 'api'
+include 'batch'
