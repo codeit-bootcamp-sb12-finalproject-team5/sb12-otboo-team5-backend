@@ -65,18 +65,6 @@ CREATE TABLE IF NOT EXISTS user_oauth_links (
 );
 
 
--- =========================================================
--- PROFILES
--- =========================================================
-
-
-
--- =========================================================
--- FOLLOWS
--- =========================================================
-
-
-
 -- =====================================================
 -- WEATHER_GRID
 -- =====================================================
@@ -203,6 +191,69 @@ CREATE TABLE IF NOT EXISTS weather_snapshot (
 );
 
 
+-- =========================================================
+-- PROFILES
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS profiles (
+    id                        UUID PRIMARY KEY,
+    user_id                   UUID NOT NULL UNIQUE,
+    weather_grid_id           UUID NOT NULL,
+    name                      VARCHAR(50) NOT NULL,
+    gender                    VARCHAR(10),
+    birth_date                DATE,
+    location_source           VARCHAR(10),
+    temperature_sensitivity   SMALLINT NOT NULL DEFAULT 3,
+    preference_vector         VECTOR(768) NOT NULL,
+    profile_image_url         VARCHAR(500) NOT NULL,
+    created_at                TIMESTAMPTZ(6) NOT NULL,
+    updated_at                TIMESTAMPTZ(6) NOT NULL,
+
+    CONSTRAINT fk_profiles_user
+    FOREIGN KEY (user_id)
+    REFERENCES users (id),
+
+    CONSTRAINT fk_profiles_weather_grid
+    FOREIGN KEY (weather_grid_id)
+    REFERENCES weather_grid (id),
+
+    CONSTRAINT chk_profiles_gender
+    CHECK (gender IN ('MALE', 'FEMALE', 'OTHER')),
+
+    CONSTRAINT chk_profiles_location_source
+    CHECK (location_source IN ('GPS', 'MANUAL')),
+
+    CONSTRAINT chk_profiles_temperature_sensitivity
+    CHECK (temperature_sensitivity BETWEEN 1 AND 5)
+);
+
+
+-- =========================================================
+-- FOLLOWS
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS follows (
+    id                        UUID PRIMARY KEY,
+    follower_id               UUID NOT NULL,
+    followee_id               UUID NOT NULL,
+    created_at                TIMESTAMPTZ(6) NOT NULL,
+
+    CONSTRAINT fk_follows_follower
+    FOREIGN KEY (follower_id)
+    REFERENCES users (id),
+
+    CONSTRAINT fk_follows_followee
+    FOREIGN KEY (followee_id)
+    REFERENCES users (id),
+
+    CONSTRAINT uk_follows_follower_followee
+    UNIQUE (follower_id, followee_id),
+
+    CONSTRAINT chk_follows_not_self
+    CHECK (follower_id <> followee_id)
+);
+
+
 -- =====================================================
 -- DM
 -- =====================================================
@@ -260,7 +311,7 @@ CREATE TABLE IF NOT EXISTS dm_room_member (
 -- CLOTHES
 -- =========================================================
 
-CREATE TABLE clothes (
+CREATE TABLE IF NOT EXISTS clothes (
     id              UUID PRIMARY KEY,
     user_id         UUID NOT NULL,
     is_owned        BOOLEAN NOT NULL,
@@ -334,7 +385,7 @@ CREATE TABLE IF NOT EXISTS ootd (
 -- FEED
 -- =========================================================
 
-CREATE TABLE feed (
+CREATE TABLE IF NOT EXISTS feed (
     id              UUID PRIMARY KEY,
     user_id         UUID NOT NULL,
     content         TEXT,
@@ -354,7 +405,7 @@ CREATE TABLE feed (
     REFERENCES users (id)
 );
 
-CREATE TABLE comment (
+CREATE TABLE IF NOT EXISTS comment (
     id          UUID PRIMARY KEY,
     feed_id     UUID NOT NULL,
     user_id     UUID NOT NULL,
@@ -371,7 +422,7 @@ CREATE TABLE comment (
     REFERENCES users (id)
 );
 
-CREATE TABLE feed_like (
+CREATE TABLE IF NOT EXISTS feed_like (
     id          UUID PRIMARY KEY,
     feed_id     UUID NOT NULL,
     user_id     UUID NOT NULL,
@@ -387,3 +438,32 @@ CREATE TABLE feed_like (
     CONSTRAINT uk_feed_like_user_feed
     UNIQUE (feed_id, user_id)
 );
+
+
+-- =========================================================
+-- notifications
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS notifications
+(
+    id          UUID          NOT NULL,
+    created_at  TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    receiver_id UUID          NOT NULL,
+    title       VARCHAR(100)  NOT NULL,
+    content     VARCHAR(1000) NOT NULL,
+    level       VARCHAR(20)   NOT NULL,
+    read_at     TIMESTAMP(6) WITH TIME ZONE,
+
+    CONSTRAINT pk_notifications
+    PRIMARY KEY (id),
+
+    CONSTRAINT ck_notifications_level
+    CHECK (level IN ('INFO', 'WARNING', 'ERROR'))
+);
+
+CREATE INDEX idx_notifications_receiver_read_created
+    ON notifications (receiver_id, read_at, created_at);
+
+ALTER TABLE notifications
+    ADD CONSTRAINT fk_notifications_receiver
+        FOREIGN KEY (receiver_id) REFERENCES users (id);
