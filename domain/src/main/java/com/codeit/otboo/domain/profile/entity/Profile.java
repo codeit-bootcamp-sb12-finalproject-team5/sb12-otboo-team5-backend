@@ -61,4 +61,35 @@ public class Profile extends UpdatableEntity {
 	@JoinColumn(name = "weather_grid_id", nullable = false)
 	private WeatherGrid weatherGrid;
 
+
+	public void updateGender(Gender gender){
+		this.gender = gender;
+	}
+
+	public void updateBirthDate(LocalDate birthDate){
+		this.birthDate = birthDate;
+	}
+
+	public void updateLocationSource(LocationSource locationSource){
+		this.locationSource = locationSource;
+	}
+
+	public void updateTemperatureSensitivity(Short sensitivity){
+		if (sensitivity == null || sensitivity < 1 || sensitivity > 5) {
+			throw new IllegalArgumentException(
+					"더위를 타는 정도는 1~5 사이여야 합니다."
+			);
+		}
+		this.temperatureSensitivity = sensitivity;
+	}
+
+	public void updateProfileImageUrl(String profileImageUrl){
+		if (profileImageUrl == null || profileImageUrl.isBlank()) {
+			throw new IllegalArgumentException(
+					"프로필 이미지 URL은 필수입니다."
+			);
+		}
+		this.profileImageUrl = profileImageUrl;
+	}
+
 }
