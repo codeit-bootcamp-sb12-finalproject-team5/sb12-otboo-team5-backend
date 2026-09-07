@@ -16,7 +16,7 @@ import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "follow")
-@Getter @SuperBuilder @ToString(callSuper = true)
+@Getter @SuperBuilder @ToString(callSuper = true, exclude = {"follower", "followee"})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Follow extends BaseEntity {
 

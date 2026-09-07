@@ -318,6 +318,7 @@ CREATE TABLE IF NOT EXISTS dm_room_member (
 CREATE TABLE clothes (
     id              UUID PRIMARY KEY,
     user_id         UUID NOT NULL,
+    name            VARCHAR(500),
     is_owned        BOOLEAN NOT NULL,
     preference      INTEGER CHECK (preference BETWEEN 1 AND 5),
     image_url       VARCHAR(1000),
