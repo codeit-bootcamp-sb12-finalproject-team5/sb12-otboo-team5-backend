@@ -1,4 +1,9 @@
 package com.codeit.otboo.api.weather.dto;
 
-public record HumidityDto() {
+import java.math.BigDecimal;
+
+public record HumidityDto(
+	BigDecimal current,
+	BigDecimal comparedToDayBefore
+) {
 }
