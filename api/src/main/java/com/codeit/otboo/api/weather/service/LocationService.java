@@ -47,7 +47,7 @@ public class LocationService {
     public GridCoordinate convert(double longitude, double latitude) {
         if (!Double.isFinite(longitude) || !Double.isFinite(latitude)
                 || longitude < -180 || longitude > 180 || latitude <= -90 || latitude >= 90) {
-            throw new WeatherException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new WeatherException(ErrorCode.INVALID_LOCATION_INPUT);
         }
         double re = 6371.00877 / 5.0;
         double slat1 = Math.toRadians(30.0);

@@ -93,7 +93,10 @@ class LocationServiceTest {
         for (double[] coordinate : invalid) {
             org.assertj.core.api.Assertions.assertThatThrownBy(
                     () -> service.convert(coordinate[0], coordinate[1]))
-                    .isInstanceOf(com.codeit.otboo.api.weather.exception.WeatherException.class);
+                    .isInstanceOfSatisfying(
+                            com.codeit.otboo.api.weather.exception.WeatherException.class,
+                            exception -> assertThat(exception.getErrorCode()).isEqualTo(
+                                    com.codeit.otboo.domain.common.exception.ErrorCode.INVALID_LOCATION_INPUT));
         }
         org.mockito.Mockito.verifyNoInteractions(repository, kakaoClient);
     }
