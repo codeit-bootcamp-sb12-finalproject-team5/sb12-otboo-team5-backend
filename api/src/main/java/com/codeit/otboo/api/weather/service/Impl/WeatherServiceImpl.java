@@ -25,7 +25,6 @@ public class WeatherServiceImpl implements WeatherService {
 
 	@Override
 	public WeatherAPILocation findLocation(Double longitude, Double latitude) {
-		lo
 		return null;
 	}
 }

@@ -34,7 +34,4 @@ dependencies {
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
-    // Jpa
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 }
