@@ -2,6 +2,7 @@ package com.codeit.otboo.domain.profile.entity;
 
 import java.time.LocalDate;
 
+import org.hibernate.annotations.Array;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -45,8 +46,9 @@ public class Profile extends UpdatableEntity {
 	private Short temperatureSensitivity = 3;
 
 	@JdbcTypeCode(SqlTypes.VECTOR)
-	@Column(name = "preference_vector", nullable = false)
-	private float[] preferenceVector;
+	@Array(length = 768)
+	@Column(name = "preference_vector", columnDefinition = "vector(768)")
+	private Float[] preferenceVector;
 
 	@Column(name = "profile_image_url", nullable = false, length = 500)
 	private String profileImageUrl;

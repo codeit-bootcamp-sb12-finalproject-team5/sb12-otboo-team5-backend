@@ -18,6 +18,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.Array;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "clothes")
@@ -45,8 +48,10 @@ public class Clothes extends SoftDeletableEntity {
 	@Column(name = "attribute_text", columnDefinition = "TEXT")
 	private String attributeText;
 
+	@JdbcTypeCode(SqlTypes.VECTOR)
+	@Array(length = 768)
 	@Column(name = "attribute_vector", columnDefinition = "vector(768)")
-	private String attributeVector;
+	private Float[] attributeVector;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
