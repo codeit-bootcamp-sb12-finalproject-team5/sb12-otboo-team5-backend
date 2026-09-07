@@ -8,6 +8,7 @@ import com.codeit.otboo.api.weather.service.WeatherService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,12 +21,14 @@ public class WeatherController {
     private final WeatherService weatherService;
 
     @GetMapping
-    public List<WeatherDto> getWeather(@ModelAttribute @Valid WeatherReadRequest request) {
-        return weatherService.findWeather(request);
+    public ResponseEntity<List<WeatherDto>> getWeather(
+            @ModelAttribute @Valid WeatherReadRequest request) {
+        return ResponseEntity.ok(weatherService.findWeather(request));
     }
 
     @GetMapping("/location")
-    public WeatherAPILocation getLocation(@ModelAttribute @Valid LocationReadRequest request) {
-        return weatherService.findLocation(request);
+    public ResponseEntity<WeatherAPILocation> getLocation(
+            @ModelAttribute @Valid LocationReadRequest request) {
+        return ResponseEntity.ok(weatherService.findLocation(request));
     }
 }
