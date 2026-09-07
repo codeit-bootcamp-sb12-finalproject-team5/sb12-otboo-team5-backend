@@ -1,7 +1,7 @@
 package com.codeit.otboo.api.weather.service;
 
-import com.codeit.otboo.api.weather.client.KakaoClient;
-import com.codeit.otboo.api.weather.dto.response.KakaoRegionDto;
+import com.codeit.otboo.support.kakao.client.KakaoClient;
+import com.codeit.otboo.support.kakao.dto.response.KakaoRegionDto;
 import com.codeit.otboo.api.weather.exception.WeatherException;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.domain.common.exception.ErrorCode;

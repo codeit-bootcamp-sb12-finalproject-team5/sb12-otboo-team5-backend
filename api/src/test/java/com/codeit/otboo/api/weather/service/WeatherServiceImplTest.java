@@ -5,7 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.codeit.otboo.api.weather.client.KakaoClient;
+import com.codeit.otboo.support.kakao.client.KakaoClient;
 import com.codeit.otboo.api.weather.dto.response.WeatherAPILocation;
 import com.codeit.otboo.api.weather.dto.request.LocationReadRequest;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;

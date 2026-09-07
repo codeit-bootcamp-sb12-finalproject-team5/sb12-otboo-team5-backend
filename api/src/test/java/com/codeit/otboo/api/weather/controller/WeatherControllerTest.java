@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.codeit.otboo.api.common.exception.GlobalExceptionHandler;
-import com.codeit.otboo.api.weather.client.KakaoClient;
+import com.codeit.otboo.support.kakao.client.KakaoClient;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.api.weather.service.LocationService;
 import com.codeit.otboo.api.weather.service.Impl.WeatherServiceImpl;
