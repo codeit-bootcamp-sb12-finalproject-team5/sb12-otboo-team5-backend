@@ -1,14 +1,13 @@
 package com.codeit.otboo.api.weather.service;
 
+import com.codeit.otboo.api.weather.dto.request.LocationReadRequest;
+import com.codeit.otboo.api.weather.dto.request.WeatherReadRequest;
+import com.codeit.otboo.api.weather.dto.response.WeatherAPILocation;
+import com.codeit.otboo.api.weather.dto.response.WeatherDto;
 import java.util.List;
 
-import org.springframework.stereotype.Service;
-
-import com.codeit.otboo.api.weather.dto.WeatherAPILocation;
-import com.codeit.otboo.api.weather.dto.WeatherDto;
-
 public interface WeatherService {
-	public List<WeatherDto> findWeather(Double longitude, Double latitude);
+    List<WeatherDto> findWeather(WeatherReadRequest request);
 
-	public WeatherAPILocation findLocation(Double longitude, Double latitude);
+    WeatherAPILocation findLocation(LocationReadRequest request);
 }

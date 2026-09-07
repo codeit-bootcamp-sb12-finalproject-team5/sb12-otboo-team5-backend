@@ -48,7 +48,31 @@ class WeatherControllerTest {
         mvc.perform(get("/api/weathers/location")
                         .param("longitude", "NaN").param("latitude", "37.5665"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.exceptionName").value("WeatherException"));
+                .andExpect(jsonPath("$.exceptionName").value("MethodArgumentNotValidException"));
+        verifyNoInteractions(repository, kakao);
+    }
+    @Test
+    void rejectsMissingAndMalformedCoordinatesForBothEndpoints() throws Exception {
+        for (String path : List.of("/api/weathers", "/api/weathers/location")) {
+            mvc.perform(get(path).param("longitude", "127"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.details.latitude").exists());
+            mvc.perform(get(path).param("longitude", "not-a-number").param("latitude", "37.5"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.details.longitude").exists());
+            mvc.perform(get(path).param("longitude", "181").param("latitude", "37.5"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.details.longitude").exists());
+        }
+        verifyNoInteractions(repository, kakao);
+    }
+
+    @Test
+    void weatherEndpointAcceptsValidatedQueryRequest() throws Exception {
+        mvc.perform(get("/api/weathers").param("longitude", "126.978").param("latitude", "37.5665"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .json("[]"));
         verifyNoInteractions(repository, kakao);
     }
 }

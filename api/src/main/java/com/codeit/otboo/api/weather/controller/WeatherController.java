@@ -1,39 +1,31 @@
 package com.codeit.otboo.api.weather.controller;
 
+import com.codeit.otboo.api.weather.dto.request.LocationReadRequest;
+import com.codeit.otboo.api.weather.dto.request.WeatherReadRequest;
+import com.codeit.otboo.api.weather.dto.response.WeatherAPILocation;
+import com.codeit.otboo.api.weather.dto.response.WeatherDto;
+import com.codeit.otboo.api.weather.service.WeatherService;
+import jakarta.validation.Valid;
 import java.util.List;
-
-import org.springframework.validation.annotation.Validated;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.codeit.otboo.api.weather.dto.WeatherAPILocation;
-import com.codeit.otboo.api.weather.dto.WeatherDto;
-import com.codeit.otboo.api.weather.service.WeatherService;
-
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
-import lombok.RequiredArgsConstructor;
-
-@Validated
 @RestController
 @RequestMapping("/api/weathers")
 @RequiredArgsConstructor
 public class WeatherController {
-	private final WeatherService weatherService;
+    private final WeatherService weatherService;
 
-	@GetMapping
-	public List<WeatherDto> getWeather(
-		@RequestParam @DecimalMin("-180") @DecimalMax("180") double longitude,
-		@RequestParam @DecimalMin("-90") @DecimalMax("90") double latitude) {
-		return weatherService.findWeather(longitude, latitude);
-	}
+    @GetMapping
+    public List<WeatherDto> getWeather(@ModelAttribute @Valid WeatherReadRequest request) {
+        return weatherService.findWeather(request);
+    }
 
-	@GetMapping("/location")
-	public WeatherAPILocation getLocation(
-		@RequestParam @DecimalMin("-180") @DecimalMax("180") double longitude,
-		@RequestParam @DecimalMin("-90") @DecimalMax("90") double latitude) {
-		return weatherService.findLocation(longitude, latitude);
-	}
+    @GetMapping("/location")
+    public WeatherAPILocation getLocation(@ModelAttribute @Valid LocationReadRequest request) {
+        return weatherService.findLocation(request);
+    }
 }

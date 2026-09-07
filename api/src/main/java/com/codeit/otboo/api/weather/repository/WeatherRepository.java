@@ -30,8 +30,6 @@ public class WeatherRepository {
         try {
             return gridRepository.saveAndFlush(WeatherGrid.create(nx, ny, names));
         } catch (DataIntegrityViolationException exception) {
-            // JPA 저장 트랜잭션 종료 후 동시에 생성된 격자를 다시 조회한다.
-            // 다른 무결성 오류라면 원래 예외를 유지한다.
             return findGrid(nx, ny).orElseThrow(() -> exception);
         }
     }
