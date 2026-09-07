@@ -10,6 +10,8 @@ public enum ErrorCode {
     // ===== 공통 =====
     INTERNAL_SERVER_ERROR(500, "서버 오류가 발생했습니다."),
     INVALID_INPUT_VALUE(400, "입력값이 올바르지 않습니다."),
+    RESOURCE_NOT_FOUND(404, "요청하신 리소스를 찾을 수 없습니다."),
+    METHOD_NOT_ALLOWED(405, "지원하지 않는 요청 방식입니다."),
 
     // ===== 사용자 / 인증 =====
     USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다."),
