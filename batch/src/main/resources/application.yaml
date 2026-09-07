@@ -1,9 +1,8 @@
 spring:
   application:
     name: batch
-
   config:
-    import: optional:file:../.env
+    import: optional:dotenv:../
 
   datasource:
     driver-class-name: org.postgresql.Driver
