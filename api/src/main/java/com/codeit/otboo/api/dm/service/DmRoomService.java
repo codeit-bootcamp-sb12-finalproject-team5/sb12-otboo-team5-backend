@@ -1,6 +1,5 @@
 package com.codeit.otboo.api.dm.service;
 
-import com.codeit.otboo.api.dm.dto.CreateDmRoomRequest;
 import com.codeit.otboo.api.dm.dto.DmRoomResponse;
 import com.codeit.otboo.domain.dm.entity.DmRoom;
 import com.codeit.otboo.domain.dm.exception.DmException;
@@ -25,15 +24,13 @@ public class DmRoomService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public DmRoomResponse createOrGet(CreateDmRoomRequest request) {
-        UUID currentUserId = request.senderId();
-        UUID receiverId = request.receiverId();
-        if (currentUserId.equals(request.receiverId())) {
+    public DmRoomResponse createOrGet(UUID currentUserId, UUID receiverId) {
+        if (currentUserId.equals(receiverId)) {
             throw DmException.selfNotAllowed();
         }
 
-        User sender = userRepository.findById(currentUserId).orElseThrow(UserException::notFound);
-        User receiver = userRepository.findById(receiverId).orElseThrow(UserException::notFound);
+        User sender = findUser(currentUserId);
+        User receiver = findUser(receiverId);
         String dmKey = createDmKey(currentUserId, receiverId);
 
         return dmRoomRepository.findByDmKey(dmKey)
@@ -41,7 +38,7 @@ public class DmRoomService {
             .orElseGet(() -> createOrGetAfterConcurrentRequest(dmKey, sender, receiver, receiverId));
     }
 
-    // 두 사용자가 거의 동시에 dm 방 생성을 요청했을 경우 중복 방 생성 막고 기존 방을 정상 반환하기 위한 로직
+    // 두 사용자가 동시에 DM 방 생성을 요청해도 기존 방을 정상 반환한다.
     private DmRoomResponse createOrGetAfterConcurrentRequest(String dmKey, User sender, User receiver,
                                                              UUID receiverId) {
         try {
@@ -60,6 +57,11 @@ public class DmRoomService {
         String second = secondUserId.toString();
 
         return first.compareTo(second) < 0 ? first + "_" + second : second + "_" + first;
+    }
+
+    private User findUser(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(UserException::notFound);
     }
 
     private DmRoomResponse toResponse(DmRoom room, UUID opponentId, boolean created) {

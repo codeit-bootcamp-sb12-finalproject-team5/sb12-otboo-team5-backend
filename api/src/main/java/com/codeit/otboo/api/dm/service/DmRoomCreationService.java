@@ -18,7 +18,7 @@ class DmRoomCreationService {
     private final DmRoomRepository dmRoomRepository;
     private final DmRoomMemberRepository dmRoomMemberRepository;
 
-    // 별도 트랜잭션으로 DM방과 두 참여자를 별도 트랜잭션으로 함께 생성
+    // DM 방과 두 참여자를 별도 트랜잭션에서 함께 생성한다.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DmRoom create(String dmKey, User sender, User receiver) {
         DmRoom room = dmRoomRepository.save(new DmRoom(dmKey));
