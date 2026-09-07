@@ -14,7 +14,7 @@ import java.net.http.HttpClient;
 import java.time.Duration;
 
 @Configuration(proxyBeanMethods = false)
-public class WeatherClientConfig {
+public class KakaoClientConfig {
     private static final Duration EXTERNAL_CONNECT_TIMEOUT = Duration.ofSeconds(3);
     private static final Duration EXTERNAL_READ_TIMEOUT = Duration.ofSeconds(5);
 
