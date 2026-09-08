@@ -1,7 +1,7 @@
 package com.codeit.otboo.support.weather.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -35,10 +35,10 @@ class KmaClientTest {
                 ]}}}}
                 """, MediaType.APPLICATION_JSON));
 
-        var result = client.findObservation(LocalDateTime.of(2026, 9, 8, 14, 35), 60, 127);
+        var result = client.findObservation(OffsetDateTime.parse("2026-09-08T05:35:00Z"), 60, 127);
 
         assertThat(result).isPresent();
-        assertThat(result.orElseThrow().observedAt()).isEqualTo(LocalDateTime.of(2026, 9, 8, 14, 0));
+        assertThat(result.orElseThrow().observedAt()).isEqualTo(OffsetDateTime.parse("2026-09-08T14:00:00+09:00"));
         assertThat(result.orElseThrow().categories()).containsEntry("T1H", "25.3");
         server.verify();
     }
@@ -52,11 +52,13 @@ class KmaClientTest {
                 ]}}}}
                 """, MediaType.APPLICATION_JSON));
 
-        var result = client.findVillageForecast(LocalDateTime.of(2026, 9, 8, 11, 0), 60, 127);
+        var result = client.findVillageForecast(OffsetDateTime.parse("2026-09-08T02:00:00Z"), 60, 127);
 
         assertThat(result).isPresent();
+        assertThat(result.orElseThrow().forecastedAt())
+            .isEqualTo(OffsetDateTime.parse("2026-09-08T11:00:00+09:00"));
         var point = result.orElseThrow().points().get(0);
-        assertThat(point.forecastAt()).isEqualTo(LocalDateTime.of(2026, 9, 8, 15, 0));
+        assertThat(point.forecastAt()).isEqualTo(OffsetDateTime.parse("2026-09-08T15:00:00+09:00"));
         assertThat(point.category()).isEqualTo("TMP");
         assertThat(point.value()).isEqualTo("26");
         server.verify();
@@ -82,7 +84,29 @@ class KmaClientTest {
         server.expect(queryParam("base_time", "1100"))
             .andRespond(withSuccess("invalid-json", MediaType.APPLICATION_JSON));
 
-        assertThat(client.findVillageForecast(LocalDateTime.of(2026, 9, 8, 11, 0), 60, 127)).isEmpty();
+        assertThat(client.findVillageForecast(OffsetDateTime.parse("2026-09-08T11:00:00+09:00"), 60, 127)).isEmpty();
+        server.verify();
+    }
+
+
+    @Test
+    void convertsOffsetAcrossDateBoundaryBeforeRequest() {
+        server.expect(queryParam("base_date", "20260909"))
+            .andExpect(queryParam("base_time", "0200"))
+            .andRespond(withSuccess("""
+                {"response":{"header":{"resultCode":"00"},"body":{"items":{"item":[
+                {"fcstDate":"20260909","fcstTime":"0300","category":"TMP","fcstValue":"20"}
+                ]}}}}
+                """, MediaType.APPLICATION_JSON));
+
+        var result = client.findVillageForecast(
+            OffsetDateTime.parse("2026-09-08T17:00:00Z"), 60, 127);
+
+        assertThat(result).isPresent();
+        assertThat(result.orElseThrow().forecastedAt())
+            .isEqualTo(OffsetDateTime.parse("2026-09-09T02:00:00+09:00"));
+        assertThat(result.orElseThrow().points().get(0).forecastAt().getOffset())
+            .isEqualTo(java.time.ZoneOffset.ofHours(9));
         server.verify();
     }
 

@@ -1,10 +1,9 @@
 package com.codeit.otboo.support.weather.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
-/** 기상청 단기예보의 시각·항목·값 한 건을 전달하는 DTO입니다. */
 public record KmaForecastPointDto(
-    LocalDateTime forecastAt,
+    OffsetDateTime forecastAt,
     String category,
     String value
 ) {}
