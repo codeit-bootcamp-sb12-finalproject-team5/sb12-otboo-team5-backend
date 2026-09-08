@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication(scanBasePackages = "com.codeit.otboo")
 @ConfigurationPropertiesScan
-@EnableJpaAuditing
+@EnableJpaAuditing(dateTimeProviderRef = "offsetDateTimeProvider")
 @EntityScan(basePackages = "com.codeit.otboo.domain")
 @EnableJpaRepositories(basePackages = "com.codeit.otboo.domain")
 public class ApiApplication {
