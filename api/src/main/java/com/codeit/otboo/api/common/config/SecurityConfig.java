@@ -54,6 +54,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        // STOMP CONNECT 인증은 WebSocket 채널 인터셉터에서 처리할 예정
+                        .requestMatchers("/ws").permitAll()
                         .requestMatchers("/error").permitAll()
 
                         // 관리자 전용
