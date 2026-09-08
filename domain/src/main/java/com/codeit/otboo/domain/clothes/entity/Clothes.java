@@ -28,6 +28,9 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Clothes extends SoftDeletableEntity {
 
+	@Column(name = "name", nullable = false, length = 500)
+	private String name;
+
 	@Column(name = "is_owned", nullable = false)
 	private Boolean isOwned;
 

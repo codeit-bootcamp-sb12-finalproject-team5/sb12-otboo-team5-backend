@@ -34,7 +34,7 @@ public enum ErrorCode {
     // 담당자가 추가
 
     // ===== 날씨 =====
-    // 담당자가 추가
+    INVALID_LOCATION_INPUT(400, "위치 입력값이 올바르지 않습니다."),
 
     // ===== DM =====
     // 담당자가 추가

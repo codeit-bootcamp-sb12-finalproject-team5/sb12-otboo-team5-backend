@@ -6,8 +6,7 @@ import lombok.Getter;
 public enum Gender {
 	MALE("남성"),
 	FEMALE("여성"),
-	BOTH("공용"),
-	NOT_APPLICABLE("해당없음");
+	BOTH("기타");
 
 	private final String description;
 
