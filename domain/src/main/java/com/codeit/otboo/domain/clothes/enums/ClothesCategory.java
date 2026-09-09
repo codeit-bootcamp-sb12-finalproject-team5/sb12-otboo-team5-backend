@@ -1,18 +1,18 @@
-package com.codeit.otboo.domain.clothes.entity;
+package com.codeit.otboo.domain.clothes.enums;
 
 import lombok.Getter;
 
 @Getter
 public enum ClothingCategory {
-	TOPS("상의"),
-	BOTTOMS("하의"),
+	TOP("상의"),
+	PANTS("바지"),
+	SKIRT("스커트"),
 	OUTER("아우터"),
-	ONE_PIECES("원피스/세트"),
-	HATS("모자"),
-	SOCKS("양말"),
+	DRESS("원피스/세트"),
+	HAT("모자"),
 	SHOES("신발"),
-	BAGS("가방"),
-	ACCESSORIES("악세사리");
+	BAG("가방"),
+	ACCESSORY("악세서리");
 
 	private final String description;
 
