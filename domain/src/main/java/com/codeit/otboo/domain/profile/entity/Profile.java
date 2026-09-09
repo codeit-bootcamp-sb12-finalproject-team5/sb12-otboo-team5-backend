@@ -57,8 +57,8 @@ public class Profile extends UpdatableEntity {
 	@JoinColumn(name = "user_id", nullable = false, unique = true)
 	private User user;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "weather_grid_id", nullable = false)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "weather_grid_id")
 	private WeatherGrid weatherGrid;
 
 
@@ -70,7 +70,13 @@ public class Profile extends UpdatableEntity {
 		this.birthDate = birthDate;
 	}
 
-	public void updateLocationSource(LocationSource locationSource){
+	public void updateLocation(WeatherGrid weatherGrid, LocationSource locationSource) {
+		if (weatherGrid == null || locationSource == null) {
+			throw new IllegalArgumentException(
+					"WeatherGrid와 위치 출처는 필수입니다."
+			);
+		}
+		this.weatherGrid = weatherGrid;
 		this.locationSource = locationSource;
 	}
 
