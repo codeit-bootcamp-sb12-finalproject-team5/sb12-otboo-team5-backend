@@ -25,7 +25,7 @@ public enum ErrorCode {
     ACCESS_DENIED(403, "접근 권한이 없습니다."),
 
     // ===== 의상 =====
-    // 담당자가 추가
+    CLOTHES_ANALYSIS_FAILED(502, "의상 분석에 실패했습니다."),
 
     // ===== 아웃핏 =====
     // 담당자가 추가
