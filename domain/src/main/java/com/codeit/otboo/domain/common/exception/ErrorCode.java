@@ -38,7 +38,7 @@ public enum ErrorCode {
     INVALID_LOCATION_INPUT(400, "위치 입력값이 올바르지 않습니다."),
 
     // ===== DM =====
-    // 담당자가 추가
+    DM_SELF_NOT_ALLOWED(400, "자기 자신과 DM 방을 만들 수 없습니다."),
 
     // ===== 알림 =====
     // 담당자가 추가
