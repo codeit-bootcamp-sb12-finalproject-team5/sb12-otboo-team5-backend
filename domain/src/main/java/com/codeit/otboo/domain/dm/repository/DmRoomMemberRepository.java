@@ -16,6 +16,18 @@ public interface DmRoomMemberRepository extends JpaRepository<DmRoomMember, UUID
 
     Optional<DmRoomMember> findByDmRoom_IdAndUser_IdAndLeftAtIsNull(UUID roomId, UUID userId);
 
+    Optional<DmRoomMember> findByDmRoom_IdAndUser_Id(UUID roomId, UUID userId);
+
+    long countByDmRoom_IdAndLeftAtIsNull(UUID roomId);
+
+    @Modifying
+    @Query("update DmRoomMember member set member.lastReadMessage = null where member.dmRoom.id = :roomId")
+    void clearLastReadMessagesByRoomId(@Param("roomId") UUID roomId);
+
+    @Modifying
+    @Query("delete from DmRoomMember member where member.dmRoom.id = :roomId")
+    void deleteAllByRoomId(@Param("roomId") UUID roomId);
+
     // 더 최신 메시지일 때만 읽음 위치를 갱신해 동시 요청에서도 위치가 뒤로 가지 않게 한다.
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""

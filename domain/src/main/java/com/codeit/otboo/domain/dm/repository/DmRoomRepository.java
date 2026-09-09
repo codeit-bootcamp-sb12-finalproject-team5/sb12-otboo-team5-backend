@@ -8,11 +8,17 @@ import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 
 public interface DmRoomRepository extends JpaRepository<DmRoom, UUID> {
 
     Optional<DmRoom> findByDmKey(String dmKey);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select room from DmRoom room where room.id = :roomId")
+    Optional<DmRoom> findByIdForUpdate(@Param("roomId") UUID roomId);
 
     // 현재 사용자의 메시지 있는 DM 방과 상대방, 마지막 메시지를 최근 대화 순으로 커서 조회한다.
     @Query("""
@@ -25,7 +31,7 @@ public interface DmRoomRepository extends JpaRepository<DmRoom, UUID> {
             from DmRoomMember currentMember
             join currentMember.dmRoom room
             join DmRoomMember opponentMember on opponentMember.dmRoom = room
-                and opponentMember.user.id <> :userId and opponentMember.leftAt is null
+                and opponentMember.user.id <> :userId
             join opponentMember.user opponent
             join DirectMessage message on message.dmRoom = room
             where currentMember.user.id = :userId

@@ -8,11 +8,16 @@ import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 
 public interface DirectMessageRepository extends JpaRepository<DirectMessage, UUID> {
 
     Optional<DirectMessage> findByIdAndDmRoom_Id(UUID messageId, UUID roomId);
+
+    @Modifying
+    @Query("delete from DirectMessage message where message.dmRoom.id = :roomId")
+    void deleteAllByRoomId(@Param("roomId") UUID roomId);
 
     // 현재 DM 목록 페이지의 방별 읽지 않은 상대방 메시지 수를 한 번에 집계한다.
     @Query("""
