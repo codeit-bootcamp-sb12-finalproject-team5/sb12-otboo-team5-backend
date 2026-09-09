@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-// Todo: unreadCount 필드 추후 추가해야함
 public record DmRoomListResponse(
     List<DmRoomListItem> data,
     String nextCursor,
@@ -15,9 +14,11 @@ public record DmRoomListResponse(
 ) {
     public static DmRoomListResponse from(List<DmRoomListProjection> projections,
                                           Map<UUID, String> profileImageUrls,
+                                          Map<UUID, Long> unreadCounts,
                                           String nextCursor, boolean hasNext) {
         return new DmRoomListResponse(
-            projections.stream().map(projection -> DmRoomListItem.from(projection, profileImageUrls)).toList(),
+            projections.stream().map(projection -> DmRoomListItem.from(projection, profileImageUrls,
+                    unreadCounts)).toList(),
             nextCursor,
             hasNext
         );
@@ -27,15 +28,18 @@ public record DmRoomListResponse(
         UUID roomId,
         String dmKey,
         Opponent opponent,
-        LastMessage lastMessage
+        LastMessage lastMessage,
+        long unreadCount
     ) {
         private static DmRoomListItem from(DmRoomListProjection projection,
-                                           Map<UUID, String> profileImageUrls) {
+                                           Map<UUID, String> profileImageUrls,
+                                           Map<UUID, Long> unreadCounts) {
             return new DmRoomListItem(
                 projection.roomId(),
                 projection.dmKey(),
                 Opponent.from(projection, profileImageUrls),
-                LastMessage.from(projection)
+                LastMessage.from(projection),
+                unreadCounts.getOrDefault(projection.roomId(), 0L)
             );
         }
     }

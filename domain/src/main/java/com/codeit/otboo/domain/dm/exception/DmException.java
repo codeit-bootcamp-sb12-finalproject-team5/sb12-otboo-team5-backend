@@ -25,6 +25,14 @@ public class DmException extends BusinessException {
         return new DmException(ErrorCode.INVALID_MESSAGE);
     }
 
+    public static DmException messageNotFound() {
+        return new DmException(ErrorCode.DM_MESSAGE_NOT_FOUND);
+    }
+
+    public static DmException invalidMessageId() {
+        return new DmException(ErrorCode.INVALID_INPUT_VALUE);
+    }
+
     public static DmException forbidden() {
         return new DmException(ErrorCode.FORBIDDEN);
     }

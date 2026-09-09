@@ -4,6 +4,8 @@ import com.codeit.otboo.api.dm.dto.CreateDmRoomRequest;
 import com.codeit.otboo.api.dm.dto.DmRoomResponse;
 import com.codeit.otboo.api.dm.dto.DmRoomListResponse;
 import com.codeit.otboo.api.dm.dto.DirectMessageListResponse;
+import com.codeit.otboo.api.dm.dto.DirectMessageReadRequest;
+import com.codeit.otboo.api.dm.service.DirectMessageReadService;
 import com.codeit.otboo.api.dm.service.DirectMessageListService;
 import com.codeit.otboo.api.dm.service.DmRoomListService;
 import com.codeit.otboo.api.dm.service.DmRoomService;
@@ -16,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,6 +32,7 @@ public class DmRoomController {
     private final DmRoomService dmRoomService;
     private final DmRoomListService dmRoomListService;
     private final DirectMessageListService directMessageListService;
+    private final DirectMessageReadService directMessageReadService;
 
     // TODO: 공통 성공 응답 규격이 정해지면 ResponseEntity body를 해당 형식으로 통일
     @GetMapping
@@ -46,6 +50,16 @@ public class DmRoomController {
             @RequestParam(required = false) UUID cursor
     ) {
         return ResponseEntity.ok(directMessageListService.getMessages(userDetails.getUserId(), roomId, cursor));
+    }
+
+    @PatchMapping("/{roomId}/read")
+    public ResponseEntity<Void> markMessagesAsRead(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable UUID roomId,
+            @Valid @RequestBody DirectMessageReadRequest request
+    ) {
+        directMessageReadService.markAsRead(userDetails.getUserId(), roomId, request.lastReadMessageId());
+        return ResponseEntity.noContent().build();
     }
 
     // TODO: 공통 성공 응답 규격이 정해지면 ResponseEntity body를 해당 형식으로 통일

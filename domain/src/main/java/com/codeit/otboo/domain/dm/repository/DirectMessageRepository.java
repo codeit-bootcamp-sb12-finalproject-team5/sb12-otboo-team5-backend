@@ -14,6 +14,26 @@ public interface DirectMessageRepository extends JpaRepository<DirectMessage, UU
 
     Optional<DirectMessage> findByIdAndDmRoom_Id(UUID messageId, UUID roomId);
 
+    // 현재 DM 목록 페이지의 방별 읽지 않은 상대방 메시지 수를 한 번에 집계한다.
+    @Query("""
+            select member.dmRoom.id as roomId, count(message) as unreadCount
+            from DmRoomMember member
+            join DirectMessage message on message.dmRoom = member.dmRoom
+            left join member.lastReadMessage readMessage
+            where member.user.id = :userId
+              and member.leftAt is null
+              and member.dmRoom.id in :roomIds
+              and message.createdAt >= member.joinedAt
+              and message.sender.id <> :userId
+              and (readMessage is null
+                or message.createdAt > readMessage.createdAt
+                or (message.createdAt = readMessage.createdAt and message.id > readMessage.id))
+            group by member.dmRoom.id
+            """)
+    List<DmUnreadCountProjection> countUnreadMessagesByRoomIds(
+            @Param("userId") UUID userId,
+            @Param("roomIds") List<UUID> roomIds);
+
     // 입장 시점 이후의 최신 메시지를 페이지 크기만큼 조회한다.
     @Query("""
             select new com.codeit.otboo.domain.dm.repository.DirectMessageListProjection(

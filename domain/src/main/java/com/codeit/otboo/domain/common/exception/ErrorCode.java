@@ -39,6 +39,7 @@ public enum ErrorCode {
     // ===== DM =====
     DM_SELF_NOT_ALLOWED(400, "자기 자신과 DM 방을 만들 수 없습니다."),
     ROOM_NOT_FOUND(404, "DM 방을 찾을 수 없습니다."),
+    DM_MESSAGE_NOT_FOUND(404, "DM 메시지를 찾을 수 없습니다."),
     INVALID_MESSAGE(400, "메시지 내용이 올바르지 않습니다."),
     FORBIDDEN(403, "해당 DM 방에서 메시지를 전송할 권한이 없습니다."),
 
