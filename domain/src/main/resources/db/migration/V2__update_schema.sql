@@ -354,6 +354,7 @@ CREATE TABLE IF NOT EXISTS outfit (
     id              UUID PRIMARY KEY,
     user_id         UUID NOT NULL,
     name            VARCHAR(100) NOT NULL,
+    category        VARCHAR(255) NOT NULL,
     description     TEXT,
     created_at      TIMESTAMPTZ(6) NOT NULL,
     updated_at      TIMESTAMPTZ(6) NOT NULL,
