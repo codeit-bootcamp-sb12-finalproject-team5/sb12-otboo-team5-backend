@@ -5,9 +5,20 @@ plugins {
 description = 'support'
 
 dependencies {
+    // Domain
+    implementation project(':domain')
+
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework:spring-web'
     implementation 'org.springframework.boot:spring-boot-starter-json'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // Spring AI
+    implementation platform('org.springframework.ai:spring-ai-bom:1.1.8')
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // HTML Parser
+    implementation 'org.jsoup:jsoup:1.21.1'
 }

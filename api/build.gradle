@@ -34,10 +34,6 @@ dependencies {
     // DevTools
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-    // Spring AI
-    implementation platform('org.springframework.ai:spring-ai-bom:1.1.8')
-    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
-
     // dotenv
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 
