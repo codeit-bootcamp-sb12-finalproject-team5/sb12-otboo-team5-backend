@@ -3,7 +3,7 @@ package com.codeit.otboo.domain.clothes.enums;
 import lombok.Getter;
 
 @Getter
-public enum ClothingCategory {
+public enum ClothesCategory implements Displayable {
 	TOP("상의"),
 	PANTS("바지"),
 	SKIRT("스커트"),
@@ -14,10 +14,10 @@ public enum ClothingCategory {
 	BAG("가방"),
 	ACCESSORY("악세서리");
 
-	private final String description;
+	private final String displayName;
 
-	ClothingCategory(String description) {
-		this.description = description;
+	ClothesCategory(String displayName) {
+		this.displayName = displayName;
 	}
 
 }
