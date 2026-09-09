@@ -12,4 +12,8 @@ public class DmException extends BusinessException {
     public static DmException selfNotAllowed() {
         return new DmException(ErrorCode.DM_SELF_NOT_ALLOWED);
     }
+
+    public static DmException invalidCursor() {
+        return new DmException(ErrorCode.INVALID_INPUT_VALUE);
+    }
 }
