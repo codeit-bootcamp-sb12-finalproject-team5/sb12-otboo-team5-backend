@@ -3,6 +3,7 @@ package com.codeit.otboo.api.common.security;
 import com.codeit.otboo.domain.dm.entity.DmRoom;
 import com.codeit.otboo.domain.dm.repository.DmRoomMemberRepository;
 import com.codeit.otboo.domain.dm.repository.DmRoomRepository;
+import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -63,12 +64,12 @@ public class StompAuthenticationInterceptor implements ChannelInterceptor {
     // Authorization 헤더의 Access Token과 현재 사용자 상태를 검증
     private Authentication authenticate(String authorizationHeader) {
         if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
-            throw new AccessDeniedException("STOMP 인증에 실패했습니다.");
+            throw invalidTokenException();
         }
 
         String token = authorizationHeader.substring(BEARER_PREFIX.length());
         if (!jwtTokenProvider.validate(token)) {
-            throw new AccessDeniedException("STOMP 인증에 실패했습니다.");
+            throw invalidTokenException();
         }
 
         try {
@@ -76,17 +77,17 @@ public class StompAuthenticationInterceptor implements ChannelInterceptor {
             UUID userId = UUID.fromString(claims.getSubject());
             Integer tokenVersion = claims.get("tokenVersion", Integer.class);
             User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AccessDeniedException("STOMP 인증에 실패했습니다."));
+                .orElseThrow(this::invalidTokenException);
 
             if (!user.getTokenVersion().equals(tokenVersion) || Boolean.TRUE.equals(user.getLocked())) {
-                throw new AccessDeniedException("STOMP 인증에 실패했습니다.");
+                throw invalidTokenException();
             }
 
             CustomUserDetails principal = new CustomUserDetails(
                 user.getId(), user.getEmail(), user.getRole().name());
             return new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
         } catch (IllegalArgumentException e) {
-            throw new AccessDeniedException("STOMP 인증에 실패했습니다.");
+            throw invalidTokenException();
         }
     }
 
@@ -96,7 +97,7 @@ public class StompAuthenticationInterceptor implements ChannelInterceptor {
             && authentication.getPrincipal() instanceof CustomUserDetails) {
             return authentication;
         }
-        throw new AccessDeniedException("STOMP 인증이 필요합니다.");
+        throw accessDeniedException();
     }
 
     // DM 구독 경로의 dmKey에 현재 사용자가 활성 멤버로 참여했는지 확인
@@ -107,15 +108,25 @@ public class StompAuthenticationInterceptor implements ChannelInterceptor {
 
         String dmKey = destination.substring(DIRECT_MESSAGE_DESTINATION_PREFIX.length());
         DmRoom room = dmRoomRepository.findByDmKey(dmKey)
-            .orElseThrow(() -> new AccessDeniedException("DM 구독 권한이 없습니다."));
+            .orElseThrow(this::accessDeniedException);
 
         if (!dmRoomMemberRepository.existsByDmRoom_IdAndUser_IdAndLeftAtIsNull(room.getId(), currentUserId)) {
-            throw new AccessDeniedException("DM 구독 권한이 없습니다.");
+            throw accessDeniedException();
         }
     }
 
     // 인증 객체에서 현재 사용자 식별자를 추출한다.
     private UUID getUserId(Authentication authentication) {
         return ((CustomUserDetails) authentication.getPrincipal()).getUserId();
+    }
+
+    // 기존 공통 오류 코드로 토큰 인증 실패 예외를 생성한다.
+    private AccessDeniedException invalidTokenException() {
+        return new AccessDeniedException(ErrorCode.INVALID_TOKEN.getMessage());
+    }
+
+    // 기존 공통 오류 코드로 STOMP 접근 권한 예외를 생성한다.
+    private AccessDeniedException accessDeniedException() {
+        return new AccessDeniedException(ErrorCode.ACCESS_DENIED.getMessage());
     }
 }
