@@ -5,4 +5,6 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DmRoomMemberRepository extends JpaRepository<DmRoomMember, UUID> {
+
+    boolean existsByDmRoom_IdAndUser_IdAndLeftAtIsNull(UUID roomId, UUID userId);
 }
