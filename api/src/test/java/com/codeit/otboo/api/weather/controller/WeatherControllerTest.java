@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.codeit.otboo.api.common.exception.GlobalExceptionHandler;
 import com.codeit.otboo.support.weather.client.KakaoClient;
+import com.codeit.otboo.support.weather.client.KmaClient;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.api.weather.service.LocationService;
 import com.codeit.otboo.api.weather.service.Impl.WeatherServiceImpl;
@@ -23,7 +24,7 @@ class WeatherControllerTest {
     private final WeatherRepository repository = mock(WeatherRepository.class);
     private final KakaoClient kakao = mock(KakaoClient.class);
     private final MockMvc mvc = MockMvcBuilders.standaloneSetup(new WeatherController(
-                    new WeatherServiceImpl(new LocationService(repository, kakao))))
+                    new WeatherServiceImpl(new LocationService(repository, kakao), repository, mock(KmaClient.class))))
             .setControllerAdvice(new GlobalExceptionHandler()).build();
 
     @Test
@@ -68,11 +69,12 @@ class WeatherControllerTest {
     }
 
     @Test
-    void weatherEndpointAcceptsValidatedQueryRequest() throws Exception {
+    void weatherEndpointReturnsDomainErrorWhenKmaDataIsUnavailable() throws Exception {
+        when(repository.findGrid(60, 127)).thenReturn(Optional.of(
+            WeatherGrid.create(60, 127, List.of("서울특별시"))));
         mvc.perform(get("/api/weathers").param("longitude", "126.978").param("latitude", "37.5665"))
-                .andExpect(status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
-                        .json("[]"));
-        verifyNoInteractions(repository, kakao);
+            .andExpect(status().isServiceUnavailable())
+            .andExpect(jsonPath("$.exceptionName").value("WeatherException"));
+        verifyNoInteractions(kakao);
     }
 }

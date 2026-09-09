@@ -20,7 +20,7 @@ public final class KmaTimeCalculator {
 
     private KmaTimeCalculator() {}
 
-    /** 15분의 공개 지연을 고려한 최신 초단기실황 기준 시각입니다. */
+    // 15분의 공개 지연을 고려한 최신 초단기실황 기준 시각
     public static OffsetDateTime currentObservationBase() {
         return observationBase(OffsetDateTime.now(KST));
     }
@@ -29,7 +29,7 @@ public final class KmaTimeCalculator {
         return normalizeToKstHour(now.minusMinutes(15));
     }
 
-    /** 15분의 공개 지연을 고려한 최신 단기예보 발표 시각입니다. */
+    // 15분의 공개 지연을 고려한 최신 단기예보 발표 시각
     public static OffsetDateTime currentVillageBase() {
         return villageBase(OffsetDateTime.now(KST));
     }
@@ -44,7 +44,7 @@ public final class KmaTimeCalculator {
         return target.minusDays(1).withHour(23).truncatedTo(ChronoUnit.HOURS);
     }
 
-    /** 동일한 순간을 한국 시간으로 변환한 뒤 정각으로 정규화합니다. */
+    // 동일한 순간을 한국 시간으로 변환한 뒤 정각으로 정규화
     public static OffsetDateTime normalizeToKstHour(OffsetDateTime time) {
         return time.withOffsetSameInstant(KST).truncatedTo(ChronoUnit.HOURS);
     }
