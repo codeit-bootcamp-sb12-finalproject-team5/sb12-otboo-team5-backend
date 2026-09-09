@@ -12,6 +12,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @Configuration
 @EntityScan(basePackages = "com.codeit.otboo.domain")
 @EnableJpaRepositories(basePackages = "com.codeit.otboo.domain")
-@EnableJpaAuditing
+@EnableJpaAuditing(dateTimeProviderRef = "offsetDateTimeProvider")
 public class PersistenceConfig {
 }
