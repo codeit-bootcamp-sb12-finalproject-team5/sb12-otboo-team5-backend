@@ -44,7 +44,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                        .ignoringRequestMatchers("/api/auth/**", "/api/users"))
+                        // DM 요청은 Authorization Bearer 토큰으로 인증되므로
+                        // 브라우저 쿠키 기반 CSRF 보호 대상이 아닙니다.
+                        .ignoringRequestMatchers("/api/auth/**", "/api/users", "/api/direct-messages/**"))
 
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -60,7 +62,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         // STOMP CONNECT 인증은 WebSocket 채널 인터셉터에서 처리할 예정
-                        .requestMatchers("/ws").permitAll()
+                        .requestMatchers("/ws", "/ws/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
                         // 관리자 전용
