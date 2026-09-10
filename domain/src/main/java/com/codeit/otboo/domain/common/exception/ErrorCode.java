@@ -34,6 +34,7 @@ public enum ErrorCode {
     // 담당자가 추가
 
     // ===== 날씨 =====
+    WEATHER_DATA_UNAVAILABLE(503, "날씨 데이터를 가져올 수 없습니다."),
     INVALID_LOCATION_INPUT(400, "위치 입력값이 올바르지 않습니다."),
 
     // ===== DM =====

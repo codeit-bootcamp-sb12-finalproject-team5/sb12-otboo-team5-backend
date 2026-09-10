@@ -1,6 +1,6 @@
-package com.codeit.otboo.support.kakao.client;
+package com.codeit.otboo.support.weather.client;
 
-import com.codeit.otboo.support.kakao.dto.response.KakaoRegionDto;
+import com.codeit.otboo.support.weather.dto.response.KakaoRegionDto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
