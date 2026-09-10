@@ -35,12 +35,11 @@ public class DmRoomListService {
     @Transactional(readOnly = true)
     public DmRoomListResponse getDmRooms(UUID currentUserId, String cursor) {
         CursorPosition position = decodeCursor(cursor);
-        List<DmRoomListProjection> results = dmRoomRepository.findDmRoomsByUserId(
-            currentUserId,
-            position.sentAt(),
-            position.roomId(),
-            PageRequest.of(0, DM_ROOM_PAGE_SIZE + 1)
-        );
+        PageRequest pageable = PageRequest.of(0, DM_ROOM_PAGE_SIZE + 1);
+        List<DmRoomListProjection> results = position.sentAt() == null
+            ? dmRoomRepository.findLatestDmRoomsByUserId(currentUserId, pageable)
+            : dmRoomRepository.findDmRoomsBeforeCursor(
+            currentUserId, position.sentAt(), position.roomId(), pageable);
 
         boolean hasNext = results.size() > DM_ROOM_PAGE_SIZE;
         List<DmRoomListProjection> page = hasNext ? results.subList(0, DM_ROOM_PAGE_SIZE) : results;
@@ -69,8 +68,8 @@ public class DmRoomListService {
 
         List<UUID> roomIds = rooms.stream().map(DmRoomListProjection::roomId).toList();
         return directMessageRepository.countUnreadMessagesByRoomIds(currentUserId, roomIds).stream()
-                .collect(Collectors.toMap(DmUnreadCountProjection::getRoomId,
-                        DmUnreadCountProjection::getUnreadCount));
+            .collect(Collectors.toMap(DmUnreadCountProjection::getRoomId,
+                DmUnreadCountProjection::getUnreadCount));
     }
 
     private String encodeCursor(DmRoomListProjection projection) {

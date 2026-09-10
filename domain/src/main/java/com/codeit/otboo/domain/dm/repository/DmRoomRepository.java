@@ -20,7 +20,7 @@ public interface DmRoomRepository extends JpaRepository<DmRoom, UUID> {
     @Query("select room from DmRoom room where room.id = :roomId")
     Optional<DmRoom> findByIdForUpdate(@Param("roomId") UUID roomId);
 
-    // 현재 사용자의 메시지 있는 DM 방과 상대방, 마지막 메시지를 최근 대화 순으로 커서 조회한다.
+    // 첫 페이지는 커서 파라미터 없이 조회해 PostgreSQL의 null 타입 추론 문제를 피한다.
     @Query("""
             select room.id as roomId,
                 room.dmKey as dmKey,
@@ -42,20 +42,51 @@ public interface DmRoomRepository extends JpaRepository<DmRoom, UUID> {
                     and (newerMessage.createdAt > message.createdAt
                       or (newerMessage.createdAt = message.createdAt and newerMessage.id > message.id))
               )
-              and (:cursorSentAt is null
-                or message.createdAt < :cursorSentAt
+            order by message.createdAt desc, room.id desc
+            """)
+    List<DmRoomListRow> findLatestDmRoomRowsByUserId(@Param("userId") UUID userId, Pageable pageable);
+
+    // 다음 페이지는 커서 이전의 DM 방만 조회한다.
+    @Query("""
+            select room.id as roomId,
+                room.dmKey as dmKey,
+                opponent.id as opponentId,
+                opponent.name as opponentName,
+                message.content as lastMessageContent,
+                message.createdAt as lastMessageAt
+            from DmRoomMember currentMember
+            join currentMember.dmRoom room
+            join DmRoomMember opponentMember on opponentMember.dmRoom = room
+                and opponentMember.user.id <> :userId
+            join opponentMember.user opponent
+            join DirectMessage message on message.dmRoom = room
+            where currentMember.user.id = :userId
+              and currentMember.leftAt is null
+              and not exists (
+                  select 1 from DirectMessage newerMessage
+                  where newerMessage.dmRoom = room
+                    and (newerMessage.createdAt > message.createdAt
+                      or (newerMessage.createdAt = message.createdAt and newerMessage.id > message.id))
+              )
+              and (message.createdAt < :cursorSentAt
                 or (message.createdAt = :cursorSentAt and room.id < :cursorRoomId))
             order by message.createdAt desc, room.id desc
             """)
-    List<DmRoomListRow> findDmRoomRowsByUserId(
+    List<DmRoomListRow> findDmRoomRowsBeforeCursor(
             @Param("userId") UUID userId,
             @Param("cursorSentAt") OffsetDateTime cursorSentAt,
             @Param("cursorRoomId") UUID cursorRoomId,
             Pageable pageable);
 
-    default List<DmRoomListProjection> findDmRoomsByUserId(
+    default List<DmRoomListProjection> findLatestDmRoomsByUserId(UUID userId, Pageable pageable) {
+        return findLatestDmRoomRowsByUserId(userId, pageable).stream()
+                .map(DmRoomListProjection::from)
+                .toList();
+    }
+
+    default List<DmRoomListProjection> findDmRoomsBeforeCursor(
             UUID userId, OffsetDateTime cursorSentAt, UUID cursorRoomId, Pageable pageable) {
-        return findDmRoomRowsByUserId(userId, cursorSentAt, cursorRoomId, pageable).stream()
+        return findDmRoomRowsBeforeCursor(userId, cursorSentAt, cursorRoomId, pageable).stream()
                 .map(DmRoomListProjection::from)
                 .toList();
     }
