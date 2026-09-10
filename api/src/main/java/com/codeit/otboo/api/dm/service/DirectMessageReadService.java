@@ -6,7 +6,9 @@ import com.codeit.otboo.domain.dm.exception.DmException;
 import com.codeit.otboo.domain.dm.repository.DirectMessageRepository;
 import com.codeit.otboo.domain.dm.repository.DmRoomMemberRepository;
 import com.codeit.otboo.domain.dm.repository.DmRoomRepository;
+
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +29,7 @@ public class DirectMessageReadService {
         DirectMessage message = findMessage(lastReadMessageId);
         validateReadableMessage(message, roomId, member);
         dmRoomMemberRepository.updateLastReadMessageIfNewer(member.getId(), message,
-                message.getCreatedAt(), message.getId());
+            message.getCreatedAt(), message.getId());
     }
 
     private void validateRoomExists(UUID roomId) {
@@ -38,7 +40,7 @@ public class DirectMessageReadService {
 
     private DmRoomMember findActiveMember(UUID roomId, UUID currentUserId) {
         return dmRoomMemberRepository.findByDmRoom_IdAndUser_IdAndLeftAtIsNull(roomId, currentUserId)
-                .orElseThrow(DmException::forbidden);
+            .orElseThrow(DmException::forbidden);
     }
 
     // 요청한 읽음 위치 메시지가 존재하는지 조회한다.
@@ -49,7 +51,7 @@ public class DirectMessageReadService {
     // 현재 방의 입장 시점 이후 메시지만 읽음 위치로 허용한다.
     private void validateReadableMessage(DirectMessage message, UUID roomId, DmRoomMember member) {
         if (!message.getDmRoom().getId().equals(roomId)
-                || message.getCreatedAt().isBefore(member.getJoinedAt())) {
+            || message.getCreatedAt().isBefore(member.getJoinedAt())) {
             throw DmException.invalidMessageId();
         }
     }

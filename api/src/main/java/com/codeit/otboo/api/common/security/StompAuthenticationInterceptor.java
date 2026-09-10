@@ -7,7 +7,9 @@ import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
+
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -125,7 +127,7 @@ public class StompAuthenticationInterceptor implements ChannelInterceptor {
 
     private void validateUserDmListSubscription(String destination, UUID currentUserId) {
         String userId = destination.substring(USER_DM_LIST_DESTINATION_PREFIX.length())
-                .replace("/dm-list", "");
+            .replace("/dm-list", "");
         try {
             if (!currentUserId.equals(UUID.fromString(userId))) {
                 throw accessDeniedException();

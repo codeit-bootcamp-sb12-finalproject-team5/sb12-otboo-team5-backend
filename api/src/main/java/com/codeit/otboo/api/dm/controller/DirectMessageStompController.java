@@ -10,10 +10,12 @@ import com.codeit.otboo.domain.dm.repository.DmRoomRepository;
 import com.codeit.otboo.domain.common.exception.BusinessException;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import jakarta.validation.Valid;
+
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
@@ -50,7 +52,7 @@ public class DirectMessageStompController {
 
         messagingTemplate.convertAndSend(DIRECT_MESSAGE_DESTINATION_PREFIX + room.getDmKey(), response);
         messagingTemplate.convertAndSend(
-                USER_DM_LIST_DESTINATION_PREFIX + request.receiverId() + "/dm-list", response);
+            USER_DM_LIST_DESTINATION_PREFIX + request.receiverId() + "/dm-list", response);
     }
 
     // DM 비즈니스 예외를 현재 STOMP 세션에 REST 공통 오류 응답 형식으로 전달한다.

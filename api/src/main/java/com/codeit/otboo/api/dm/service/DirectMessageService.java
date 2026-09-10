@@ -36,10 +36,10 @@ public class DirectMessageService {
 
         User sender = userRepository.getReferenceById(currentUserId);
         DirectMessage message = directMessageRepository.save(DirectMessage.builder()
-                .dmRoom(room)
-                .sender(sender)
-                .content(content)
-                .build());
+            .dmRoom(room)
+            .sender(sender)
+            .content(content)
+            .build());
 
         room.updateLastMessageAt(message.getCreatedAt());
 
@@ -64,7 +64,7 @@ public class DirectMessageService {
         }
 
         DmRoomMember receiverMember = dmRoomMemberRepository.findByDmRoom_IdAndUser_Id(roomId, receiverId)
-                .orElseThrow(DmException::forbidden);
+            .orElseThrow(DmException::forbidden);
         if (receiverMember.getLeftAt() != null) {
             receiverMember.rejoin();
         }

@@ -64,14 +64,14 @@ public class DmRoomService {
 
     private User findUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(UserException::notFound);
+            .orElseThrow(UserException::notFound);
     }
 
     // 기존 방이지만 나간 사용자가 다시 요청한 경우 새 입장 세션으로 활성화
     private DmRoomResponse rejoinIfNeeded(DmRoom room, UUID currentUserId, UUID receiverId) {
         dmRoomMemberRepository.findByDmRoom_IdAndUser_Id(room.getId(), currentUserId)
-                .filter(member -> member.getLeftAt() != null)
-                .ifPresent(DmRoomMember::rejoin);
+            .filter(member -> member.getLeftAt() != null)
+            .ifPresent(DmRoomMember::rejoin);
 
         return toResponse(room, receiverId, false);
     }

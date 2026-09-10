@@ -5,7 +5,9 @@ import com.codeit.otboo.domain.dm.entity.DmRoomMember;
 import com.codeit.otboo.domain.dm.repository.DmRoomMemberRepository;
 import com.codeit.otboo.domain.dm.repository.DmRoomRepository;
 import com.codeit.otboo.domain.user.entity.User;
+
 import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -23,8 +25,8 @@ class DmRoomCreationService {
     public DmRoom create(String dmKey, User sender, User receiver) {
         DmRoom room = dmRoomRepository.save(new DmRoom(dmKey));
         dmRoomMemberRepository.saveAll(List.of(
-                new DmRoomMember(room, sender),
-                new DmRoomMember(room, receiver)
+            new DmRoomMember(room, sender),
+            new DmRoomMember(room, receiver)
         ));
 
         return dmRoomRepository.saveAndFlush(room);

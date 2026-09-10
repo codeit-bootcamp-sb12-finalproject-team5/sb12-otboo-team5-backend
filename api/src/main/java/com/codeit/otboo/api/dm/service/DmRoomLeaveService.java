@@ -6,7 +6,9 @@ import com.codeit.otboo.domain.dm.exception.DmException;
 import com.codeit.otboo.domain.dm.repository.DirectMessageRepository;
 import com.codeit.otboo.domain.dm.repository.DmRoomMemberRepository;
 import com.codeit.otboo.domain.dm.repository.DmRoomRepository;
+
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +25,9 @@ public class DmRoomLeaveService {
     @Transactional
     public void leaveRoom(UUID currentUserId, UUID roomId) {
         DmRoom room = dmRoomRepository.findByIdForUpdate(roomId)
-                .orElseThrow(DmException::roomNotFound);
+            .orElseThrow(DmException::roomNotFound);
         DmRoomMember member = dmRoomMemberRepository.findByDmRoom_IdAndUser_IdAndLeftAtIsNull(roomId, currentUserId)
-                .orElseThrow(DmException::forbidden);
+            .orElseThrow(DmException::forbidden);
         member.leave();
 
         if (dmRoomMemberRepository.countByDmRoom_IdAndLeftAtIsNull(roomId) == 0) {
