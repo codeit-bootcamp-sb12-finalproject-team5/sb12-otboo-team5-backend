@@ -2,7 +2,7 @@ package com.codeit.otboo.batch.weather.scheduler;
 
 import java.time.LocalDate;
 import com.codeit.otboo.support.weather.util.KmaTimeCalculator;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
@@ -13,11 +13,16 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class DailyWeatherBatchScheduler {
 
     private final JobLauncher jobLauncher;
     private final Job dailyWeatherSyncJob;
+
+    public DailyWeatherBatchScheduler(JobLauncher jobLauncher,
+            @Qualifier("dailyWeatherSyncJob") Job dailyWeatherSyncJob) {
+        this.jobLauncher = jobLauncher;
+        this.dailyWeatherSyncJob = dailyWeatherSyncJob;
+    }
 
     @Scheduled(cron = "0 50 23 * * *", zone = "Asia/Seoul")
     public void runDailySync() {

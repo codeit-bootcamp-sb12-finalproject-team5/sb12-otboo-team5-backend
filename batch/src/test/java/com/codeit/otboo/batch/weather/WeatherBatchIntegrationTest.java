@@ -10,6 +10,7 @@ import com.codeit.otboo.batch.weather.processor.WeatherDataProcessor;
 import com.codeit.otboo.batch.weather.reader.WeatherGridItemReader;
 import com.codeit.otboo.batch.weather.service.WeatherBatchExecutionService;
 import com.codeit.otboo.batch.weather.writer.WeatherJdbcItemWriter;
+import com.codeit.otboo.batch.weather.tasklet.WeatherCleanupTasklet;
 import com.codeit.otboo.domain.weather.entity.WeatherGrid;
 import com.codeit.otboo.domain.weather.repository.WeatherGridRepository;
 import com.codeit.otboo.domain.weather.repository.WeatherBatchExecutionRepository;
@@ -151,8 +152,56 @@ class WeatherBatchIntegrationTest {
         assertThat(completed.getFailedGridCount()).isZero();
     }
 
+    @Test
+    void cleanupDeletesOnlyBeforeCutoffsAndKeepsFutureForecastWithOldIssue() throws Exception {
+        var day = java.time.LocalDate.of(2026, 9, 10);
+        seedCleanupRows(day);
+        var execution = launchCleanup(day);
+        assertThat(execution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
+        assertThat(count("weather_observation")).isEqualTo(2);
+        assertThat(count("weather_forecast")).isEqualTo(2);
+        var state = execution.getStepExecutions().iterator().next().getExecutionContext();
+        assertThat(state.getInt("deletedObservationCount")).isEqualTo(1);
+        assertThat(state.getInt("deletedForecastCount")).isEqualTo(1);
+        verifyNoInteractions(context.getBean(KmaClient.class));
+    }
+
+    @Test
+    void cleanupRollsBackObservationDeletionWhenForecastDeletionFails() throws Exception {
+        var day = java.time.LocalDate.of(2026, 9, 17);
+        seedCleanupRows(day);
+        var jdbc = context.getBean(JdbcTemplate.class);
+        doThrow(new IllegalStateException("forced cleanup failure")).when(jdbc)
+            .update(eq("DELETE FROM weather_forecast WHERE forecast_at < ?"), any(Object[].class));
+        var execution = launchCleanup(day);
+        assertThat(execution.getStatus()).isEqualTo(BatchStatus.FAILED);
+        assertThat(count("weather_observation")).isEqualTo(3);
+        assertThat(count("weather_forecast")).isEqualTo(3);
+    }
+
+    private void seedCleanupRows(java.time.LocalDate day) {
+        var jdbc = context.getBean(JdbcTemplate.class);
+        UUID gridId = context.getBean(WeatherGridRepository.class).findAll().get(0).getId();
+        var start = day.atStartOfDay().atOffset(java.time.ZoneOffset.ofHours(9));
+        var observationCutoff = start.minusDays(2);
+        for (var at : List.of(observationCutoff.minusSeconds(1), observationCutoff, observationCutoff.plusSeconds(1))) {
+            jdbc.update("INSERT INTO weather_observation (id, grid_id, observed_at, created_at, updated_at) VALUES (?, ?, ?, now(), now())",
+                UUID.randomUUID(), gridId, at.withOffsetSameInstant(java.time.ZoneOffset.UTC));
+        }
+        var forecastCutoff = start.minusDays(1);
+        for (var at : List.of(forecastCutoff.minusSeconds(1), forecastCutoff, start.plusDays(1))) {
+            jdbc.update("INSERT INTO weather_forecast (id, grid_id, forecasted_at, forecast_at, created_at, updated_at) VALUES (?, ?, ?, ?, now(), now())",
+                UUID.randomUUID(), gridId, start.minusDays(5), at.withOffsetSameInstant(java.time.ZoneOffset.UTC));
+        }
+    }
+
+    private JobExecution launchCleanup(java.time.LocalDate date) throws Exception {
+        return context.getBean(JobLauncher.class).run(context.getBean("weeklyWeatherCleanupJob", Job.class),
+            new JobParametersBuilder().addString("cleanupDate", date.toString()).toJobParameters());
+    }
+
     private JobExecution launch(String at) throws Exception {
-        return context.getBean(JobLauncher.class).run(context.getBean(Job.class),
+        return context.getBean(JobLauncher.class).run(context.getBean("dailyWeatherSyncJob", Job.class),
             new JobParametersBuilder().addString("collectionAt", at).toJobParameters());
     }
 
@@ -167,7 +216,7 @@ class WeatherBatchIntegrationTest {
     @EnableJpaRepositories(basePackageClasses = WeatherGridRepository.class)
     @Import({JpaAuditingConfig.class, WeatherBatchJobConfig.class, WeatherSyncStepListener.class,
         WeatherGridItemReader.class, WeatherDataProcessor.class, WeatherJdbcItemWriter.class,
-        WeatherBatchExecutionService.class})
+        WeatherBatchExecutionService.class, WeatherCleanupJobConfig.class, WeatherCleanupTasklet.class})
     static class Config {
         @Bean DataSource dataSource() { return dataSourceForTest(); }
         @Bean JdbcTemplate jdbcTemplate(DataSource ds) { return spy(new JdbcTemplate(ds)); }

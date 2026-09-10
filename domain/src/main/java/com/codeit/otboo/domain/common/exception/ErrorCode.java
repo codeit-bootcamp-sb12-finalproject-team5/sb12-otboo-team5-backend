@@ -38,6 +38,7 @@ public enum ErrorCode {
     INVALID_LOCATION_INPUT(400, "위치 입력값이 올바르지 않습니다."),
 
     // ===== 배치 =====
+    INVALID_BATCH_CLEANUP_DATE(400, "cleanupDate는 yyyy-MM-dd 형식의 날짜여야 합니다."),
     BATCH_WEATHER_DATA_UNAVAILABLE(503, "격자의 관측·예보 데이터를 하나도 수집하지 못했습니다."),
     INVALID_BATCH_COLLECTION_TIME(400, "collectionAt은 offset을 포함한 ISO 시각이어야 합니다."),
     BATCH_TRANSACTION_REQUIRED(500, "배치 저장에는 활성 트랜잭션이 필요합니다."),
