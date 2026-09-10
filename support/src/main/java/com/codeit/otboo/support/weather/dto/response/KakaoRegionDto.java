@@ -1,4 +1,4 @@
-package com.codeit.otboo.support.kakao.dto.response;
+package com.codeit.otboo.support.weather.dto.response;
 
 public record KakaoRegionDto(
     String regionType,

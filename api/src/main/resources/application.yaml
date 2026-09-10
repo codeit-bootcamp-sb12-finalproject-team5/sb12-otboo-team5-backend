@@ -10,6 +10,11 @@ spring:
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -40,6 +45,11 @@ kakao:
 
 kma:
   service-key: ${KMA_SERVICE_KEY:}
+
+weather:
+  cache:
+    ttl: PT3H
+
 admin:
   email: ${ADMIN_EMAIL:system@otboo.io}
   password: ${ADMIN_PASSWORD:otboo1!}
