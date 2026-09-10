@@ -2,6 +2,7 @@ package com.codeit.otboo.api.auth.service;
 
 import com.codeit.otboo.api.auth.dto.JwtDto;
 import com.codeit.otboo.api.auth.dto.SignInRequest;
+import com.codeit.otboo.api.user.dto.UserDto;
 import com.codeit.otboo.api.common.mail.EmailSender;
 import com.codeit.otboo.api.common.mail.TempPasswordGenerator;
 import com.codeit.otboo.api.common.security.JwtTokenProvider;
@@ -144,6 +145,6 @@ public class AuthService {
                 .build());
 
         log.info("토큰 발급: {}", user.getEmail());
-        return new JwtDto(accessToken, refreshToken);
+        return new JwtDto(UserDto.from(user), accessToken, refreshToken);
     }
 }
