@@ -33,6 +33,7 @@ import org.springframework.validation.FieldError;
 public class DirectMessageStompController {
 
     private static final String DIRECT_MESSAGE_DESTINATION_PREFIX = "/sub/direct-messages_";
+    private static final String USER_DM_LIST_DESTINATION_PREFIX = "/sub/users_";
 
     private final DirectMessageService directMessageService;
     private final DmRoomRepository dmRoomRepository;
@@ -48,6 +49,8 @@ public class DirectMessageStompController {
             .orElseThrow(() -> new IllegalStateException("저장된 DM 방을 찾을 수 없습니다."));
 
         messagingTemplate.convertAndSend(DIRECT_MESSAGE_DESTINATION_PREFIX + room.getDmKey(), response);
+        messagingTemplate.convertAndSend(
+                USER_DM_LIST_DESTINATION_PREFIX + request.receiverId() + "/dm-list", response);
     }
 
     // DM 비즈니스 예외를 현재 STOMP 세션에 REST 공통 오류 응답 형식으로 전달한다.

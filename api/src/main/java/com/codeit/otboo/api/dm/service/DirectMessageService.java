@@ -3,6 +3,7 @@ package com.codeit.otboo.api.dm.service;
 import com.codeit.otboo.api.dm.dto.DirectMessageResponse;
 import com.codeit.otboo.domain.dm.entity.DirectMessage;
 import com.codeit.otboo.domain.dm.entity.DmRoom;
+import com.codeit.otboo.domain.dm.entity.DmRoomMember;
 import com.codeit.otboo.domain.dm.exception.DmException;
 import com.codeit.otboo.domain.dm.repository.DirectMessageRepository;
 import com.codeit.otboo.domain.dm.repository.DmRoomMemberRepository;
@@ -31,7 +32,7 @@ public class DirectMessageService {
         validateContent(content);
 
         DmRoom room = findRoom(roomId);
-        validateMembers(roomId, currentUserId, receiverId);
+        validateSenderAndRejoinReceiver(roomId, currentUserId, receiverId);
 
         User sender = userRepository.getReferenceById(currentUserId);
         DirectMessage message = directMessageRepository.save(DirectMessage.builder()
@@ -56,11 +57,16 @@ public class DirectMessageService {
             .orElseThrow(DmException::roomNotFound);
     }
 
-    private void validateMembers(UUID roomId, UUID currentUserId, UUID receiverId) {
+    private void validateSenderAndRejoinReceiver(UUID roomId, UUID currentUserId, UUID receiverId) {
         if (currentUserId.equals(receiverId)
-            || !dmRoomMemberRepository.existsByDmRoom_IdAndUser_IdAndLeftAtIsNull(roomId, currentUserId)
-            || !dmRoomMemberRepository.existsByDmRoom_IdAndUser_IdAndLeftAtIsNull(roomId, receiverId)) {
+            || !dmRoomMemberRepository.existsByDmRoom_IdAndUser_IdAndLeftAtIsNull(roomId, currentUserId)) {
             throw DmException.forbidden();
+        }
+
+        DmRoomMember receiverMember = dmRoomMemberRepository.findByDmRoom_IdAndUser_Id(roomId, receiverId)
+                .orElseThrow(DmException::forbidden);
+        if (receiverMember.getLeftAt() != null) {
+            receiverMember.rejoin();
         }
     }
 
