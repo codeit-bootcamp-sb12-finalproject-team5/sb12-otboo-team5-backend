@@ -29,7 +29,7 @@ public class DailyWeatherBatchScheduler {
         try {
             JobParameters parameters = new JobParametersBuilder()
                     .addString("collectionAt", LocalDate.now(KmaTimeCalculator.KST)
-                            .atTime(23, 50).atOffset(KmaTimeCalculator.KST).toString())
+                            .atTime(23, 30).atOffset(KmaTimeCalculator.KST).toString())
                     .toJobParameters();
             jobLauncher.run(dailyWeatherSyncJob, parameters);
         } catch (Exception exception) {
