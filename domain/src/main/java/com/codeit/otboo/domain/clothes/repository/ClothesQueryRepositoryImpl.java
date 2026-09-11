@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class ClothesRepositoryCustomImpl implements ClothesRepositoryCustom {
+public class ClothesQueryRepositoryImpl implements ClothesQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
@@ -38,10 +38,7 @@ public class ClothesRepositoryCustomImpl implements ClothesRepositoryCustom {
             .limit(limit + 1)
             .fetch();
 
-        // 다음 페이지 존재 여부
         boolean hasNext = content.size() > limit;
-
-        // limit + 1번째 데이터는 다음 페이지 존재 여부 확인용이므로 제거
         if (hasNext) {
             content.remove(content.size() - 1);
         }
@@ -49,7 +46,6 @@ public class ClothesRepositoryCustomImpl implements ClothesRepositoryCustom {
         String nextCursor = null;
         UUID nextIdAfter = null;
 
-        // 다음 페이지가 있다면 마지막 데이터의 정렬값을 다음 커서로 사용
         if (hasNext && !content.isEmpty()) {
             Clothes last = content.get(content.size() - 1);
 
@@ -57,7 +53,6 @@ public class ClothesRepositoryCustomImpl implements ClothesRepositoryCustom {
             nextIdAfter = last.getId();
         }
 
-        // 전체 데이터 개수
         Long totalCount = queryFactory
             .select(clothes.count())
             .from(clothes)
@@ -78,21 +73,12 @@ public class ClothesRepositoryCustomImpl implements ClothesRepositoryCustom {
             "DESCENDING"
         );
     }
-
-    private BooleanExpression typeEqualEq(
-        QClothes clothes,
-        ClothesCategory typeEqual
-    ) {
+    private BooleanExpression typeEqualEq(QClothes clothes, ClothesCategory typeEqual) {
         return typeEqual != null
             ? clothes.category.eq(typeEqual)
             : null;
     }
-
-    private BooleanExpression cursorCondition(
-        QClothes clothes,
-        String cursor,
-        UUID idAfter
-    ) {
+    private BooleanExpression cursorCondition(QClothes clothes, String cursor, UUID idAfter) {
         if (cursor == null) {
             return null;
         }

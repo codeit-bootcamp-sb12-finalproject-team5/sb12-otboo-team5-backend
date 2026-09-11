@@ -41,7 +41,6 @@ public class OpenAiWebSearchClient {
         this.webClient = builder
             .baseUrl("https://api.openai.com/v1")
             .build();
-
         this.objectMapper = objectMapper;
     }
 
@@ -64,9 +63,7 @@ public class OpenAiWebSearchClient {
 
         try {
             JsonNode root = objectMapper.readTree(response);
-
             String result = extractOutputText(root);
-
             ClothesAnalysisResult analysis = objectMapper.readValue(
                 result,
                 ClothesAnalysisResult.class

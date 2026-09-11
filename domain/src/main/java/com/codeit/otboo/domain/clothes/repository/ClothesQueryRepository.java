@@ -5,7 +5,7 @@ import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import java.util.UUID;
 
-public interface ClothesRepositoryCustom {
+public interface ClothesQueryRepository {
 
     CursorResponse<Clothes> findAllByDynamicQuery(
         String cursor,

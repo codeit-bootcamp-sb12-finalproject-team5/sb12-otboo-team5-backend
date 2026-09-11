@@ -1,8 +1,6 @@
 package com.codeit.otboo.domain.clothes.enums;
+import com.fasterxml.jackson.annotation.JsonValue;
 
-import lombok.Getter;
-
-@Getter
 public enum ClothesCategory implements Displayable {
 	TOP("상의"),
 	PANTS("바지"),
@@ -20,4 +18,9 @@ public enum ClothesCategory implements Displayable {
 		this.displayName = displayName;
 	}
 
+	@Override
+	@JsonValue
+	public String getDisplayName() {
+		return displayName;
+	}
 }

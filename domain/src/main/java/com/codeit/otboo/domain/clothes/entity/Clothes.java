@@ -1,10 +1,9 @@
 package com.codeit.otboo.domain.clothes.entity;
 
 import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
+import com.codeit.otboo.domain.clothes.enums.ClothesGender;
 import com.codeit.otboo.domain.common.SoftDeletableEntity;
-import com.codeit.otboo.domain.profile.entity.Gender;
 import com.codeit.otboo.domain.user.entity.User;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -47,7 +46,7 @@ public class Clothes extends SoftDeletableEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "gender", nullable = false, length = 50)
-	private Gender gender;
+	private ClothesGender gender;
 
 	@Column(name = "attribute_text", columnDefinition = "TEXT")
 	private String attributeText;

@@ -5,12 +5,9 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
-import java.util.UUID;
 import org.hibernate.validator.constraints.Range;
 
-public record ClothesRequest (
-    @NotNull(message = "사용자 ID 입력은 필수입니다.")
-    UUID ownerId,
+public record ClothesUpdateRequest(
     @NotEmpty(message = "의상 이름 입력은 필수입니다.")
     String name,
     @Nullable
