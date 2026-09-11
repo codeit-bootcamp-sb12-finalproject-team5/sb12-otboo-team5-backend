@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
@@ -41,7 +43,15 @@ public class SecurityExceptionHandler implements AuthenticationEntryPoint, Acces
     public void handle(HttpServletRequest request,
                        HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException {
-        log.warn("[FORBIDDEN] {} {}", request.getMethod(), request.getRequestURI());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = (auth != null && auth.getName() != null) ? auth.getName() : "Anonymous";
+        log.warn("[FORBIDDEN] {} {} - User: [{}] | Reason: [{}] {}",
+            request.getMethod(),
+            request.getRequestURI(),
+            currentUser,
+            accessDeniedException.getClass().getSimpleName(),
+            accessDeniedException.getMessage()
+        );
         write(response, ErrorCode.ACCESS_DENIED, "AccessDeniedException");
     }
 

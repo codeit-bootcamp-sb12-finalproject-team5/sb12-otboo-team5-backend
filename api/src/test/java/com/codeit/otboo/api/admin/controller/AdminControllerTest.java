@@ -15,7 +15,7 @@ import com.codeit.otboo.api.admin.dto.UserLockUpdateRequest;
 import com.codeit.otboo.api.admin.dto.UserRoleUpdateRequest;
 import com.codeit.otboo.api.admin.dto.UserSearchCondition;
 import com.codeit.otboo.api.admin.service.AdminService;
-import com.codeit.otboo.api.common.dto.CursorResponse;
+import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.api.common.exception.GlobalExceptionHandler;
 import com.codeit.otboo.api.user.dto.UserDto;
 import com.codeit.otboo.domain.user.entity.UserRole;

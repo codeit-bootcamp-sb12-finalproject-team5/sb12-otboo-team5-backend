@@ -54,3 +54,8 @@ admin:
   email: ${ADMIN_EMAIL:system@otboo.io}
   password: ${ADMIN_PASSWORD:otboo1!}
   name: ${ADMIN_NAME:system}
+
+otboo:
+  storage:
+    local:
+      root-path: .otboo/storage
