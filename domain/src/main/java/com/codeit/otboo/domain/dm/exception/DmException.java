@@ -16,4 +16,16 @@ public class DmException extends BusinessException {
     public static DmException invalidCursor() {
         return new DmException(ErrorCode.INVALID_INPUT_VALUE);
     }
+
+    public static DmException roomNotFound() {
+        return new DmException(ErrorCode.ROOM_NOT_FOUND);
+    }
+
+    public static DmException invalidMessage() {
+        return new DmException(ErrorCode.INVALID_MESSAGE);
+    }
+
+    public static DmException forbidden() {
+        return new DmException(ErrorCode.FORBIDDEN);
+    }
 }

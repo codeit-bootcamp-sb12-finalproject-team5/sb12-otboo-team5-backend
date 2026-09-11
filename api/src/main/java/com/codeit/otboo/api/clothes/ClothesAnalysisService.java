@@ -1,6 +1,6 @@
 package com.codeit.otboo.api.clothes;
 
-import com.codeit.otboo.api.clothes.exception.ClothesException;
+import com.codeit.otboo.domain.clothes.exception.ClothesException;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.support.openai.clothes.ClothesAnalysisResult;
 import com.codeit.otboo.support.openai.clothes.ClothesPromptBuilder;

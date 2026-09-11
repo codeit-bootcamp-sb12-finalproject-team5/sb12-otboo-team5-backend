@@ -4,23 +4,23 @@ import com.codeit.otboo.domain.clothes.enums.Displayable;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 public record ClothesAttributeResponse(
-    UUID definitionId,
-    String definitionName,
+    String id,
+    String name,
     List<String> selectableValues,
     OffsetDateTime createdAt
 ) {
     public static <E extends Enum<E> & Displayable> ClothesAttributeResponse of(Class<E> enumClass) {
         String definitionName = getDefinitionName(enumClass);
+        String definitionId = getDefinitionId(enumClass);
 
         List<String> selectableValues = Arrays.stream(enumClass.getEnumConstants())
             .map(Displayable::getDisplayName)
             .toList();
 
         return new ClothesAttributeResponse(
-            null,
+            definitionId,
             definitionName,
             selectableValues,
             null
@@ -28,8 +28,6 @@ public record ClothesAttributeResponse(
     }
     private static String getDefinitionName(Class<?> enumClass) {
         return switch (enumClass.getSimpleName()) {
-            case "ClothesGender" -> "성별";
-            case "ClothesCategory" -> "대분류";
             case "ClothesSubCategory" -> "소분류";
             case "ClothesColor" -> "색상";
             case "ClothesFit" -> "핏";
@@ -37,7 +35,21 @@ public record ClothesAttributeResponse(
             case "ClothesPattern" -> "패턴";
             case "ClothesStyle" -> "스타일";
             case "ClothesSeason" -> "계절감";
+            case "ClothesGender" -> "의상성별";
             default -> "기타 속성";
+        };
+    }
+    private static String getDefinitionId(Class<?> enumClass) {
+        return switch (enumClass.getSimpleName()) {
+            case "ClothesSubCategory" -> "2";
+            case "ClothesColor" -> "3";
+            case "ClothesFit" -> "4";
+            case "ClothesMaterial" -> "5";
+            case "ClothesPattern" -> "6";
+            case "ClothesStyle" -> "7";
+            case "ClothesSeason" -> "8";
+            case "ClothesGender" -> "9";
+            default -> "0";
         };
     }
 }

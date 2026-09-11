@@ -1,4 +1,4 @@
-package com.codeit.otboo.api.common.dto;
+package com.codeit.otboo.domain.common.dto;
 
 import java.util.List;
 
@@ -21,7 +21,6 @@ public record CursorResponse<T>(
         String sortBy,
         String sortDirection
 ) {
-
     public static <T> CursorResponse<T> of(List<T> data,
                                            String nextCursor,
                                            Object nextIdAfter,

@@ -25,7 +25,10 @@ public enum ErrorCode {
     ACCESS_DENIED(403, "접근 권한이 없습니다."),
 
     // ===== 의상 =====
+    CLOTHES_NOT_FOUND(404, "의상을 찾을 수 없습니다"),
     CLOTHES_ANALYSIS_FAILED(502, "의상 분석에 실패했습니다."),
+    INVALID_ATTRIBUTE_VALUE(400, "유효하지 않은 의상 속성입니다."),
+    CLOTHES_ATTRIBUTE_PARSE_FAILED(500, "의상 속성작업에 실패했습니다."),
 
     // ===== 아웃핏 =====
     // 담당자가 추가
@@ -45,6 +48,9 @@ public enum ErrorCode {
 
     // ===== DM =====
     DM_SELF_NOT_ALLOWED(400, "자기 자신과 DM 방을 만들 수 없습니다."),
+    ROOM_NOT_FOUND(404, "DM 방을 찾을 수 없습니다."),
+    INVALID_MESSAGE(400, "메시지 내용이 올바르지 않습니다."),
+    FORBIDDEN(403, "해당 DM 방에서 메시지를 전송할 권한이 없습니다."),
 
     // ===== 알림 =====
     // 담당자가 추가

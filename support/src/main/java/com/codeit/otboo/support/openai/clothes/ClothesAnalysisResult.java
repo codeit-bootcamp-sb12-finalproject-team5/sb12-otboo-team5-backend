@@ -12,8 +12,8 @@ import com.codeit.otboo.domain.clothes.enums.ClothesSubCategory;
 
 public record ClothesAnalysisResult(
     String name,
+    String brand,
     String imageUrl,
-    ClothesGender gender,
     ClothesCategory category,
     ClothesSubCategory subcategory,
     ClothesColor color,
@@ -22,6 +22,6 @@ public record ClothesAnalysisResult(
     ClothesPattern pattern,
     ClothesStyle style,
     ClothesSeason season,
-    String brand
+    ClothesGender gender
 ) {
 }
