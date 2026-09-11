@@ -30,6 +30,9 @@ public enum ErrorCode {
     INVALID_ATTRIBUTE_VALUE(400, "유효하지 않은 의상 속성입니다."),
     CLOTHES_ATTRIBUTE_PARSE_FAILED(500, "의상 속성작업에 실패했습니다."),
 
+    // ===== 프로필 =====
+    PROFILE_NOT_FOUND(404, "프로필을 찾을 수 없습니다."),
+
     // ===== 아웃핏 =====
     // 담당자가 추가
 
