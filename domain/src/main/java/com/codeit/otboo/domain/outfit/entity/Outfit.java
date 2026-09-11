@@ -24,6 +24,9 @@ public class Outfit extends SoftDeletableEntity {
 	@Column(nullable = false, length = 100)
 	private String name;
 
+	@Column(nullable = false, length = 100)
+	private String category;
+
 	@Column(columnDefinition = "TEXT")
 	private String description;
 
