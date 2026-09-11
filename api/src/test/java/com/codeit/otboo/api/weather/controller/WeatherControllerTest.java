@@ -24,7 +24,7 @@ class WeatherControllerTest {
     private final WeatherRepository repository = mock(WeatherRepository.class);
     private final KakaoClient kakao = mock(KakaoClient.class);
     private final MockMvc mvc = MockMvcBuilders.standaloneSetup(new WeatherController(
-                    new WeatherServiceImpl(new LocationService(repository, kakao), repository, mock(KmaClient.class))))
+                    new WeatherServiceImpl(new LocationService(repository, kakao), new com.codeit.otboo.api.weather.service.WeatherViewCacheService(repository, mock(KmaClient.class)))))
             .setControllerAdvice(new GlobalExceptionHandler()).build();
 
     @Test

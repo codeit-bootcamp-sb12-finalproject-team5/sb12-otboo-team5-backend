@@ -33,9 +33,9 @@ class LocationServiceTest {
         when(weatherRepository.findOrCreateGrid(66, 117, names))
                 .thenReturn(WeatherGrid.create(66, 117, names));
 
-        WeatherGrid result = service.findOrCreate(66, 117, 127.338, 37.123213);
+        var result = service.findOrCreate(66, 117, 127.338, 37.123213);
 
-        assertThat(result.getLocationNames()).isEqualTo(names);
+        assertThat(result.locationNames()).isEqualTo(names);
         verify(kakaoClient).findAdministrativeRegion(127.338, 37.123213);
         verify(weatherRepository).findOrCreateGrid(66, 117, names);
     }
@@ -50,9 +50,9 @@ class LocationServiceTest {
         WeatherGrid stored = WeatherGrid.create(66, 117, names);
         when(weatherRepository.findGrid(66, 117)).thenReturn(Optional.of(stored));
 
-        WeatherGrid result = service.findOrCreate(66, 117, 127.338, 37.123213);
+        var result = service.findOrCreate(66, 117, 127.338, 37.123213);
 
-        assertThat(result).isSameAs(stored);
+        assertThat(result).isEqualTo(com.codeit.otboo.api.weather.dto.response.WeatherGridDto.from(stored));
         verify(kakaoClient, never()).findAdministrativeRegion(anyDouble(), anyDouble());
     }
     @Test
@@ -66,9 +66,9 @@ class LocationServiceTest {
         when(repository.findOrCreateGrid(60, 127, List.of()))
                 .thenReturn(WeatherGrid.create(60, 127, List.of()));
 
-        WeatherGrid result = service.findOrCreate(60, 127, 126.978, 37.5665);
+        var result = service.findOrCreate(60, 127, 126.978, 37.5665);
 
-        assertThat(result.getLocationNames()).containsExactly("", "", "", "");
+        assertThat(result.locationNames()).containsExactly("", "", "", "");
     }
 
     @Test

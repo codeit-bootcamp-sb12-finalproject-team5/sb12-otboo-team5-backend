@@ -44,7 +44,7 @@ kakao:
   rest-api-key: ${KAKAO_REST_API_KEY:}
 
 kma:
-  service-key: ${KMA_SERVICE_KEY:}
+  service-key: ${KMA_API_KEY:}
 
 weather:
   cache:

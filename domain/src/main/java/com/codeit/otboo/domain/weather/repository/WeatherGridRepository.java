@@ -1,5 +1,6 @@
 package com.codeit.otboo.domain.weather.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import jakarta.persistence.LockModeType;
@@ -17,4 +18,8 @@ public interface WeatherGridRepository extends JpaRepository<WeatherGrid, UUID> 
     Optional<WeatherGrid> findByIdForUpdate(@Param("id") UUID id);
 
     Optional<WeatherGrid> findByNxAndNy(int nx, int ny);
+
+    List<WeatherGrid> findByEnabledTrueOrderByIdAsc();
+
+    long countByEnabledTrue();
 }
