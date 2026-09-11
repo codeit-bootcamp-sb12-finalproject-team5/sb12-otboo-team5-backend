@@ -38,7 +38,7 @@ class AuthControllerTest {
     @Test
     void returnsTokensAndSetsRefreshCookieOnSignIn() throws Exception {
         when(authService.signIn(any(SignInRequest.class)))
-                .thenReturn(new JwtDto("access-token", "refresh-token"));
+                .thenReturn(new JwtDto(null, "access-token", "refresh-token"));
 
         mockMvc.perform(post("/api/auth/sign-in")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -128,7 +128,7 @@ class AuthControllerTest {
     @Test
     void setsNewCookieOnRefresh() throws Exception {
         when(authService.refresh("old-refresh"))
-                .thenReturn(new JwtDto("new-access", "new-refresh"));
+                .thenReturn(new JwtDto(null, "new-access", "new-refresh"));
 
         mockMvc.perform(post("/api/auth/refresh")
                         .cookie(new jakarta.servlet.http.Cookie("refresh_token", "old-refresh")))
