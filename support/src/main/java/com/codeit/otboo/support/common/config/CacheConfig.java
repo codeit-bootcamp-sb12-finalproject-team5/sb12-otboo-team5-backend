@@ -27,6 +27,7 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 public class CacheConfig implements CachingConfigurer {
 
     public static final String WEATHER_CACHE = "weather";
+    public static final String GRID_CACHE = "grid";
 
     @Bean
     public CacheManager cacheManager(
@@ -42,7 +43,8 @@ public class CacheConfig implements CachingConfigurer {
                 .disableCachingNullValues();
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = Map.ofEntries(
-                Map.entry(WEATHER_CACHE, defaults.entryTtl(weatherTtl))
+                Map.entry(WEATHER_CACHE, defaults.entryTtl(weatherTtl)),
+                Map.entry(GRID_CACHE, defaults.entryTtl(Duration.ofHours(1)))
             // 여기에 캐시 추가
         );
 

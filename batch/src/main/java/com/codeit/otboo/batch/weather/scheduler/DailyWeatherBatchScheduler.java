@@ -24,7 +24,7 @@ public class DailyWeatherBatchScheduler {
         this.dailyWeatherSyncJob = dailyWeatherSyncJob;
     }
 
-    @Scheduled(cron = "0 50 23 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 30 23 * * *", zone = "Asia/Seoul")
     public void runDailySync() {
         try {
             JobParameters parameters = new JobParametersBuilder()

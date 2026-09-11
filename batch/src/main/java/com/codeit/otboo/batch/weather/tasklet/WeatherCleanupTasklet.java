@@ -23,8 +23,10 @@ public class WeatherCleanupTasklet implements Tasklet {
     private final JdbcTemplate jdbcTemplate;
     private final LocalDate cleanupDate;
 
-    public WeatherCleanupTasklet(JdbcTemplate jdbcTemplate,
-            @Value("#{jobParameters['cleanupDate']}") String cleanupDate) {
+    public WeatherCleanupTasklet(
+        JdbcTemplate jdbcTemplate,
+        @Value("#{jobParameters['cleanupDate']}") String cleanupDate
+    ) {
         this.jdbcTemplate = jdbcTemplate;
         this.cleanupDate = parseCleanupDate(cleanupDate);
     }
@@ -33,6 +35,7 @@ public class WeatherCleanupTasklet implements Tasklet {
         if (value == null || value.isBlank()) {
             throw new BatchException(ErrorCode.INVALID_BATCH_CLEANUP_DATE);
         }
+
         try {
             return LocalDate.parse(value);
         } catch (DateTimeParseException exception) {

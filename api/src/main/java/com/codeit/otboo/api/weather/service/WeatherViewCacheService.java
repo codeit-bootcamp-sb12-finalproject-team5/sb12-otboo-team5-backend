@@ -10,6 +10,7 @@ import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.weather.entity.WeatherForecast;
 import com.codeit.otboo.domain.weather.entity.WeatherGrid;
+import com.codeit.otboo.api.weather.dto.response.WeatherGridDto;
 import com.codeit.otboo.domain.weather.entity.WeatherObservation;
 import com.codeit.otboo.support.weather.client.KmaClient;
 import com.codeit.otboo.support.common.config.CacheConfig;
@@ -44,24 +45,24 @@ public class WeatherViewCacheService {
             cacheNames = CacheConfig.WEATHER_CACHE,
             key = "#grid.nx + ':' + #grid.ny + ':' + #targetAt",
             sync = true)
-    public List<WeatherViewData> findWeatherView(WeatherGrid grid, OffsetDateTime targetAt) {
+    public List<WeatherViewData> findWeatherView(WeatherGridDto grid, OffsetDateTime targetAt) {
         ensureRequiredData(grid, targetAt);
         return assemble(grid, targetAt);
     }
 
-    private void ensureRequiredData(WeatherGrid grid, OffsetDateTime targetAt) {
+    private void ensureRequiredData(WeatherGridDto grid, OffsetDateTime targetAt) {
 
         List<WeatherForecast> forecasts = weatherRepository.findForecasts(
-            grid.getId(),
+            grid.id(),
             targetAt.truncatedTo(ChronoUnit.DAYS),
             targetAt.truncatedTo(ChronoUnit.DAYS).plusDays(6)
         );
 
         if (forecasts.stream().noneMatch(forecast -> forecast.getForecastAt().isEqual(targetAt))) {
-            KmaForecastBundleDto bundle = kmaClient.findLatestVillageForecast(grid.getNx(), grid.getNy())
+            KmaForecastBundleDto bundle = kmaClient.findLatestVillageForecast(grid.nx(), grid.ny())
                 .orElseThrow(() -> new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE));
 
-            List<WeatherForecast> incoming = KmaForecastNormalizer.normalizeForecasts(grid, bundle);
+            List<WeatherForecast> incoming = KmaForecastNormalizer.normalizeForecasts(WeatherGrid.builder().id(grid.id()).build(), bundle);
 
             if (incoming.stream().noneMatch(forecast -> forecast.getForecastAt().isEqual(targetAt))) {
                 throw new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE);
@@ -71,19 +72,19 @@ public class WeatherViewCacheService {
 
         OffsetDateTime previousAt = targetAt.minusDays(1);
 
-        if (weatherRepository.findObservation(grid.getId(), previousAt).isEmpty()) {
-            kmaClient.findObservation(previousAt, grid.getNx(), grid.getNy())
+        if (weatherRepository.findObservation(grid.id(), previousAt).isEmpty()) {
+            kmaClient.findObservation(previousAt, grid.nx(), grid.ny())
                 .filter(observation -> observation.observedAt().isEqual(previousAt))
                 .ifPresent(observation -> weatherRepository.upsertObservations(
-                    List.of(KmaForecastNormalizer.normalizeObservation(grid, observation))));
+                    List.of(KmaForecastNormalizer.normalizeObservation(WeatherGrid.builder().id(grid.id()).build(), observation))));
         }
     }
 
-    private List<WeatherViewData> assemble(WeatherGrid grid, OffsetDateTime targetAt) {
+    private List<WeatherViewData> assemble(WeatherGridDto grid, OffsetDateTime targetAt) {
         LocalDate firstDate = targetAt.toLocalDate();
 
         List<WeatherForecast> forecasts = weatherRepository.findForecasts(
-                grid.getId(),
+                grid.id(),
                 firstDate.atStartOfDay().atOffset(KmaTimeCalculator.KST),
                 firstDate.plusDays(6).atStartOfDay().atOffset(KmaTimeCalculator.KST)
         );
@@ -101,7 +102,7 @@ public class WeatherViewCacheService {
         List<SelectedDay> selected = selectRepresentativeDays(byDate, targetAt);
 
         WeatherObservation previousObservation = weatherRepository.findObservation(
-                grid.getId(),
+                grid.id(),
                 targetAt.minusDays(1))
             .orElse(null);
 

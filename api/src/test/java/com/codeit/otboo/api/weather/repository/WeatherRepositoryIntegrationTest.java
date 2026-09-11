@@ -188,7 +188,7 @@ class WeatherRepositoryIntegrationTest {
 
         @Bean
         WeatherServiceImpl weatherService(LocationService location, WeatherRepository repository, KmaClient kma) {
-            return new WeatherServiceImpl(location, repository, kma);
+            return new WeatherServiceImpl(location, new com.codeit.otboo.api.weather.service.WeatherViewCacheService(repository, kma));
         }
     }
 }

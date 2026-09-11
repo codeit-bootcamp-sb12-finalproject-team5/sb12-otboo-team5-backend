@@ -18,8 +18,10 @@ public class WeatherCleanupJobConfig {
     public static final String JOB_NAME = "weeklyWeatherCleanupJob";
 
     @Bean
-    public Job weeklyWeatherCleanupJob(JobRepository jobRepository,
-            @Qualifier("weatherCleanupStep") Step step) {
+    public Job weeklyWeatherCleanupJob(
+        JobRepository jobRepository,
+        @Qualifier("weatherCleanupStep") Step step
+    ) {
         return new JobBuilder(JOB_NAME, jobRepository)
             .validator(parameters -> {
                 try {
@@ -35,8 +37,11 @@ public class WeatherCleanupJobConfig {
     }
 
     @Bean
-    public Step weatherCleanupStep(JobRepository jobRepository,
-            PlatformTransactionManager transactionManager, WeatherCleanupTasklet tasklet) {
+    public Step weatherCleanupStep(
+        JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        WeatherCleanupTasklet tasklet
+    ) {
         return new StepBuilder("weatherCleanupStep", jobRepository)
             .tasklet(tasklet, transactionManager)
             .build();
