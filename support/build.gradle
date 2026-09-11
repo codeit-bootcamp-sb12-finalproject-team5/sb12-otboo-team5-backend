@@ -25,4 +25,7 @@ dependencies {
 
     // HTML Parser
     implementation 'org.jsoup:jsoup:1.21.1'
+
+    // UUID v7
+    implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
 }

@@ -40,7 +40,7 @@ class WeatherServiceImplTest {
     private final KakaoClient kakao = mock(KakaoClient.class);
     private final KmaClient kma = mock(KmaClient.class);
     private final WeatherServiceImpl service = new WeatherServiceImpl(
-        new LocationService(repository, kakao), repository, kma);
+        new LocationService(repository, kakao), new WeatherViewCacheService(repository, kma));
     private final WeatherGrid grid = WeatherGrid.builder().id(UUID.randomUUID()).nx(60).ny(127)
         .region1Depth("서울특별시").region2Depth("중구").region3Depth("명동").build();
     private final OffsetDateTime target = OffsetDateTime.parse("2026-09-08T15:00:00+09:00");
@@ -88,6 +88,24 @@ class WeatherServiceImplTest {
         verify(repository, times(2)).findForecasts(eq(grid.getId()), any(), any());
         verify(repository, never()).upsertForecasts(any());
         verifyNoInteractions(kakao, kma);
+    }
+
+    @Test
+    void lateEveningKeepsTodayAsFirstOfFiveForecastDates() {
+        var now = OffsetDateTime.parse("2026-09-10T23:30:00+09:00");
+        time.when(() -> OffsetDateTime.now(KmaTimeCalculator.KST)).thenReturn(now);
+        var today = now.withHour(21).withMinute(0);
+        var forecasts = java.util.stream.IntStream.range(0, 5)
+                .mapToObj(day -> forecast(day == 4 ? today.plusDays(day).withHour(0)
+                        : today.plusDays(day), "25", "60")).toList();
+        when(repository.findForecasts(eq(grid.getId()), any(), any())).thenReturn(forecasts);
+        when(repository.findObservation(grid.getId(), today.minusDays(1)))
+                .thenReturn(Optional.of(observation("22", "65")));
+        var result = service.findWeather(request);
+        assertThat(result).hasSize(5);
+        assertThat(result.get(0).forecastAt()).isEqualTo(today.toLocalDateTime());
+        assertThat(result.get(4).forecastAt()).isEqualTo(today.plusDays(4).withHour(0).toLocalDateTime());
+        verifyNoInteractions(kma);
     }
 
     @Test
@@ -151,10 +169,16 @@ class WeatherServiceImplTest {
         "2026-09-08T15:00:00+09:00, 2026-09-08T15:00:00+09:00",
         "2026-09-08T15:00:00.000000001+09:00, 2026-09-08T18:00:00+09:00",
         "2026-09-08T14:30:00+09:00, 2026-09-08T15:00:00+09:00",
-        "2026-12-31T23:30:00+09:00, 2027-01-01T00:00:00+09:00"
+        "2026-09-10T20:59:59+09:00, 2026-09-10T21:00:00+09:00",
+        "2026-09-10T21:00:00+09:00, 2026-09-10T21:00:00+09:00",
+        "2026-09-10T21:00:00.000000001+09:00, 2026-09-10T21:00:00+09:00",
+        "2026-09-10T23:59:59+09:00, 2026-09-10T21:00:00+09:00",
+        "2026-12-31T23:30:00+09:00, 2026-12-31T21:00:00+09:00",
+        "2027-01-01T00:00:00+09:00, 2027-01-01T00:00:00+09:00",
+        "2026-09-10T14:30:00Z, 2026-09-10T21:00:00+09:00"
     })
-    void roundsUpToThreeHourBoundary(String now, String expected) {
-        OffsetDateTime actual = ReflectionTestUtils.invokeMethod(service, "nextThreeHourSlot", OffsetDateTime.parse(now));
+    void roundsUpWithinTodayAndCapsAtNinePm(String now, String expected) {
+        OffsetDateTime actual = ReflectionTestUtils.invokeMethod(service, "forecastSlotForToday", OffsetDateTime.parse(now));
         assertThat(actual).isEqualTo(OffsetDateTime.parse(expected));
     }
 

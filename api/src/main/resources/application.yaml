@@ -44,7 +44,7 @@ kakao:
   rest-api-key: ${KAKAO_REST_API_KEY:}
 
 kma:
-  service-key: ${KMA_SERVICE_KEY:}
+  service-key: ${KMA_API_KEY:}
 
 weather:
   cache:
@@ -54,3 +54,8 @@ admin:
   email: ${ADMIN_EMAIL:system@otboo.io}
   password: ${ADMIN_PASSWORD:otboo1!}
   name: ${ADMIN_NAME:system}
+
+otboo:
+  storage:
+    local:
+      root-path: .otboo/storage

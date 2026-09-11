@@ -34,7 +34,7 @@ public final class KmaTimeCalculator {
         return villageBase(OffsetDateTime.now(KST));
     }
 
-    static OffsetDateTime villageBase(OffsetDateTime now) {
+    public static OffsetDateTime villageBase(OffsetDateTime now) {
         OffsetDateTime target = now.withOffsetSameInstant(KST).minusMinutes(15);
         for (int i = VILLAGE_HOURS.length - 1; i >= 0; i--) {
             if (target.getHour() >= VILLAGE_HOURS[i]) {

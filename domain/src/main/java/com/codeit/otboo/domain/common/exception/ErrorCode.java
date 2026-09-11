@@ -25,7 +25,10 @@ public enum ErrorCode {
     ACCESS_DENIED(403, "접근 권한이 없습니다."),
 
     // ===== 의상 =====
+    CLOTHES_NOT_FOUND(404, "의상을 찾을 수 없습니다"),
     CLOTHES_ANALYSIS_FAILED(502, "의상 분석에 실패했습니다."),
+    INVALID_ATTRIBUTE_VALUE(400, "유효하지 않은 의상 속성입니다."),
+    CLOTHES_ATTRIBUTE_PARSE_FAILED(500, "의상 속성작업에 실패했습니다."),
 
     // ===== 아웃핏 =====
     // 담당자가 추가
@@ -36,6 +39,12 @@ public enum ErrorCode {
     // ===== 날씨 =====
     WEATHER_DATA_UNAVAILABLE(503, "날씨 데이터를 가져올 수 없습니다."),
     INVALID_LOCATION_INPUT(400, "위치 입력값이 올바르지 않습니다."),
+
+    // ===== 배치 =====
+    INVALID_BATCH_CLEANUP_DATE(400, "cleanupDate는 yyyy-MM-dd 형식의 날짜여야 합니다."),
+    BATCH_WEATHER_DATA_UNAVAILABLE(503, "격자의 관측·예보 데이터를 하나도 수집하지 못했습니다."),
+    INVALID_BATCH_COLLECTION_TIME(400, "collectionAt은 offset을 포함한 ISO 시각이어야 합니다."),
+    BATCH_TRANSACTION_REQUIRED(500, "배치 저장에는 활성 트랜잭션이 필요합니다."),
 
     // ===== DM =====
     DM_SELF_NOT_ALLOWED(400, "자기 자신과 DM 방을 만들 수 없습니다."),
