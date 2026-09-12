@@ -183,7 +183,9 @@ public class WeatherViewCacheService {
     }
 
     private List<SelectedDay> selectRepresentativeDays(
-            Map<LocalDate, List<WeatherForecast>> byDate, OffsetDateTime targetAt) {
+        Map<LocalDate, List<WeatherForecast>> byDate,
+        OffsetDateTime targetAt
+    ) {
 
         List<SelectedDay> selected = new ArrayList<>();
 
@@ -219,6 +221,8 @@ public class WeatherViewCacheService {
     }
 
     private record SelectedDay(
-        WeatherForecast representative, List<WeatherForecast> all) {
+        WeatherForecast representative,
+        List<WeatherForecast> all
+    ) {
     }
 }
