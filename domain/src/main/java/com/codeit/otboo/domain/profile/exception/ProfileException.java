@@ -16,4 +16,8 @@ public class ProfileException extends BusinessException {
   public static ProfileException notFound() {
     return new ProfileException(ErrorCode.PROFILE_NOT_FOUND);
   }
+
+  public static ProfileException resourceNotFound() {
+    return new ProfileException(ErrorCode.RESOURCE_NOT_FOUND);
+  }
 }

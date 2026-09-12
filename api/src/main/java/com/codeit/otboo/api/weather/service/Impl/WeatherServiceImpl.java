@@ -53,7 +53,8 @@ public class WeatherServiceImpl implements WeatherService {
         return toLocationResponse(grid, request.longitude(), request.latitude());
     }
 
-    private WeatherGridDto findGrid(double longitude, double latitude) {
+    @Override
+    public WeatherGridDto findGrid(double longitude, double latitude) {
         var coordinate = locationService.convert(longitude, latitude);
         return locationService.findOrCreate(coordinate.x(), coordinate.y(), longitude, latitude);
     }
