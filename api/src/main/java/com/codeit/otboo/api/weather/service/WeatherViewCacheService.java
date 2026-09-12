@@ -44,6 +44,7 @@ public class WeatherViewCacheService {
     @Cacheable(
             cacheNames = CacheConfig.WEATHER_CACHE,
             key = "#grid.nx + ':' + #grid.ny + ':' + #targetAt",
+            condition = "#grid.hasAdministrativeRegion()",
             sync = true)
     public List<WeatherViewData> findWeatherView(WeatherGridDto grid, OffsetDateTime targetAt) {
         ensureRequiredData(grid, targetAt);

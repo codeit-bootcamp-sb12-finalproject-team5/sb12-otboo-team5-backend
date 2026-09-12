@@ -10,6 +10,10 @@ public record WeatherGridDto(UUID id, int nx, int ny, List<String> locationNames
         locationNames = List.copyOf(locationNames);
     }
 
+    public boolean hasAdministrativeRegion() {
+        return !locationNames.isEmpty() && !locationNames.get(0).isBlank();
+    }
+
     public static WeatherGridDto from(WeatherGrid grid) {
         return new WeatherGridDto(grid.getId(), grid.getNx(), grid.getNy(), grid.getLocationNames());
     }
