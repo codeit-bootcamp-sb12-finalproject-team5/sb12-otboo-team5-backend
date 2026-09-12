@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @Slf4j
 @RestControllerAdvice
@@ -47,6 +48,17 @@ public class GlobalExceptionHandler {
                         e.getClass().getSimpleName(),
                         code.getMessage(),
                         details));
+    }
+
+    /** 경로·쿼리 파라미터의 UUID, 숫자 등 타입 변환 실패 */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidParameter(MethodArgumentTypeMismatchException e) {
+        log.warn("[INVALID_PARAMETER] name={}", e.getName());
+
+        ErrorCode code = ErrorCode.INVALID_INPUT_VALUE;
+        return ResponseEntity
+                .status(HttpStatus.valueOf(code.getStatus()))
+                .body(ErrorResponse.of(e.getClass().getSimpleName(), code.getMessage()));
     }
 
     /** 존재하지 않는 경로 */

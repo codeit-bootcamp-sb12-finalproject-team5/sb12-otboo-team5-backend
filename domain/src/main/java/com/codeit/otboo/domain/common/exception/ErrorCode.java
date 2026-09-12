@@ -53,7 +53,7 @@ public enum ErrorCode {
     FORBIDDEN(403, "해당 DM 방에서 메시지를 전송할 권한이 없습니다."),
 
     // ===== 알림 =====
-    // 담당자가 추가
+    NOTIFICATION_NOT_FOUND(400, "알림을 찾을 수 없습니다.")
     ;
 
     private final int status;
