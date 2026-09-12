@@ -27,8 +27,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("http://localhost:5173") // todo: 추후 프론트 배포 시 수정 필요(환경별 설정 분리 필요)
-                .withSockJS();
+            .setAllowedOriginPatterns("http://localhost:5173") // todo: 추후 프론트 배포 시 수정 필요(환경별 설정 분리 필요)
+            .withSockJS();
     }
 
     // STOMP 수신 채널에 인증과 DM 구독 권한 검증 인터셉터를 등록

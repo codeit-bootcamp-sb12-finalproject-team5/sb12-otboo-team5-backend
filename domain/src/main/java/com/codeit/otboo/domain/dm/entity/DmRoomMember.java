@@ -64,4 +64,10 @@ public class DmRoomMember extends BaseEntity {
         this.leftAt = OffsetDateTime.now();
     }
 
+    public void rejoin() {
+        this.joinedAt = OffsetDateTime.now();
+        this.leftAt = null;
+        this.lastReadMessage = null;
+    }
+
 }

@@ -7,7 +7,9 @@ import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
+
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -28,6 +30,7 @@ public class StompAuthenticationInterceptor implements ChannelInterceptor {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String DIRECT_MESSAGE_DESTINATION_PREFIX = "/sub/direct-messages_";
+    private static final String USER_DM_LIST_DESTINATION_PREFIX = "/sub/users_";
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
@@ -102,15 +105,34 @@ public class StompAuthenticationInterceptor implements ChannelInterceptor {
 
     // DM 구독 경로의 dmKey에 현재 사용자가 활성 멤버로 참여했는지 확인
     private void validateSubscription(String destination, UUID currentUserId) {
-        if (destination == null || !destination.startsWith(DIRECT_MESSAGE_DESTINATION_PREFIX)) {
+        if (destination == null) {
             return;
         }
+
+        if (destination.startsWith(USER_DM_LIST_DESTINATION_PREFIX)) {
+            validateUserDmListSubscription(destination, currentUserId);
+            return;
+        }
+
+        if (!destination.startsWith(DIRECT_MESSAGE_DESTINATION_PREFIX)) return;
 
         String dmKey = destination.substring(DIRECT_MESSAGE_DESTINATION_PREFIX.length());
         DmRoom room = dmRoomRepository.findByDmKey(dmKey)
             .orElseThrow(this::accessDeniedException);
 
         if (!dmRoomMemberRepository.existsByDmRoom_IdAndUser_IdAndLeftAtIsNull(room.getId(), currentUserId)) {
+            throw accessDeniedException();
+        }
+    }
+
+    private void validateUserDmListSubscription(String destination, UUID currentUserId) {
+        String userId = destination.substring(USER_DM_LIST_DESTINATION_PREFIX.length())
+            .replace("/dm-list", "");
+        try {
+            if (!currentUserId.equals(UUID.fromString(userId))) {
+                throw accessDeniedException();
+            }
+        } catch (IllegalArgumentException e) {
             throw accessDeniedException();
         }
     }

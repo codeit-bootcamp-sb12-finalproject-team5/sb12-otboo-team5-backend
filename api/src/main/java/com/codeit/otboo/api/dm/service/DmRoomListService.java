@@ -4,6 +4,8 @@ import com.codeit.otboo.api.dm.dto.DmRoomListResponse;
 import com.codeit.otboo.domain.dm.exception.DmException;
 import com.codeit.otboo.domain.dm.repository.DmRoomListProjection;
 import com.codeit.otboo.domain.dm.repository.DmRoomRepository;
+import com.codeit.otboo.domain.dm.repository.DirectMessageRepository;
+import com.codeit.otboo.domain.dm.repository.DmUnreadCountProjection;
 import com.codeit.otboo.domain.profile.repository.ProfileImageProjection;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
 
@@ -27,24 +29,25 @@ public class DmRoomListService {
     private static final int DM_ROOM_PAGE_SIZE = 10;
 
     private final DmRoomRepository dmRoomRepository;
+    private final DirectMessageRepository directMessageRepository;
     private final ProfileRepository profileRepository;
 
     @Transactional(readOnly = true)
     public DmRoomListResponse getDmRooms(UUID currentUserId, String cursor) {
         CursorPosition position = decodeCursor(cursor);
-        List<DmRoomListProjection> results = dmRoomRepository.findDmRoomsByUserId(
-            currentUserId,
-            position.sentAt(),
-            position.roomId(),
-            PageRequest.of(0, DM_ROOM_PAGE_SIZE + 1)
-        );
+        PageRequest pageable = PageRequest.of(0, DM_ROOM_PAGE_SIZE + 1);
+        List<DmRoomListProjection> results = position.sentAt() == null
+            ? dmRoomRepository.findLatestDmRoomsByUserId(currentUserId, pageable)
+            : dmRoomRepository.findDmRoomsBeforeCursor(
+            currentUserId, position.sentAt(), position.roomId(), pageable);
 
         boolean hasNext = results.size() > DM_ROOM_PAGE_SIZE;
         List<DmRoomListProjection> page = hasNext ? results.subList(0, DM_ROOM_PAGE_SIZE) : results;
         String nextCursor = hasNext ? encodeCursor(page.get(page.size() - 1)) : null;
         Map<UUID, String> profileImageUrls = findProfileImageUrls(page);
+        Map<UUID, Long> unreadCounts = findUnreadCounts(currentUserId, page);
 
-        return DmRoomListResponse.from(page, profileImageUrls, nextCursor, hasNext);
+        return DmRoomListResponse.from(page, profileImageUrls, unreadCounts, nextCursor, hasNext);
     }
 
     private Map<UUID, String> findProfileImageUrls(List<DmRoomListProjection> rooms) {
@@ -56,6 +59,17 @@ public class DmRoomListService {
         return profileRepository.findProfileImagesByUserIds(opponentIds).stream()
             .collect(Collectors.toMap(ProfileImageProjection::userId,
                 ProfileImageProjection::profileImageUrl, (first, ignored) -> first));
+    }
+
+    private Map<UUID, Long> findUnreadCounts(UUID currentUserId, List<DmRoomListProjection> rooms) {
+        if (rooms.isEmpty()) {
+            return Map.of();
+        }
+
+        List<UUID> roomIds = rooms.stream().map(DmRoomListProjection::roomId).toList();
+        return directMessageRepository.countUnreadMessagesByRoomIds(currentUserId, roomIds).stream()
+            .collect(Collectors.toMap(DmUnreadCountProjection::getRoomId,
+                DmUnreadCountProjection::getUnreadCount));
     }
 
     private String encodeCursor(DmRoomListProjection projection) {
