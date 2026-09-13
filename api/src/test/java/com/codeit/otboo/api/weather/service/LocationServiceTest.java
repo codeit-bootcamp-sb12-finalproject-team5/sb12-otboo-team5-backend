@@ -94,7 +94,7 @@ class LocationServiceTest {
             org.assertj.core.api.Assertions.assertThatThrownBy(
                     () -> service.convert(coordinate[0], coordinate[1]))
                     .isInstanceOfSatisfying(
-                            com.codeit.otboo.api.weather.exception.WeatherException.class,
+                            com.codeit.otboo.domain.weather.exception.WeatherException.class,
                             exception -> assertThat(exception.getErrorCode()).isEqualTo(
                                     com.codeit.otboo.domain.common.exception.ErrorCode.INVALID_LOCATION_INPUT));
         }

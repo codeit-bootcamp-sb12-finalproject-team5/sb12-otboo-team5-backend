@@ -8,7 +8,7 @@ import static org.mockito.Mockito.*;
 import com.codeit.otboo.api.weather.dto.request.LocationReadRequest;
 import com.codeit.otboo.api.weather.dto.request.WeatherReadRequest;
 import com.codeit.otboo.api.weather.dto.response.WeatherAPILocation;
-import com.codeit.otboo.api.weather.exception.WeatherException;
+import com.codeit.otboo.domain.weather.exception.WeatherException;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.api.weather.service.Impl.WeatherServiceImpl;
 import com.codeit.otboo.domain.common.exception.ErrorCode;

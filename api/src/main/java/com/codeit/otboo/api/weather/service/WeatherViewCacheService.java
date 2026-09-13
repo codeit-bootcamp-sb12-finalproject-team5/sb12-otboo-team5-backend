@@ -5,7 +5,7 @@ import com.codeit.otboo.api.weather.dto.response.PrecipitationDto;
 import com.codeit.otboo.api.weather.dto.response.TemperatureDto;
 import com.codeit.otboo.api.weather.dto.response.WeatherViewData;
 import com.codeit.otboo.api.weather.dto.response.WindSpeedDto;
-import com.codeit.otboo.api.weather.exception.WeatherException;
+import com.codeit.otboo.domain.weather.exception.WeatherException;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.weather.entity.WeatherForecast;

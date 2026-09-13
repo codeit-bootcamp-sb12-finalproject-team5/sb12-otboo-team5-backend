@@ -5,7 +5,7 @@ import com.codeit.otboo.api.weather.dto.response.WeatherGridDto;
 import com.codeit.otboo.support.common.config.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
 import com.codeit.otboo.support.weather.dto.response.KakaoRegionDto;
-import com.codeit.otboo.api.weather.exception.WeatherException;
+import com.codeit.otboo.domain.weather.exception.WeatherException;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.weather.dto.GridCoordinate;
