@@ -15,6 +15,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration(proxyBeanMethods = false)
 public class WeatherCleanupJobConfig {
+
     public static final String JOB_NAME = "weeklyWeatherCleanupJob";
 
     @Bean
