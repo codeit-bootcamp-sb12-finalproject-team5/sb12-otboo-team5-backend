@@ -1,21 +1,9 @@
 package com.codeit.otboo.api.clothes;
 
-import com.codeit.otboo.api.clothes.dto.ClothesAttributeResponse;
-import com.codeit.otboo.api.clothes.dto.ClothesRequest;
-import com.codeit.otboo.api.clothes.dto.ClothesResponse;
-import com.codeit.otboo.api.clothes.dto.ClothesSearchRequest;
-import com.codeit.otboo.api.clothes.dto.ClothesUpdateRequest;
+import com.codeit.otboo.api.clothes.dto.*;
 import com.codeit.otboo.api.common.security.CustomUserDetails;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
-import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
-import com.codeit.otboo.domain.clothes.enums.ClothesColor;
-import com.codeit.otboo.domain.clothes.enums.ClothesFit;
-import com.codeit.otboo.domain.clothes.enums.ClothesGender;
-import com.codeit.otboo.domain.clothes.enums.ClothesMaterial;
-import com.codeit.otboo.domain.clothes.enums.ClothesPattern;
-import com.codeit.otboo.domain.clothes.enums.ClothesSeason;
-import com.codeit.otboo.domain.clothes.enums.ClothesStyle;
-import com.codeit.otboo.domain.clothes.enums.ClothesSubCategory;
+import com.codeit.otboo.domain.clothes.enums.*;
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
 import com.codeit.otboo.domain.clothes.repository.ClothesRepository;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
@@ -23,14 +11,15 @@ import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
 import com.codeit.otboo.support.storage.FileStorage;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -47,14 +36,12 @@ public class ClothesService {
             ClothesAttributeResponse.of(ClothesFit.class),          // 4-핏
             ClothesAttributeResponse.of(ClothesMaterial.class),     // 5-소재
             ClothesAttributeResponse.of(ClothesPattern.class),      // 6-패턴
-            ClothesAttributeResponse.of(ClothesStyle.class),        // 7-스타일
-            ClothesAttributeResponse.of(ClothesSeason.class),       // 8-계절감
-            ClothesAttributeResponse.of(ClothesGender.class)        // 9-의상성별
+            ClothesAttributeResponse.of(ClothesStyle.class)         // 7-스타일
         );
     }
 
     @Transactional
-    public ClothesResponse create(ClothesRequest req, String imageUrl) {
+    public Clothes create(ClothesRequest req, String imageUrl) {
         User user = getCurrentUserEntity(getCurrentUserId());
         if (!req.ownerId().equals(user.getId())) {
             throw new ClothesException(ErrorCode.INVALID_INPUT_VALUE).addDetail("사용자 Id값 입력이 유효하지 않습니다", null);
@@ -62,7 +49,7 @@ public class ClothesService {
 
         ClothesCategory category = req.type();
         ClothesSubCategory subCategory = req.getSubCategory();
-        if (subCategory != null && category != subCategory.getCategory()) {
+        if (subCategory != null && category != subCategory.getParentCategory()) {
             log.info("Category : {} / SubCategory : {}", category, subCategory);
             throw new ClothesException(ErrorCode.INVALID_INPUT_VALUE).addDetail("의상 대분류에 유요한 소분류값이 아닙닏다", null);
         }
@@ -73,12 +60,15 @@ public class ClothesService {
             .preference(req.preference())
             .imageUrl(imageUrl)
             .category(category)
-            .gender(req.getGender())
+            .gender(req.gender())
+            .brand(req.brand())
+            .season(req.season())
             .attributeText(req.toEmbeddingText())
+            .description(req.description())
             .attributeVector(null)
             .user(user)
             .build();
-        return ClothesResponse.of(clothesRepository.save(clothes), user.getId());
+        return clothesRepository.save(clothes);
     }
 
     @Transactional(readOnly = true)
@@ -99,7 +89,7 @@ public class ClothesService {
     }
 
     @Transactional
-    public ClothesResponse update(UUID clothesId, ClothesUpdateRequest req, MultipartFile image) {
+    public Clothes update(UUID clothesId, ClothesUpdateRequest req, MultipartFile image) {
         Clothes clothes = clothesRepository.findById(clothesId)
             .orElseThrow(() -> new ClothesException(ErrorCode.RESOURCE_NOT_FOUND));
         if (!clothes.getUser().getId().equals(getCurrentUserId())) {
@@ -110,18 +100,21 @@ public class ClothesService {
         }
 
         clothes.setName(req.name());
+        if (req.brand() != null) clothes.setBrand(req.brand());
         clothes.setCategory(req.type());
+        if (req.season() != null) clothes.setSeason(req.season());
+        if (req.gender() != null) clothes.setGender(req.gender());
+        clothes.setAttributeText(req.toEmbeddingText());
+        if (req.description() != null) clothes.setDescription(req.description());
         clothes.setIsOwned(req.isOwned());
         if (req.preference() != null) clothes.setPreference(req.preference());
-        clothes.setGender(req.getGender());
-        clothes.setAttributeText(req.toEmbeddingText());
+
         if (image != null) {
             fileStorage.deleteOne(clothes.getImageUrl());
             clothes.setImageUrl(fileStorage.saveOne(image));
         }
 
-        clothesRepository.save(clothes);
-        return ClothesResponse.of(clothes, clothes.getUser().getId());
+        return clothesRepository.save(clothes);
     }
 
     @Transactional

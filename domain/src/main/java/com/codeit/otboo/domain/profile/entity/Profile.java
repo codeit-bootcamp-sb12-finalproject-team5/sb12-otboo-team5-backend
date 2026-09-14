@@ -1,29 +1,19 @@
 package com.codeit.otboo.domain.profile.entity;
 
-import java.time.LocalDate;
-
-import org.hibernate.annotations.Array;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
 import com.codeit.otboo.domain.common.UpdatableEntity;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.weather.entity.WeatherGrid;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.Array;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "profile")
@@ -43,10 +33,10 @@ public class Profile extends UpdatableEntity {
 	private LocationSource locationSource;
 
 	@Column(name = "temperature_sensitivity", nullable = false)
-	private Short temperatureSensitivity = 3;
+	private Short temperatureSensitivity = 0;
 
 	@JdbcTypeCode(SqlTypes.VECTOR)
-	@Array(length = 768)
+	@Array(length = 1536)
 	@Column(name = "preference_vector", nullable = false, columnDefinition = "vector(768)")
 	private Float[] preferenceVector;
 

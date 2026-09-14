@@ -22,6 +22,7 @@ public record ClothesAnalysisResult(
     ClothesPattern pattern,
     ClothesStyle style,
     ClothesSeason season,
-    ClothesGender gender
+    ClothesGender gender,
+    String description
 ) {
 }

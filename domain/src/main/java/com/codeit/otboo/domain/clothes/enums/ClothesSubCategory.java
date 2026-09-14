@@ -1,8 +1,9 @@
 package com.codeit.otboo.domain.clothes.enums;
 
+import lombok.Getter;
+
 import java.util.Arrays;
 import java.util.List;
-import lombok.Getter;
 
 @Getter
 public enum ClothesSubCategory implements Displayable {
@@ -429,14 +430,14 @@ public enum ClothesSubCategory implements Displayable {
     );
 
     private final String displayName;
-    private final ClothesCategory category;
+    private final ClothesCategory parentCategory;
 
     ClothesSubCategory(
         String displayName,
-        ClothesCategory category
+        ClothesCategory parentCategory
     ) {
         this.displayName = displayName;
-        this.category = category;
+        this.parentCategory = parentCategory;
     }
 
     public static List<ClothesSubCategory> findByCategory(
@@ -444,7 +445,7 @@ public enum ClothesSubCategory implements Displayable {
     ) {
         return Arrays.stream(values())
             .filter(subCategory ->
-                subCategory.category == category
+                subCategory.parentCategory == category
             )
             .toList();
     }

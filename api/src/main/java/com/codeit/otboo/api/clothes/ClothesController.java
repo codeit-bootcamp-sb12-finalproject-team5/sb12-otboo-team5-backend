@@ -7,6 +7,7 @@ import com.codeit.otboo.api.clothes.dto.ClothesSearchRequest;
 import com.codeit.otboo.api.clothes.dto.ClothesUpdateRequest;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.support.openai.clothes.ClothesAnalysisResult;
+import com.codeit.otboo.support.openai.clothes.ClothesAnalysisService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
