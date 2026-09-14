@@ -2,21 +2,11 @@ package com.codeit.otboo.domain.clothes.entity;
 
 import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
 import com.codeit.otboo.domain.clothes.enums.ClothesGender;
+import com.codeit.otboo.domain.clothes.enums.ClothesSeason;
 import com.codeit.otboo.domain.common.SoftDeletableEntity;
 import com.codeit.otboo.domain.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Array;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -48,12 +38,22 @@ public class Clothes extends SoftDeletableEntity {
 	@Column(name = "gender", nullable = false, length = 50)
 	private ClothesGender gender;
 
+	@Column(name = "brand", length = 255)
+	private String brand;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "season", nullable = false, length = 50)
+	private ClothesSeason season;
+
 	@Column(name = "attribute_text", columnDefinition = "TEXT")
-	private String attributeText;
+	private String attributeText; // subcategory, color, fit, material, pattern, style
+
+	@Column(name = "description", columnDefinition = "TEXT")
+	private String description;
 
 	@JdbcTypeCode(SqlTypes.VECTOR)
-	@Array(length = 768)
-	@Column(name = "attribute_vector", columnDefinition = "vector(768)")
+	@Array(length = 1536)
+	@Column(name = "attribute_vector", columnDefinition = "vector(1536)")
 	private Float[] attributeVector;
 
 	@ManyToOne(fetch = FetchType.LAZY)
