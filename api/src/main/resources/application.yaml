@@ -4,6 +4,9 @@ spring:
   config:
     import: optional:dotenv:../
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/${POSTGRES_DB}
@@ -59,3 +62,8 @@ otboo:
   storage:
     local:
       root-path: .otboo/storage
+
+notification:
+  kafka:
+    enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
+    instance-id: ${NOTIFICATION_INSTANCE_ID:}

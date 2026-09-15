@@ -3,15 +3,25 @@ package com.codeit.otboo.api.notification;
 import com.codeit.otboo.api.common.exception.GlobalExceptionHandler;
 import com.codeit.otboo.api.common.security.CustomUserDetails;
 import com.codeit.otboo.api.notification.controller.*;
+import com.codeit.otboo.api.notification.config.NotificationSseExecutorConfig;
+import com.codeit.otboo.api.notification.config.NotificationSseExecutorConfig.NotificationSseExecutors;
 import com.codeit.otboo.api.notification.dto.response.NotificationReadResponse;
 import com.codeit.otboo.api.notification.service.NotificationService;
 import com.codeit.otboo.api.notification.service.NotificationSseService;
+import com.codeit.otboo.api.notification.repository.SseEmitterRepository;
 import java.util.List;
 import java.util.UUID;
+import java.time.OffsetDateTime;
+import com.codeit.otboo.domain.notification.dto.NotificationDto;
+import com.codeit.otboo.domain.notification.entity.NotificationLevel;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -24,7 +34,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class NotificationControllerTest {
     private final NotificationService service = mock(NotificationService.class);
-    private final NotificationSseService sse = new NotificationSseService();
+    private final NotificationSseExecutors executors =
+            new NotificationSseExecutorConfig().notificationSseExecutors();
+    private final NotificationSseService sse = new NotificationSseService(executors, new SseEmitterRepository(),
+            new DefaultListableBeanFactory().getBeanProvider(KafkaListenerEndpointRegistry.class), false);
     private final UUID user = UUID.randomUUID();
     private MockMvc mvc;
 
@@ -44,7 +57,10 @@ class NotificationControllerTest {
     }
 
     @AfterEach
-    void cleanup() { sse.shutdown(); }
+    void cleanup() {
+        sse.shutdown();
+        executors.close();
+    }
 
     @Test
     void listMatchesContract() throws Exception {
@@ -84,5 +100,37 @@ class NotificationControllerTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(":connected")));
         mvc.perform(get("/api/sse").param("LastEventId", "invalid"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void broadcastsToBothUserConnectionsUsingFrontendEventContract() throws Exception {
+        var first = mvc.perform(get("/api/sse")).andReturn();
+        var second = mvc.perform(get("/api/sse")).andReturn();
+        var id = UUID.randomUUID();
+        sse.publish(new NotificationDto(id, OffsetDateTime.now(), user,
+                "role changed", "ADMIN", NotificationLevel.INFO));
+        await().atMost(java.time.Duration.ofSeconds(3)).untilAsserted(() -> {
+            for (var result : List.of(first, second)) {
+                assertThat(result.getResponse().getContentAsString())
+                        .contains("event:notifications", "id:" + id, "\"receiverId\":\"" + user);
+            }
+        });
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void rejectsSubscriptionBeforeKafkaConsumerIsAssigned() {
+        org.springframework.beans.factory.ObjectProvider<org.springframework.kafka.config.KafkaListenerEndpointRegistry>
+                registries = mock(org.springframework.beans.factory.ObjectProvider.class);
+        var gated = new NotificationSseService(executors, new SseEmitterRepository(), registries, true);
+        try {
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> gated.subscribe(user))
+                    .isInstanceOfSatisfying(
+                            com.codeit.otboo.domain.notification.exception.NotificationException.class,
+                            error -> assertThat(error.getErrorCode()).isEqualTo(
+                                    com.codeit.otboo.domain.common.exception.ErrorCode.NOTIFICATION_STREAM_UNAVAILABLE));
+        } finally {
+            gated.shutdown();
+        }
     }
 }

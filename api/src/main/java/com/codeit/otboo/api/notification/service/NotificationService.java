@@ -26,7 +26,9 @@ public class NotificationService {
         if ((request.cursor() == null) != (request.idAfter() == null)) {
             throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE);
         }
+
         OffsetDateTime cursor = null;
+
         if (request.cursor() != null) {
             try {
                 cursor = OffsetDateTime.parse(request.cursor());
@@ -34,7 +36,9 @@ public class NotificationService {
                 throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE);
             }
         }
+
         var page = queryRepository.findUnread(receiverId, cursor, request.idAfter(), request.limit());
+
         return new NotificationReadResponse(page.data().stream().map(this::toDto).toList(),
                 page.nextCursor(), (UUID) page.nextIdAfter(), page.hasNext(), page.totalCount(),
                 page.sortBy(), page.sortDirection());
