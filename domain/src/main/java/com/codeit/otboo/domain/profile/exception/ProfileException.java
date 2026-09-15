@@ -24,4 +24,8 @@ public class ProfileException extends BusinessException {
     public static ProfileException invalidTemperatureSensitivity() {
         return new ProfileException(ErrorCode.INVALID_INPUT_VALUE);
     }
+
+    public static ProfileException preferenceVectorNotReady() {
+        return new ProfileException(ErrorCode.PROFILE_PREFERENCE_NOT_READY);
+    }
 }

@@ -39,15 +39,36 @@ public class RecommendationFilteringService {
         return filter(RecommendationType.OOTD, userId, weatherId);
     }
 
+    public List<Clothes> filterOotd(UUID userId, UUID weatherId, Profile profile) {
+        return filter(RecommendationType.OOTD, userId, weatherId, profile);
+    }
+
     public List<Clothes> filterOutfit(UUID userId, UUID weatherId) {
         return filter(RecommendationType.OUTFIT, userId, weatherId);
     }
 
-    private List<Clothes> filter(RecommendationType type, UUID userId, UUID weatherId) {
-        List<Clothes> candidates = providersByType().get(type).findCandidates(userId);
+    public List<Clothes> filterOutfit(UUID userId, UUID weatherId, Profile profile) {
+        return filter(RecommendationType.OUTFIT, userId, weatherId, profile);
+    }
 
+    private List<Clothes> filter(
+        RecommendationType type,
+        UUID userId,
+        UUID weatherId
+    ) {
         Profile profile = profileRepository.findByUser_Id(userId)
             .orElseThrow(ProfileException::profileNotFound);
+        return filter(type, userId, weatherId, profile);
+    }
+
+    private List<Clothes> filter(
+        RecommendationType type,
+        UUID userId,
+        UUID weatherId,
+        Profile profile
+    ) {
+        List<Clothes> candidates = providersByType().get(type).findCandidates(userId);
+
         WeatherForecast weather = weatherForecastRepository.findById(weatherId)
             .orElseThrow(() -> new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE));
 
