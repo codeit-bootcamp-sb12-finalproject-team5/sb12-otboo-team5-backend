@@ -5,7 +5,7 @@ import com.codeit.otboo.api.weather.dto.response.WeatherGridDto;
 import com.codeit.otboo.support.common.config.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
 import com.codeit.otboo.support.weather.dto.response.KakaoRegionDto;
-import com.codeit.otboo.api.weather.exception.WeatherException;
+import com.codeit.otboo.domain.weather.exception.WeatherException;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.weather.dto.GridCoordinate;
@@ -25,31 +25,30 @@ public class LocationService {
     private final WeatherRepository weatherRepository;
     private final KakaoClient kakaoClient;
 
-    @Cacheable(cacheNames = CacheConfig.GRID_CACHE, key = "#nx + ':' + #ny", sync = true)
+    @Cacheable(
+        cacheNames = CacheConfig.GRID_CACHE,
+        key = "#nx + ':' + #ny",
+        unless = "#result == null || !#result.hasAdministrativeRegion()")
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public WeatherGridDto findOrCreate(int nx, int ny, double longitude, double latitude) {
 
         var existingGrid = weatherRepository.findGrid(nx, ny);
 
-        if (existingGrid.isPresent()) {
-            WeatherGrid grid = existingGrid.get();
-
-            log.info("[LOCATION] 기존 격자 사용 gridId={}, nx={}, ny={}, Kakao 호출=false",
-                grid.getId(), grid.getNx(), grid.getNy());
-
-            return WeatherGridDto.from(grid);
+        if (existingGrid.isPresent() && WeatherGridDto.from(existingGrid.get()).hasAdministrativeRegion()) {
+            return WeatherGridDto.from(existingGrid.get());
         }
 
-        log.info("[LOCATION] 신규 격자 nx={}, ny={}, Kakao 행정동 조회를 시작합니다.", nx, ny);
-
+        log.info("[LOCATION] 행정명 보충 nx={}, ny={}, Kakao 행정동 조회를 시작합니다.", nx, ny);
         List<String> names = kakaoClient.findAdministrativeRegion(longitude, latitude)
             .map(this::regionNames)
             .orElseGet(List::of);
 
-        WeatherGrid grid = weatherRepository.findOrCreateGrid(nx, ny, names);
-
-        log.info("[LOCATION] 신규 격자 저장 완료 gridId={}, nx={}, ny={}, locationNames={}",
-            grid.getId(), grid.getNx(), grid.getNy(), grid.getLocationNames());
+        WeatherGrid grid = existingGrid.orElseGet(
+            () -> weatherRepository.findOrCreateGrid(nx, ny, names));
+        if (!WeatherGridDto.from(grid).hasAdministrativeRegion()
+                && !names.isEmpty() && !names.get(0).isBlank()) {
+            grid = weatherRepository.fillGridLocationNames(grid.getId(), names);
+        }
 
         return WeatherGridDto.from(grid);
     }

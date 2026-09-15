@@ -34,9 +34,12 @@ public class WeatherGridItemReader implements ItemReader<GridCollectionResult> {
     private final OffsetDateTime collectionAt;
     private Iterator<WeatherGrid> gridIterator;
 
-    public WeatherGridItemReader(WeatherGridRepository gridRepository,
-            WeatherObservationRepository observationRepository, KmaClient kmaClient,
-            @Value("#{stepExecutionContext['collectionAt']}") String collectionAt) {
+    public WeatherGridItemReader(
+        WeatherGridRepository gridRepository,
+        WeatherObservationRepository observationRepository,
+        KmaClient kmaClient,
+        @Value("#{stepExecutionContext['collectionAt']}") String collectionAt
+    ) {
         this.gridRepository = gridRepository;
         this.observationRepository = observationRepository;
         this.kmaClient = kmaClient;
@@ -67,6 +70,7 @@ public class WeatherGridItemReader implements ItemReader<GridCollectionResult> {
                 .collect(Collectors.toSet());
 
         List<KmaObservationDto> fetchedObservations = new ArrayList<>();
+
         for (OffsetDateTime slot : slots) {
             if (existingSlots.contains(slot.toInstant())) continue;
             kmaClient.findObservation(slot, grid.getNx(), grid.getNy())
@@ -82,12 +86,15 @@ public class WeatherGridItemReader implements ItemReader<GridCollectionResult> {
 
         return new GridCollectionResult(grid, existingSlots.size(), fetchedObservations, forecastBundle);
     }
+
     private Optional<KmaForecastBundleDto> collectForecast(WeatherGrid grid) {
         OffsetDateTime base = KmaTimeCalculator.villageBase(collectionAt);
+
         for (int attempt = 0; attempt < 3; attempt++) {
             var result = kmaClient.findVillageForecast(base.minusHours(attempt * 3L), grid.getNx(), grid.getNy());
             if (result.isPresent()) return result;
         }
+
         return Optional.empty();
     }
 }

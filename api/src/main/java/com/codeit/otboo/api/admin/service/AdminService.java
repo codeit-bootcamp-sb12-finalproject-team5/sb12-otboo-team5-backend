@@ -3,6 +3,7 @@ package com.codeit.otboo.api.admin.service;
 import com.codeit.otboo.api.admin.dto.UserLockUpdateRequest;
 import com.codeit.otboo.api.admin.dto.UserRoleUpdateRequest;
 import com.codeit.otboo.api.admin.dto.UserSearchCondition;
+import com.codeit.otboo.api.notification.event.NotificationEvents;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.api.user.dto.UserDto;
 import com.codeit.otboo.domain.user.entity.User;
@@ -14,6 +15,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -27,6 +29,7 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /** 사용자 목록 조회 */
     @Transactional(readOnly = true)
@@ -62,8 +65,13 @@ public class AdminService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserException::notFound);
 
+        boolean roleChanged = user.getRole() != request.role();
         user.setRole(request.role());
         invalidateSessions(user);
+
+        if (roleChanged) {
+            eventPublisher.publishEvent(NotificationEvents.roleChanged(user.getId(), user.getRole()));
+        }
 
         log.info("권한 변경: {} -> {}", user.getEmail(), request.role());
         return UserDto.from(user);
