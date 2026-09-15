@@ -10,7 +10,7 @@ import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
-import com.codeit.otboo.support.storage.FileStorage;
+import com.codeit.otboo.support.storage.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,7 +27,7 @@ import java.util.UUID;
 public class ClothesService {
     private final ClothesRepository clothesRepository;
     private final UserRepository userRepository;
-    private final FileStorage fileStorage;
+    private final S3StorageService s3StorageService;
 
     public List<ClothesAttributeResponse> getAttributes() {
         return List.of(
@@ -41,12 +41,12 @@ public class ClothesService {
     }
 
     @Transactional
-    public Clothes create(ClothesRequest req, String imageUrl) {
+    public Clothes create(ClothesRequest req, MultipartFile image) {
         User user = getCurrentUserEntity(getCurrentUserId());
         if (!req.ownerId().equals(user.getId())) {
             throw new ClothesException(ErrorCode.INVALID_INPUT_VALUE).addDetail("사용자 Id값 입력이 유효하지 않습니다", null);
         }
-
+//        User user = userRepository.findById(req.ownerId()).orElseThrow(() -> new ClothesException(ErrorCode.RESOURCE_NOT_FOUND));
         ClothesCategory category = req.type();
         ClothesSubCategory subCategory = req.getSubCategory();
         if (subCategory != null && category != subCategory.getParentCategory()) {
@@ -58,7 +58,7 @@ public class ClothesService {
             .name(req.name())
             .isOwned(req.isOwned())
             .preference(req.preference())
-            .imageUrl(imageUrl)
+            .imageUrl(null)
             .category(category)
             .gender(req.gender())
             .brand(req.brand())
@@ -68,7 +68,13 @@ public class ClothesService {
             .attributeVector(null)
             .user(user)
             .build();
-        return clothesRepository.save(clothes);
+        clothes = clothesRepository.save(clothes);
+
+        if (image != null) {
+            String imageUrl = s3StorageService.saveClothes(image, clothes.getId());
+            clothes.setImageUrl(imageUrl);
+        }
+        return clothes;
     }
 
     @Transactional(readOnly = true)
@@ -77,7 +83,7 @@ public class ClothesService {
             req.cursor(), req.idAfter(), req.limit(), req.typeEqual(), req.ownerId()
         );
         List<ClothesResponse> data = res.data().stream()
-            .map(e -> ClothesResponse.of(e, getCurrentUserId()))
+            .map(e -> ClothesResponse.of(e, getCurrentUserId(), s3StorageService.getPresignedUrl(e.getImageUrl())))
             .toList();
         return CursorResponse.of(data, res.nextCursor(), res.nextIdAfter(), res.hasNext(), res.totalCount(), res.sortBy(), res.sortDirection());
     }
@@ -99,19 +105,21 @@ public class ClothesService {
             throw new ClothesException(ErrorCode.CLOTHES_NOT_FOUND).addDetail("이미 삭제된 의상입니다.", null);
         }
 
-        clothes.setName(req.name());
-        if (req.brand() != null) clothes.setBrand(req.brand());
-        clothes.setCategory(req.type());
-        if (req.season() != null) clothes.setSeason(req.season());
-        if (req.gender() != null) clothes.setGender(req.gender());
-        clothes.setAttributeText(req.toEmbeddingText());
-        if (req.description() != null) clothes.setDescription(req.description());
-        clothes.setIsOwned(req.isOwned());
-        if (req.preference() != null) clothes.setPreference(req.preference());
+        clothes.update(
+                req.name(),
+                req.brand(),
+                req.type(),
+                req.season(),
+                req.gender(),
+                req.toEmbeddingText(),
+                req.description(),
+                req.isOwned(),
+                req.preference()
+        );
 
         if (image != null) {
-            fileStorage.deleteOne(clothes.getImageUrl());
-            clothes.setImageUrl(fileStorage.saveOne(image));
+            s3StorageService.deleteOne(clothes.getImageUrl());
+            clothes.setImageUrl(s3StorageService.saveClothes(image, clothes.getId()));
         }
 
         return clothesRepository.save(clothes);
@@ -142,5 +150,6 @@ public class ClothesService {
         return userRepository.findById(userId)
             .orElseThrow(() -> new IllegalStateException("DB에서 사용자를 찾을 수 없습니다."));
     }
+
 
 }

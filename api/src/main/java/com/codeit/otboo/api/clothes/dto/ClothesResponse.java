@@ -39,8 +39,8 @@ public record ClothesResponse(
         return new ClothesResponse(
             null,
             null,
-            result.brand(),
             result.name(),
+            result.brand(),
             result.imageUrl(),
             result.category(),
             result.season(),
@@ -70,7 +70,7 @@ public record ClothesResponse(
         }
     }
 
-    public static ClothesResponse of(Clothes clothes, UUID userId) {
+    public static ClothesResponse of(Clothes clothes, UUID userId, String imageUrl) {
         List<ClothesAttribute> attributes = new ArrayList<>();
         String text = clothes.getAttributeText();
         if (text != null && !text.isBlank()) {
@@ -99,7 +99,7 @@ public record ClothesResponse(
             userId,
             clothes.getName(),
             clothes.getBrand(),
-            clothes.getImageUrl(),
+            imageUrl,
             clothes.getCategory(),
             clothes.getSeason(),
             clothes.getGender(),
