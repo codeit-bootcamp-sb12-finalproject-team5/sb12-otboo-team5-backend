@@ -1,8 +1,7 @@
 package com.codeit.otboo.domain.clothes.enums;
 
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonValue;
 
-@Getter
 public enum ClothesSeason implements Displayable {
 
     SPRING("봄"),
@@ -16,5 +15,11 @@ public enum ClothesSeason implements Displayable {
 
     ClothesSeason(String displayName) {
         this.displayName = displayName;
+    }
+
+    @Override
+    @JsonValue
+    public String getDisplayName() {
+        return displayName;
     }
 }

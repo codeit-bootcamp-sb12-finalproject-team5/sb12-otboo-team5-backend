@@ -1,30 +1,16 @@
 package com.codeit.otboo.api.clothes;
 
-import com.codeit.otboo.api.clothes.dto.ClothesAttributeResponse;
-import com.codeit.otboo.api.clothes.dto.ClothesRequest;
-import com.codeit.otboo.api.clothes.dto.ClothesResponse;
-import com.codeit.otboo.api.clothes.dto.ClothesSearchRequest;
-import com.codeit.otboo.api.clothes.dto.ClothesUpdateRequest;
+import com.codeit.otboo.api.clothes.dto.*;
 import com.codeit.otboo.api.common.security.CustomUserDetails;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
-import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
-import com.codeit.otboo.domain.clothes.enums.ClothesColor;
-import com.codeit.otboo.domain.clothes.enums.ClothesFit;
-import com.codeit.otboo.domain.clothes.enums.ClothesGender;
-import com.codeit.otboo.domain.clothes.enums.ClothesMaterial;
-import com.codeit.otboo.domain.clothes.enums.ClothesPattern;
-import com.codeit.otboo.domain.clothes.enums.ClothesSeason;
-import com.codeit.otboo.domain.clothes.enums.ClothesStyle;
-import com.codeit.otboo.domain.clothes.enums.ClothesSubCategory;
+import com.codeit.otboo.domain.clothes.enums.*;
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
 import com.codeit.otboo.domain.clothes.repository.ClothesRepository;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
-import com.codeit.otboo.support.storage.FileStorage;
-import java.util.List;
-import java.util.UUID;
+import com.codeit.otboo.support.storage.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,13 +18,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ClothesService {
     private final ClothesRepository clothesRepository;
     private final UserRepository userRepository;
-    private final FileStorage fileStorage;
+    private final S3StorageService s3StorageService;
 
     public List<ClothesAttributeResponse> getAttributes() {
         return List.of(
@@ -47,22 +36,20 @@ public class ClothesService {
             ClothesAttributeResponse.of(ClothesFit.class),          // 4-핏
             ClothesAttributeResponse.of(ClothesMaterial.class),     // 5-소재
             ClothesAttributeResponse.of(ClothesPattern.class),      // 6-패턴
-            ClothesAttributeResponse.of(ClothesStyle.class),        // 7-스타일
-            ClothesAttributeResponse.of(ClothesSeason.class),       // 8-계절감
-            ClothesAttributeResponse.of(ClothesGender.class)        // 9-의상성별
+            ClothesAttributeResponse.of(ClothesStyle.class)         // 7-스타일
         );
     }
 
     @Transactional
-    public ClothesResponse create(ClothesRequest req, String imageUrl) {
+    public Clothes create(ClothesRequest req, MultipartFile image) {
         User user = getCurrentUserEntity(getCurrentUserId());
         if (!req.ownerId().equals(user.getId())) {
             throw new ClothesException(ErrorCode.INVALID_INPUT_VALUE).addDetail("사용자 Id값 입력이 유효하지 않습니다", null);
         }
-
+//        User user = userRepository.findById(req.ownerId()).orElseThrow(() -> new ClothesException(ErrorCode.RESOURCE_NOT_FOUND));
         ClothesCategory category = req.type();
         ClothesSubCategory subCategory = req.getSubCategory();
-        if (subCategory != null && category != subCategory.getCategory()) {
+        if (subCategory != null && category != subCategory.getParentCategory()) {
             log.info("Category : {} / SubCategory : {}", category, subCategory);
             throw new ClothesException(ErrorCode.INVALID_INPUT_VALUE).addDetail("의상 대분류에 유요한 소분류값이 아닙닏다", null);
         }
@@ -71,14 +58,23 @@ public class ClothesService {
             .name(req.name())
             .isOwned(req.isOwned())
             .preference(req.preference())
-            .imageUrl(imageUrl)
+            .imageUrl(null)
             .category(category)
-            .gender(req.getGender())
+            .gender(req.gender())
+            .brand(req.brand())
+            .season(req.season())
             .attributeText(req.toEmbeddingText())
+            .description(req.description())
             .attributeVector(null)
             .user(user)
             .build();
-        return ClothesResponse.of(clothesRepository.save(clothes), user.getId());
+        clothes = clothesRepository.save(clothes);
+
+        if (image != null) {
+            String imageUrl = s3StorageService.saveClothes(image, clothes.getId());
+            clothes.setImageUrl(imageUrl);
+        }
+        return clothes;
     }
 
     @Transactional(readOnly = true)
@@ -87,7 +83,7 @@ public class ClothesService {
             req.cursor(), req.idAfter(), req.limit(), req.typeEqual(), req.ownerId()
         );
         List<ClothesResponse> data = res.data().stream()
-            .map(e -> ClothesResponse.of(e, getCurrentUserId()))
+            .map(e -> ClothesResponse.of(e, getCurrentUserId(), s3StorageService.getPresignedUrl(e.getImageUrl())))
             .toList();
         return CursorResponse.of(data, res.nextCursor(), res.nextIdAfter(), res.hasNext(), res.totalCount(), res.sortBy(), res.sortDirection());
     }
@@ -99,7 +95,7 @@ public class ClothesService {
     }
 
     @Transactional
-    public ClothesResponse update(UUID clothesId, ClothesUpdateRequest req, MultipartFile image) {
+    public Clothes update(UUID clothesId, ClothesUpdateRequest req, MultipartFile image) {
         Clothes clothes = clothesRepository.findById(clothesId)
             .orElseThrow(() -> new ClothesException(ErrorCode.RESOURCE_NOT_FOUND));
         if (!clothes.getUser().getId().equals(getCurrentUserId())) {
@@ -109,19 +105,24 @@ public class ClothesService {
             throw new ClothesException(ErrorCode.CLOTHES_NOT_FOUND).addDetail("이미 삭제된 의상입니다.", null);
         }
 
-        clothes.setName(req.name());
-        clothes.setCategory(req.type());
-        clothes.setIsOwned(req.isOwned());
-        if (req.preference() != null) clothes.setPreference(req.preference());
-        clothes.setGender(req.getGender());
-        clothes.setAttributeText(req.toEmbeddingText());
+        clothes.update(
+                req.name(),
+                req.brand(),
+                req.type(),
+                req.season(),
+                req.gender(),
+                req.toEmbeddingText(),
+                req.description(),
+                req.isOwned(),
+                req.preference()
+        );
+
         if (image != null) {
-            fileStorage.deleteOne(clothes.getImageUrl());
-            clothes.setImageUrl(fileStorage.saveOne(image));
+            s3StorageService.deleteOne(clothes.getImageUrl());
+            clothes.setImageUrl(s3StorageService.saveClothes(image, clothes.getId()));
         }
 
-        clothesRepository.save(clothes);
-        return ClothesResponse.of(clothes, clothes.getUser().getId());
+        return clothesRepository.save(clothes);
     }
 
     @Transactional
@@ -149,5 +150,6 @@ public class ClothesService {
         return userRepository.findById(userId)
             .orElseThrow(() -> new IllegalStateException("DB에서 사용자를 찾을 수 없습니다."));
     }
+
 
 }

@@ -58,10 +58,16 @@ admin:
   password: ${ADMIN_PASSWORD:otboo1!}
   name: ${ADMIN_NAME:system}
 
-otboo:
-  storage:
-    local:
-      root-path: .otboo/storage
+cloud:
+  aws:
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+      clothes-prefix: otboo-clothes-dev
+      profile-prefix: otboo-profile-dev
+    region: ${AWS_REGION}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID}
+      secret-key: ${AWS_SECRET_ACCESS_KEY}
 
 notification:
   kafka:

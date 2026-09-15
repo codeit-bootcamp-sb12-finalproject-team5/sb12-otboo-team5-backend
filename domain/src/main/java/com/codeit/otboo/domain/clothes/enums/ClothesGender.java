@@ -1,8 +1,7 @@
 package com.codeit.otboo.domain.clothes.enums;
 
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonValue;
 
-@Getter
 public enum ClothesGender implements Displayable {
     MALE("남성"),
     FEMALE("여성"),
@@ -12,5 +11,11 @@ public enum ClothesGender implements Displayable {
 
     ClothesGender(String displayName) {
         this.displayName = displayName;
+    }
+
+    @Override
+    @JsonValue
+    public String getDisplayName() {
+        return displayName;
     }
 }

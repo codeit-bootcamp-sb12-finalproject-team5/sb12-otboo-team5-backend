@@ -1,28 +1,20 @@
 package com.codeit.otboo.support.openai.clothes;
 
-import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
-import com.codeit.otboo.domain.clothes.enums.ClothesColor;
-import com.codeit.otboo.domain.clothes.enums.ClothesFit;
-import com.codeit.otboo.domain.clothes.enums.ClothesGender;
-import com.codeit.otboo.domain.clothes.enums.ClothesMaterial;
-import com.codeit.otboo.domain.clothes.enums.ClothesPattern;
-import com.codeit.otboo.domain.clothes.enums.ClothesSeason;
-import com.codeit.otboo.domain.clothes.enums.ClothesStyle;
-import com.codeit.otboo.domain.clothes.enums.ClothesSubCategory;
-import com.codeit.otboo.domain.clothes.enums.Displayable;
+import com.codeit.otboo.domain.clothes.enums.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -187,6 +179,13 @@ public class OpenAiWebSearchClient {
             )
         );
 
+        properties.put(
+            "description",
+            Map.of(
+                    "type", "string"
+            )
+        );
+
         return Map.of(
             "type", "object",
 
@@ -204,7 +203,8 @@ public class OpenAiWebSearchClient {
                 "pattern",
                 "style",
                 "season",
-                "brand"
+                "brand",
+                "description"
             ),
 
             "additionalProperties", false

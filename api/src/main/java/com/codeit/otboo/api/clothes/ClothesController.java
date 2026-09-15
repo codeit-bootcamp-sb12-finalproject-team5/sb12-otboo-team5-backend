@@ -1,29 +1,20 @@
 package com.codeit.otboo.api.clothes;
 
-import com.codeit.otboo.api.clothes.dto.ClothesAttributeResponse;
-import com.codeit.otboo.api.clothes.dto.ClothesRequest;
-import com.codeit.otboo.api.clothes.dto.ClothesResponse;
-import com.codeit.otboo.api.clothes.dto.ClothesSearchRequest;
-import com.codeit.otboo.api.clothes.dto.ClothesUpdateRequest;
+import com.codeit.otboo.api.clothes.dto.*;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.support.openai.clothes.ClothesAnalysisResult;
+import com.codeit.otboo.support.openai.clothes.ClothesAnalysisService;
 import jakarta.validation.Valid;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
 
 @Slf4j
 @RestController
@@ -82,6 +73,26 @@ public class ClothesController {
     public ResponseEntity<Void> deleteSoft(@PathVariable UUID clothesId) {
         clothesService.softDelete(clothesId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/bulk")
+    public ResponseEntity<Void> postBulk(
+            @RequestBody BulkClothesRequest req
+    ) {
+        int total = req.links().size();
+        List<CompletableFuture<ClothesResponse>> futures =
+                IntStream.range(0, total)
+                        .mapToObj(i ->
+                                clothesFacade.process(
+                                        req.userId(),
+                                        req.links().get(i),
+                                        i + 1,
+                                        total
+                                )
+                        )
+                        .toList();
+        futures.forEach(CompletableFuture::join);
+        return ResponseEntity.ok().build();
     }
 
 }

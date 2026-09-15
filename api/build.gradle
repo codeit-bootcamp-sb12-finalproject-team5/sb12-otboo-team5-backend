@@ -44,4 +44,5 @@ dependencies {
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'org.springframework:spring-test' // 의상 배치수집용 MockMultipartFile
 }
