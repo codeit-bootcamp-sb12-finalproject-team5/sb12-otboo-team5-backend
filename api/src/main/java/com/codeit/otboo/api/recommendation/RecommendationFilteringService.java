@@ -47,7 +47,7 @@ public class RecommendationFilteringService {
         List<Clothes> candidates = providersByType().get(type).findCandidates(userId);
 
         Profile profile = profileRepository.findByUser_Id(userId)
-            .orElseThrow(ProfileException::notFound);
+            .orElseThrow(ProfileException::profileNotFound);
         WeatherForecast weather = weatherForecastRepository.findById(weatherId)
             .orElseThrow(() -> new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE));
 

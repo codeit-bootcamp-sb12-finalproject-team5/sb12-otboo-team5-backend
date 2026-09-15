@@ -10,6 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ProfileRepository extends JpaRepository<Profile, UUID> {
+    Optional<Profile> findByUser_Id(UUID userId);
+
+    Optional<Profile> findByUser_Id(UUID userId);
 
     Optional<Profile> findByUser_Id(UUID userId);
 

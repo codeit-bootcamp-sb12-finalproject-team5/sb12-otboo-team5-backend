@@ -9,8 +9,16 @@ public class ProfileException extends BusinessException {
         super(errorCode);
     }
 
-    public static ProfileException notFound() {
+    public ProfileException(ErrorCode errorCode, Throwable cause) {
+        super(errorCode, cause);
+    }
+
+    public static ProfileException profileNotFound() {
         return new ProfileException(ErrorCode.PROFILE_NOT_FOUND);
+    }
+
+    public static ProfileException resourceNotFound() {
+        return new ProfileException(ErrorCode.RESOURCE_NOT_FOUND);
     }
 
     public static ProfileException invalidTemperatureSensitivity() {

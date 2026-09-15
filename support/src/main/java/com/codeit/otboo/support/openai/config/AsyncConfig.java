@@ -18,7 +18,21 @@ public class AsyncConfig {
         executor.setCorePoolSize(2);
         executor.setMaxPoolSize(5);
         executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("async-");
+        executor.setThreadNamePrefix("async-task-");
+
+        executor.initialize();
+
+        return executor;
+    }
+
+    @Bean(name = "bulkExecutor")
+    public Executor bulkExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(5);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("async-bulk-");
 
         executor.initialize();
 
