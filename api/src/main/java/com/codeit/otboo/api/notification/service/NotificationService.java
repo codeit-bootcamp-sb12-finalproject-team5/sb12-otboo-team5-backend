@@ -39,9 +39,14 @@ public class NotificationService {
 
         var page = queryRepository.findUnread(receiverId, cursor, request.idAfter(), request.limit());
 
-        return new NotificationReadResponse(page.data().stream().map(this::toDto).toList(),
-                page.nextCursor(), (UUID) page.nextIdAfter(), page.hasNext(), page.totalCount(),
-                page.sortBy(), page.sortDirection());
+        return new NotificationReadResponse(
+            page.data().stream().map(this::toDto).toList(),
+            page.nextCursor(), (UUID) page.nextIdAfter(),
+            page.hasNext(),
+            page.totalCount(),
+            page.sortBy(),
+            page.sortDirection()
+        );
     }
 
     @Transactional
@@ -52,8 +57,13 @@ public class NotificationService {
     }
 
     private NotificationDto toDto(Notification notification) {
-        return new NotificationDto(notification.getId(), notification.getCreatedAt(),
-                notification.getReceiver().getId(), notification.getTitle(),
-                notification.getContent(), notification.getLevel());
+        return new NotificationDto(
+            notification.getId(),
+            notification.getCreatedAt(),
+            notification.getReceiver().getId(),
+            notification.getTitle(),
+            notification.getContent(),
+            notification.getLevel()
+        );
     }
 }

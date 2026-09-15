@@ -1,20 +1,25 @@
 spring:
   application:
     name: notification-worker
+
   config:
     import: optional:dotenv:../
+
   main:
     web-application-type: none
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5432/${POSTGRES_DB}}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
+
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
   flyway:
-    # API가 먼저 V3까지 마이그레이션한다. worker는 마이그레이션을 실행하지 않는다.
     enabled: false
+
   ai:
     model:
       chat: none

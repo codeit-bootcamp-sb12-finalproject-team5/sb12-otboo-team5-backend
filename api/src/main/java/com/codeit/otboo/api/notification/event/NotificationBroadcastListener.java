@@ -1,6 +1,8 @@
 package com.codeit.otboo.api.notification.event;
 
 import com.codeit.otboo.api.notification.service.NotificationSseService;
+import com.codeit.otboo.domain.common.exception.ErrorCode;
+import com.codeit.otboo.domain.notification.exception.NotificationException;
 import com.codeit.otboo.domain.notification.event.NotificationBroadcastEvent;
 import com.codeit.otboo.support.notification.kafka.NotificationTopics;
 import lombok.RequiredArgsConstructor;
@@ -14,15 +16,19 @@ import org.springframework.stereotype.Component;
 public class NotificationBroadcastListener {
     private final NotificationSseService sse;
 
-    @KafkaListener(id = "notification-broadcast", idIsGroup = false,
-            topics = NotificationTopics.BROADCAST, containerFactory = "notificationBroadcastFactory")
+    @KafkaListener(
+        id = "notification-broadcast",
+        idIsGroup = false,
+        topics = NotificationTopics.BROADCAST,
+        containerFactory = "notificationBroadcastFactory")
     public void receive(NotificationBroadcastEvent event) {
         if (event == null || event.schemaVersion() != 1 || event.notification() == null
                 || event.notification().id() == null || event.notification().receiverId() == null
                 || event.notification().createdAt() == null || event.notification().title() == null
                 || event.notification().content() == null || event.notification().level() == null) {
-            throw new IllegalArgumentException("Invalid notification broadcast");
+            throw new NotificationException(ErrorCode.INVALID_NOTIFICATION_BROADCAST);
         }
+
         sse.publish(event.notification());
     }
 }

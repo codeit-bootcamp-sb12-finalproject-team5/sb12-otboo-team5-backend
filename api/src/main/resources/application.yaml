@@ -72,4 +72,3 @@ cloud:
 notification:
   kafka:
     enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
-    instance-id: ${NOTIFICATION_INSTANCE_ID:}

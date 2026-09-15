@@ -3,8 +3,6 @@ package com.codeit.otboo.api.notification;
 import com.codeit.otboo.api.common.exception.GlobalExceptionHandler;
 import com.codeit.otboo.api.common.security.CustomUserDetails;
 import com.codeit.otboo.api.notification.controller.*;
-import com.codeit.otboo.api.notification.config.NotificationSseExecutorConfig;
-import com.codeit.otboo.api.notification.config.NotificationSseExecutorConfig.NotificationSseExecutors;
 import com.codeit.otboo.api.notification.dto.response.NotificationReadResponse;
 import com.codeit.otboo.api.notification.service.NotificationService;
 import com.codeit.otboo.api.notification.service.NotificationSseService;
@@ -15,7 +13,6 @@ import java.time.OffsetDateTime;
 import com.codeit.otboo.domain.notification.dto.NotificationDto;
 import com.codeit.otboo.domain.notification.entity.NotificationLevel;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,9 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class NotificationControllerTest {
     private final NotificationService service = mock(NotificationService.class);
-    private final NotificationSseExecutors executors =
-            new NotificationSseExecutorConfig().notificationSseExecutors();
-    private final NotificationSseService sse = new NotificationSseService(executors, new SseEmitterRepository(),
+    private final NotificationSseService sse = new NotificationSseService( new SseEmitterRepository(),
             new DefaultListableBeanFactory().getBeanProvider(KafkaListenerEndpointRegistry.class), false);
     private final UUID user = UUID.randomUUID();
     private MockMvc mvc;
@@ -59,7 +54,6 @@ class NotificationControllerTest {
     @AfterEach
     void cleanup() {
         sse.shutdown();
-        executors.close();
     }
 
     @Test
@@ -109,12 +103,19 @@ class NotificationControllerTest {
         var id = UUID.randomUUID();
         sse.publish(new NotificationDto(id, OffsetDateTime.now(), user,
                 "role changed", "ADMIN", NotificationLevel.INFO));
-        await().atMost(java.time.Duration.ofSeconds(3)).untilAsserted(() -> {
-            for (var result : List.of(first, second)) {
-                assertThat(result.getResponse().getContentAsString())
-                        .contains("event:notifications", "id:" + id, "\"receiverId\":\"" + user);
-            }
-        });
+        for (var result : List.of(first, second)) {
+            String body = result.getResponse().getContentAsString();
+            assertThat(body).contains("event:notifications", "id:" + id,
+                    "\"receiverId\":\"" + user);
+            assertThat(body.indexOf(":connected")).isLessThan(body.indexOf("event:notifications"));
+        }
+    }
+
+    @Test
+    void heartbeatReachesConnectedClients() throws Exception {
+        var result = mvc.perform(get("/api/sse")).andReturn();
+        sse.heartbeat();
+        assertThat(result.getResponse().getContentAsString()).contains(":connected", ":heartbeat");
     }
 
     @Test
@@ -122,7 +123,7 @@ class NotificationControllerTest {
     void rejectsSubscriptionBeforeKafkaConsumerIsAssigned() {
         org.springframework.beans.factory.ObjectProvider<org.springframework.kafka.config.KafkaListenerEndpointRegistry>
                 registries = mock(org.springframework.beans.factory.ObjectProvider.class);
-        var gated = new NotificationSseService(executors, new SseEmitterRepository(), registries, true);
+        var gated = new NotificationSseService( new SseEmitterRepository(), registries, true);
         try {
             org.assertj.core.api.Assertions.assertThatThrownBy(() -> gated.subscribe(user))
                     .isInstanceOfSatisfying(

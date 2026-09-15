@@ -1,14 +1,11 @@
 package com.codeit.otboo.api.notification.service;
 
-import com.codeit.otboo.api.notification.config.NotificationSseExecutorConfig.NotificationSseExecutors;
 import com.codeit.otboo.api.notification.repository.SseEmitterRepository;
 import com.codeit.otboo.domain.notification.dto.NotificationDto;
 import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.RejectedExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.notification.exception.NotificationException;
@@ -17,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import java.util.function.BooleanSupplier;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
@@ -24,15 +22,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class NotificationSseService {
 
     private final BooleanSupplier ready;
-    private final NotificationSseExecutors executors;
     private final SseEmitterRepository emitterRepository;
-    private final ScheduledFuture<?> heartbeatTask;
 
-    public NotificationSseService(NotificationSseExecutors executors,
+    public NotificationSseService(
             SseEmitterRepository emitterRepository,
             ObjectProvider<KafkaListenerEndpointRegistry> registries,
             @Value("${notification.kafka.enabled:false}") boolean kafkaEnabled) {
-        this.executors = executors;
         this.emitterRepository = emitterRepository;
 
         this.ready = () -> {
@@ -44,10 +39,7 @@ public class NotificationSseService {
                     && !container.getAssignedPartitions().isEmpty();
         };
 
-        heartbeatTask = executors.heartbeat().scheduleAtFixedRate(() ->
-                emitterRepository.findAll().forEach((receiverId, emitters) -> emitters.forEach(emitter ->
-                        enqueue(receiverId, emitter, SseEmitter.event().comment("heartbeat")))),
-                25, 25, TimeUnit.SECONDS);
+
     }
 
     public SseEmitter subscribe(UUID receiverId) {
@@ -64,8 +56,11 @@ public class NotificationSseService {
         });
 
         emitter.onError(error -> emitterRepository.delete(receiverId, emitter));
-        emitterRepository.save(receiverId, emitter);
-        send(receiverId, emitter, SseEmitter.event().comment("connected").reconnectTime(3000));
+
+        // 초기 메시지를 먼저 보내고 공개하여 알림이 connected보다 앞서지 않도록 한다.
+        if (send(receiverId, emitter, SseEmitter.event().comment("connected").reconnectTime(3000))) {
+            emitterRepository.save(receiverId, emitter);
+        }
 
         return emitter;
     }
@@ -73,38 +68,32 @@ public class NotificationSseService {
     /** Kafka 브로드캐스팅 수신부에서 호출할 로컬 연결 전달 진입점. */
     public void publish(NotificationDto notification) {
         emitterRepository.findEmitters(notification.receiverId()).forEach(emitter ->
-                enqueue(notification.receiverId(), emitter, SseEmitter.event().name("notifications")
+                send(notification.receiverId(), emitter, SseEmitter.event().name("notifications")
                         .id(notification.id().toString()).data(notification)));
     }
 
-    private void enqueue(UUID receiverId, SseEmitter emitter, SseEmitter.SseEventBuilder event) {
-        try {
-            int senderIndex = Math.floorMod(System.identityHashCode(emitter), executors.senders().size());
-
-            executors.senders().get(senderIndex).execute(() -> {
-                if (emitterRepository.findEmitters(receiverId).contains(emitter)) {
-                    send(receiverId, emitter, event);
-                }
-            });
-        } catch (RejectedExecutionException error) {
-            log.warn("SSE queue full; disconnecting emitter for receiverId={}", receiverId);
-            emitterRepository.delete(receiverId, emitter);
-            emitter.complete();
-        }
+    @Scheduled(initialDelay = 2, fixedDelay = 2, timeUnit = TimeUnit.MINUTES)
+    public void heartbeat() {
+        emitterRepository.findAll().forEach((receiverId, emitters) -> emitters.forEach(emitter ->
+                send(receiverId, emitter, SseEmitter.event().comment("heartbeat"))));
     }
 
-    private void send(UUID receiverId, SseEmitter emitter, SseEmitter.SseEventBuilder event) {
-        try {
-            emitter.send(event);
-        } catch (IOException | IllegalStateException e) {
-            emitterRepository.delete(receiverId, emitter);
-            emitter.completeWithError(e);
+    private boolean send(UUID receiverId, SseEmitter emitter, SseEmitter.SseEventBuilder event) {
+        // heartbeat와 Kafka 수신 스레드의 동일 연결 전송이 겹치지 않도록
+        synchronized (emitter) {
+            try {
+                emitter.send(event);
+                return true;
+            } catch (IOException | IllegalStateException e) {
+                emitterRepository.delete(receiverId, emitter);
+                emitter.completeWithError(e);
+                return false;
+            }
         }
     }
 
     @PreDestroy
     public void shutdown() {
-        heartbeatTask.cancel(true);
         emitterRepository.findAll().forEach((receiverId, emitters) -> emitters.forEach(emitter -> {
             emitterRepository.delete(receiverId, emitter);
             emitter.complete();

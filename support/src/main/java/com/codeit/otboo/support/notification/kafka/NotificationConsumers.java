@@ -45,7 +45,8 @@ public final class NotificationConsumers {
             for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
                 if (cause instanceof NotificationException notificationException) {
                     return switch (notificationException.getErrorCode()) {
-                        case INVALID_INPUT_VALUE, USER_NOT_FOUND, UNSUPPORTED_NOTIFICATION_TYPE ->
+                        case INVALID_INPUT_VALUE, USER_NOT_FOUND, UNSUPPORTED_NOTIFICATION_TYPE,
+                                INVALID_NOTIFICATION_BROADCAST ->
                                 new FixedBackOff(0L, 0L);
                         default -> null; // 기존 1초 간격 2회 재시도를 유지한다.
                     };
