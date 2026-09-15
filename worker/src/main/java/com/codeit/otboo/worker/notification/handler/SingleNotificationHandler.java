@@ -1,17 +1,21 @@
 package com.codeit.otboo.worker.notification.handler;
 
 import com.codeit.otboo.domain.common.exception.ErrorCode;
-import com.codeit.otboo.domain.notification.exception.NotificationException;
-import com.codeit.otboo.worker.notification.service.NotificationSaveService;
-
-import com.codeit.otboo.domain.notification.dto.NotificationDto;
+import com.codeit.otboo.domain.notification.dto.NotificationContent;
+import com.codeit.otboo.domain.notification.entity.NotificationLevel;
 import com.codeit.otboo.domain.notification.entity.NotificationType;
+import com.codeit.otboo.domain.notification.event.DirectMessageNotificationEvent;
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
-import com.codeit.otboo.domain.notification.event.SingleNotificationCreateEvent;
+import com.codeit.otboo.domain.notification.event.NotificationSourceEvent;
+import com.codeit.otboo.domain.notification.event.RoleChangedNotificationEvent;
+import com.codeit.otboo.domain.notification.exception.NotificationException;
+import com.codeit.otboo.domain.user.entity.UserRole;
 import com.codeit.otboo.support.notification.kafka.NotificationKafkaJson;
+import com.codeit.otboo.worker.notification.repository.NotificationSourceRepository;
+import com.codeit.otboo.worker.notification.service.NotificationSaveService;
 import com.fasterxml.jackson.databind.JsonNode;
-import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,36 +23,80 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SingleNotificationHandler implements NotificationRequestHandler {
     private final NotificationSaveService saveService;
+    private final NotificationSourceRepository sources;
 
     @Override
     public Set<NotificationType> supportedTypes() {
-        // 같은 payload를 사용하는 1:1 유형은 이 목록과 API 이벤트 팩토리만 확장
-        return Set.of(NotificationType.ROLE_CHANGED);
+        return Set.of(NotificationType.ROLE_CHANGED, NotificationType.FEED_LIKED,
+                NotificationType.FEED_COMMENTED, NotificationType.FOLLOWED, NotificationType.DM_RECEIVED);
     }
 
     @Override
-    public List<NotificationDto> handle(NotificationCreateMessage<JsonNode> message) {
-        SingleNotificationCreateEvent payload;
+    public NotificationHandlingResult handle(NotificationCreateMessage<JsonNode> message) {
+        NotificationContent content;
+        if (message.type() == NotificationType.ROLE_CHANGED) {
+            var event = payload(message, RoleChangedNotificationEvent.class);
+            if (event.receiverId() == null || event.role() == null) throw invalid();
+            content = content(event.receiverId(), "권한이 변경되었습니다",
+                    "회원님의 권한이 %s(으)로 변경되었습니다. 다시 로그인해 주세요."
+                            .formatted(event.role() == UserRole.ADMIN ? "관리자" : "일반 사용자"));
+        } else if (message.type() == NotificationType.DM_RECEIVED) {
+            var event = payload(message, DirectMessageNotificationEvent.class);
+            requireSource(message, event.messageId());
+            if (event.receiverId() == null) throw invalid();
+            var source = sources.findDirectMessage(event.messageId(), event.receiverId())
+                    .orElseThrow(() -> new NotificationException(ErrorCode.NOTIFICATION_SOURCE_NOT_FOUND));
+            content = content(source.receiverId(), "[DM] %s".formatted(source.actorName()), source.content());
+        } else {
+            var event = payload(message, NotificationSourceEvent.class);
+            requireSource(message, event.sourceId());
+            var source = switch (message.type()) {
+                case FEED_LIKED -> sources.findLike(event.sourceId());
+                case FEED_COMMENTED -> sources.findComment(event.sourceId());
+                case FOLLOWED -> sources.findFollow(event.sourceId());
+                default -> throw new NotificationException(ErrorCode.UNSUPPORTED_NOTIFICATION_TYPE);
+            };
+            var value = source.orElseThrow(() -> new NotificationException(ErrorCode.NOTIFICATION_SOURCE_NOT_FOUND));
+            content = switch (message.type()) {
+                case FEED_LIKED -> content(value.receiverId(), "피드에 좋아요가 등록되었습니다",
+                        "%s님이 회원님의 피드를 좋아합니다.".formatted(value.actorName()));
+                case FEED_COMMENTED -> content(value.receiverId(),
+                        "%s님이 댓글을 남겼습니다.".formatted(value.actorName()), value.content());
+                case FOLLOWED -> content(value.receiverId(),
+                        "%s님이 나를 팔로우 했어요.".formatted(value.actorName()), "");
+                default -> throw new NotificationException(ErrorCode.UNSUPPORTED_NOTIFICATION_TYPE);
+            };
+        }
+        return NotificationHandlingResult.completed(
+                saveService.save(message.type(), message.deduplicationKey(), content).stream().toList());
+    }
+
+    private NotificationContent content(UUID receiverId, String title, String body) {
+        if (receiverId == null || title == null || title.isBlank() || body == null) throw invalid();
+        // 저장 계약에 맞춘 미리보기. 빈 본문은 유지하고 UTF-16 surrogate pair는 자르지 않는다.
+        return new NotificationContent(receiverId, preview(title, 100), preview(body, 1000), NotificationLevel.INFO);
+    }
+
+    private String preview(String value, int max) {
+        return value.codePointCount(0, value.length()) <= max ? value
+                : value.substring(0, value.offsetByCodePoints(0, max));
+    }
+
+    private void requireSource(NotificationCreateMessage<JsonNode> message, UUID id) {
+        if (id == null || !message.deduplicationKey().equals(message.type().name() + ":" + id)) throw invalid();
+    }
+
+    private <T> T payload(NotificationCreateMessage<JsonNode> message, Class<T> type) {
         try {
-            payload = NotificationKafkaJson.mapper()
-                    .convertValue(message.payload(), SingleNotificationCreateEvent.class);
+            T value = NotificationKafkaJson.mapper().convertValue(message.payload(), type);
+            if (value == null) throw invalid();
+            return value;
         } catch (IllegalArgumentException exception) {
             throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE, exception);
         }
-
-        if (payload == null || payload.receiverId() == null || payload.level() == null) {
-            throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-
-        requireText(payload.title(), 100);
-        requireText(payload.content(), 1000);
-
-        return saveService.save(message.type(), message.deduplicationKey(), payload).stream().toList();
     }
 
-    private static void requireText(String value, int max) {
-        if (value == null || value.isBlank() || value.codePointCount(0, value.length()) > max) {
-            throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE);
-        }
+    private NotificationException invalid() {
+        return new NotificationException(ErrorCode.INVALID_INPUT_VALUE);
     }
 }

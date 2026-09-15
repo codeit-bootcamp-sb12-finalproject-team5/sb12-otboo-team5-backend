@@ -1,7 +1,10 @@
 package com.codeit.otboo.api.notification.event;
 
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
-import com.codeit.otboo.domain.notification.event.SingleNotificationCreateEvent;
+import com.codeit.otboo.domain.notification.event.NotificationSourceEvent;
+import com.codeit.otboo.domain.notification.event.RoleChangedNotificationEvent;
+import com.codeit.otboo.domain.notification.event.DirectMessageNotificationEvent;
+import com.codeit.otboo.domain.notification.event.FeedNotificationCreateEvent;
 import com.codeit.otboo.support.notification.kafka.NotificationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +22,20 @@ public class NotificationCommittedListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onCommitted(NotificationCreateMessage<?> message) {
-        // 추후 1:N 요청은 별도 payload 리스너로 확장한다.
-        if (!(message.payload() instanceof SingleNotificationCreateEvent payload)) {
-            return;
-        }
         try {
-            publisher.publishCreate(payload.receiverId().toString(), message)
+            String key;
+            if (message.payload() instanceof RoleChangedNotificationEvent payload) {
+                key = payload.receiverId().toString();
+            } else if (message.payload() instanceof DirectMessageNotificationEvent payload) {
+                key = payload.receiverId().toString();
+            } else if (message.payload() instanceof NotificationSourceEvent payload) {
+                key = payload.sourceId().toString();
+            } else if (message.payload() instanceof FeedNotificationCreateEvent payload) {
+                key = payload.feedId().toString();
+            } else {
+                return;
+            }
+            publisher.publishCreate(key, message)
                     .whenComplete((ignored, error) -> {
                         if (error != null) {
                             log.error("NOTIFICATION_CREATE_FAILED eventId={} type={} deduplicationKey={}",
@@ -32,7 +43,7 @@ public class NotificationCommittedListener {
                         }
                     });
         } catch (RuntimeException error) {
-            // 이미 커밋된 권한 변경의 응답을 Kafka 실패 때문에 실패 응답으로 바꾸지 않는다.
+            // 이미 커밋된 업무의 응답을 Kafka 실패 때문에 실패 응답으로 바꾸지 않는다.
             log.error("NOTIFICATION_CREATE_FAILED eventId={}", message.eventId(), error);
         }
     }

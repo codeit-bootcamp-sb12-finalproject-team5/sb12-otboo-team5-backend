@@ -19,7 +19,7 @@ import com.codeit.otboo.domain.user.repository.RefreshTokenRepository;
 import com.codeit.otboo.domain.user.repository.UserRepository;
 import com.codeit.otboo.domain.notification.entity.NotificationType;
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
-import com.codeit.otboo.domain.notification.event.SingleNotificationCreateEvent;
+import com.codeit.otboo.domain.notification.event.RoleChangedNotificationEvent;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -66,9 +66,9 @@ class AdminServiceTest {
         assertThat(message.type()).isEqualTo(NotificationType.ROLE_CHANGED);
         assertThat(message.eventId().version()).isEqualTo(7);
         assertThat(message.deduplicationKey()).isEqualTo("ROLE_CHANGED:" + message.eventId());
-        SingleNotificationCreateEvent payload = (SingleNotificationCreateEvent) message.payload();
+        RoleChangedNotificationEvent payload = (RoleChangedNotificationEvent) message.payload();
         assertThat(payload.receiverId()).isEqualTo(target.getId());
-        assertThat(payload.content()).contains("관리자");
+        assertThat(payload.role()).isEqualTo(UserRole.ADMIN);
     }
 
     @Test

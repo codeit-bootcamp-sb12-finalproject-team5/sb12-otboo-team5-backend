@@ -1,9 +1,9 @@
-package com.codeit.otboo.domain.notification.event;
+package com.codeit.otboo.domain.notification.dto;
 
 import com.codeit.otboo.domain.notification.entity.NotificationLevel;
 import java.util.UUID;
 
-public record SingleNotificationCreateEvent(
+public record NotificationContent(
         UUID receiverId,
         String title,
         String content,

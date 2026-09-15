@@ -66,6 +66,26 @@ class NotificationCommittedListenerTest {
         }
     }
 
+    @Test
+    void feedUsesSourceKeyOnlyAfterCommit() {
+        var publisher = mock(NotificationEventPublisher.class);
+        when(publisher.publishCreate(anyString(), any())).thenReturn(CompletableFuture.completedFuture(null));
+        var message = NotificationEvents.feedCreated(UUID.randomUUID());
+        try (var context = context(publisher)) {
+            var transaction = new TransactionTemplate(new TestTransactionManager());
+            transaction.executeWithoutResult(status -> {
+                context.publishEvent(message);
+                status.setRollbackOnly();
+            });
+            verifyNoInteractions(publisher);
+            transaction.executeWithoutResult(status -> {
+                context.publishEvent(message);
+                verifyNoInteractions(publisher);
+            });
+            verify(publisher).publishCreate(message.payload().feedId().toString(), message);
+        }
+    }
+
     private AnnotationConfigApplicationContext context(NotificationEventPublisher publisher) {
         var context = new AnnotationConfigApplicationContext();
         context.getEnvironment().getPropertySources().addFirst(

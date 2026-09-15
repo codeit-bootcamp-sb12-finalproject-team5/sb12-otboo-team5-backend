@@ -13,5 +13,5 @@ public record NotificationCreateMessage<T>(
         String deduplicationKey,
         T payload
 ) {
-    public static final int CURRENT_SCHEMA_VERSION = 1;
+    public static final int CURRENT_SCHEMA_VERSION = 2;
 }

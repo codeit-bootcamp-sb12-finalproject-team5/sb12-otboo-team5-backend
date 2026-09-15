@@ -1,4 +1,4 @@
-# 권한 변경 알림
+# 알림 worker와 메시지 조립
 
 ## 패키지 구조
 
@@ -24,7 +24,7 @@ AdminService.updateRole에서 권한이 실제로 바뀐 경우 NotificationEven
 업무 트랜잭션의 AFTER_COMMIT 리스너가 notification-create로 보낸다. 롤백 및 트랜잭션 밖 발행은 전달하지 않는다.
 
 worker는 NotificationRequestHandler 목록을 유형별로 등록하고 SingleNotificationHandler로
-ROLE_CHANGED를 처리한다. 존재하며 탈퇴하지 않은 사용자를 대상으로 알림을 저장한다.
+ROLE_CHANGED, FEED_LIKED, FEED_COMMENTED, FOLLOWED, DM_RECEIVED를 처리한다. 존재하며 탈퇴하지 않은 사용자를 대상으로 알림을 저장한다.
 잠긴 사용자도 DB 알림은 보존한다. 기존 권한 변경의 세션 무효화 동작은 유지한다.
 
 NotificationSaveService의 트랜잭션이 커밋된 다음 notification-broadcasting으로 전송한다.
@@ -33,15 +33,14 @@ API마다 서로 다른 consumer group으로 받아 NotificationSseService의 �
 
 ## 실행 설정
 
-기존 버전, 비밀값, Docker 구성은 변경하지 않았다. API와 worker 모두
+이번 조립 작업에서는 빌드·환경·Docker를 변경하지 않았다. API와 worker 모두
 NOTIFICATION_KAFKA_ENABLED=true를 명시해야 Kafka 기능이 활성화된다.
 비활성 상태에서는 권한 변경과 기존 알림 조회/SSE 연결만 동작하며 새 알림을 생성하지 않는다.
 
 필요한 설정:
 
 - KAFKA_BOOTSTRAP_SERVERS: 사용할 브로커 주소. 기본 localhost:9092.
-- NOTIFICATION_INSTANCE_ID: API별 고유하고 안정된 이름. 예: api-a, api-b.
-  활성화 시 비어 있으면 API 시작이 실패한다. 동시 API에 같은 이름을 사용하지 않는다.
+- API 그룹 ID는 시작 시 UUIDv7으로 생성한다. 현재 코드는 NOTIFICATION_INSTANCE_ID를 읽지 않는다.
 - POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD: 기존 DB 설정.
 - NOTIFICATION_DB_URL: worker DB URL을 별도로 지정할 때 사용한다.
   기본은 API와 같은 localhost:5432/POSTGRES_DB다.
@@ -68,28 +67,48 @@ docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafk
 위 명령은 실행 안내이며 이번 구성 추가에서 서버 시작·토픽 생성은 수행하지 않았다.
 이 변경에는 토픽 프로비저닝 코드를 넣지 않았다. 브로커 자체의 자동 생성 정책은 별도다.
 worker는 notification-worker 그룹,
-API는 notification-sse-{instanceId} 그룹을 사용한다.
+API는 notification-sse-{시작 시 생성한 UUIDv7} 그룹을 사용한다.
 API는 전달 consumer의 파티션 할당 전 SSE 구독을 503으로 거절한다.
 
 실행 명령은 저장소 루트에서 ./gradlew :api:bootRun 및 ./gradlew :worker:bootRun 이다.
 API에는 기존 JWT/OpenAI 등 원래 실행 설정도 필요하다.
 
-## 다른 알림 추가
+## API는 원본 이벤트, worker는 조회·조립 (schemaVersion 2)
 
-같은 1:1 payload를 사용하는 알림:
+알림 생성 토픽에는 제목·본문·작성자 이름을 넣지 않는다. API의 NotificationEvents는 순수 이벤트 팩토리이며 Repository를 주입받지 않는다. 각 업무 서비스의 신규 발행 연결은 아직 하지 않았다. 기존 AdminService의 roleChanged 호출은 유지한다.
 
-1. NotificationEvents에 업무별 팩토리를 추가한다. receiverId, 문구, 중요도와 안정된 업무 중복 키를 구성한다.
-2. SingleNotificationHandler.supportedTypes에 해당 NotificationType을 등록한다.
-3. 해당 업무의 활성 트랜잭션 안에서 이벤트를 발행한다. 공통 AFTER_COMMIT, 저장, Kafka, SSE는 재사용한다.
-4. 업무 커밋/롤백, 재전송 중복, 수신자와 문구 검증 테스트를 추가한다.
+| 호출 | 생성 payload | worker 조회·조립 |
+| --- | --- | --- |
+| roleChanged(receiverId, role) | RoleChangedNotificationEvent | 변경 당시 role로 문구 작성. 지연 후 현재 권한을 다시 읽지 않음 |
+| feedLiked(likeId) | NotificationSourceEvent(sourceId) | feed_like→feed 소유자·좋아요 작성자 조회 |
+| commentCreated(commentId) | NotificationSourceEvent(sourceId) | feed_comment의 실제 content·작성자·피드 소유자 조회 |
+| followCreated(followId) | NotificationSourceEvent(sourceId) | follow의 팔로워 이름·팔로우 대상 조회. 본문은 빈 문자열 |
+| directMessageReceived(messageId, receiverId) | DirectMessageNotificationEvent | direct_message 본문·발신자 이름 조회, 수신자 방 멤버십·입장 시각·퇴장 상태 검증 |
+| feedCreated(feedId) | FeedNotificationCreateEvent(feedId, afterReceiverId) | feed의 작성자·이름 조회 후 팔로워 페이지 처리 |
 
-새로운 유형이라면 NotificationType과 DB CHECK를 새 마이그레이션으로 함께 확장한다.
-기존 V3 파일을 수정하지 않는다. 업무 도메인 수정은 프로젝트 승인 규칙을 따른다.
+호출 예시(발행 서비스 연결은 후속 작업):
 
-수신자를 조회해야 하는 1:N은 별도 payload와 NotificationRequestHandler 구현체를 추가한다.
-생성 listener의 switch문을 수정할 필요는 없다. 발행 측 payload/key 처리도 함께 추가하고,
-대량 대상은 페이지 단위 커밋 및 전체 처리 시간 정책을 별도로 구현해야 한다.
-현재 API 커밋 리스너는 SingleNotificationCreateEvent만 처리한다.
+```java
+NotificationEvents.commentCreated(comment.getId());
+NotificationEvents.directMessageReceived(message.getId(), receiverId);
+NotificationEvents.followCreated(follow.getId());
+```
+
+NotificationSourceRepository의 JDBC 조회는 worker 안에 있다. 원본 도메인 Repository·서비스는 수정하지 않았다. 삭제된 작성자·삭제/비공개 피드·접근할 수 없는 DM 등 원본을 조회할 수 없으면 NOTIFICATION_SOURCE_NOT_FOUND로 저장하지 않는다. 이 오류는 재시도 없이 실패 로그로 처리하고, DB 일시 오류는 제한 재시도한다. 메시지는 발행 시점이 아니라 worker 조회 시점의 본문·작성자 이름을 사용한다. 댓글 수정·삭제·팔로우 취소가 먼저 반영되면 알림 내용 또는 생성 여부도 달라진다.
+
+worker가 만든 NotificationContent는 저장용 DTO이며 Kafka 생성 이벤트가 아니다. 본문 `""`과 공백은 허용하고 null은 허용하지 않는다. 제목은 필수다. 저장 제한에 맞춰 제목 100자·본문 1,000자까지 Unicode 코드 포인트 단위 미리보기를 사용하며 원본을 수정하지 않는다. `[DM] 발신자 이름` 제목과 실제 DM/댓글 본문을 저장한다.
+
+날씨는 배치 판정값 gridId·precipitationType·firstRainAt을 전달하고 worker가 KST로 변환해 날짜 문구를 작성한다. 실제 배치 판정·발행은 아직 미연결이다.
+
+## 페이지 처리
+
+날씨/피드는 수신자 501명을 조회해 최대 500명을 한 트랜잭션으로 저장한다. 다음 페이지가 있으면 조회한 마지막 사용자 ID를 커서로 같은 생성 토픽에 인계한다. 모두 중복으로 저장이 0건이어도 다음 페이지는 계속한다. 날씨 Kafka key는 gridId, 새 피드 key는 feedId다. 단일 원본 이벤트는 sourceId, 권한 변경/DM은 receiverId로 발행한다.
+
+원본 eventId·발생 시각·중복 키를 후속 작업에서 유지한다. 날씨 중복 키는 WEATHER_RAIN:KST대상날짜, 나머지는 TYPE:원본업무ID다. 권한 변경은 호출마다 UUIDv7을 새로 생성한다. API의 공통 AFTER_COMMIT 리스너가 이벤트를 전송하고, DB 저장 이후의 전달 계약과 SSE 데이터는 기존 NotificationDto를 유지한다.
+
+## 계약 변경과 배포
+
+생성 메시지는 기존 문구 payload와 구분해 schemaVersion을 **2**로 올렸다. 전달 토픽/SSE 계약은 버전 1을 유지한다. API와 worker를 함께 배포해야 하며 현재 실행 중인 서버는 이번 작업에서 재시작하지 않았다. 기존 버전 1 생성 메시지를 새 worker에 그대로 재발행하면 입력 오류로 거절된다. 구버전 큐를 기존 worker로 처리할지 원본 ID로 변환할지 배포 전에 결정한다. 임의의 API 제목·본문을 그대로 저장하는 호환 경로는 두지 않았다.
 
 ## 중복 및 실패 정책
 
@@ -100,8 +119,10 @@ API에는 기존 JWT/OpenAI 등 원래 실행 설정도 필요하다.
 - 잘못된 JSON/type/version/필수값, 수신자 없음은 재시도하지 않고 실패 메타데이터를 로그에 기록한다.
 - DB 등 일시 오류는 1초 간격 2회 재시도한다. 소진 시 NOTIFICATION_FAILED 로그에
   topic/partition/offset/group을 남기고 다음 메시지로 진행한다.
-- DB 저장 후 전달 발행은 최대 12초 결과를 기다린다. 실패 시
-  NOTIFICATION_BROADCAST_FAILED를 기록하고 원본 처리를 완료한다. DB 목록으로 복구한다.
+- DB 저장 후 전달 발행의 결과 대기 예산은 페이지 전체 12초다. 예산이 끝나면 나머지 실시간 전송을 생략하고 다음 페이지를 인계한다. send 자체의 max.block.ms 대기는 별도로 최대 2초가 추가될 수 있다. DB 목록으로 누락을 보완한다.
+- 다음 페이지 발행은 별도로 최대 12초 기다린다. 실패 시 NOTIFICATION_CONTINUATION_FAILED 예외를 전파해 현재 레코드를 재시도한다. 저장 후 SSE 실패와 달리 인계 실패를 성공으로 삼키지 않는다.
+- 인계 성공 후 offset 커밋 전 종료하면 다음 작업이 중복될 수 있다. UNIQUE는 저장 중복을 막지만 페이지 작업 자체의 exactly-once를 보장하지 않는다.
+- 재시도 소진 시 현재 공통 recoverer는 NOTIFICATION_FAILED를 기록하고 진행한다. 이 경우 후속 수신자가 누락될 수 있다. 로그의 topic/partition/offset에 있는 원본 레코드를 Kafka 보관 기간 안에 추출해 payload의 커서·eventId·중복 키를 그대로 재발행한다. 전체 worker 그룹 offset을 되돌리면 무관한 메시지도 재처리되므로 복구 대상으로 사용하지 않는다. 영구 실패 저장소·자동 복구는 미구현이며 로그와 원본 레코드가 없어지면 복구를 보장하지 않는다.
 - 권한 변경 커밋 후 생성 전송 실패는 NOTIFICATION_CREATE_FAILED 로그로 관측한다.
   이미 성공한 권한 변경을 실패 응답으로 바꾸지 않는다.
 - outbox/DLT/영구 실패 저장소는 없다. 생성 전 프로세스 종료 등 일부 유실을 허용한다.
@@ -151,3 +172,19 @@ API 테스트는 Spring 커밋/롤백 리스너, 권한 변경 이벤트, MockMv
 
 토큰과 비밀번호는 출력하거나 이 문서에 기록하지 않는다.
 이 검증은 실제 인증·Kafka·DB·SSE 경로에 대한 것으로 프런트 화면 표시까지 확인한 것은 아니다.
+
+## 조립 검증 (2026-09-15)
+
+임시 PostgreSQL 16과 임베디드 Kafka를 사용했다. 최종 worker 33개·API 알림 20개 테스트가 실패·건너뜀 없이 통과했다. git diff --check도 통과했다. 임시 컨테이너는 검증 후 제거했고 기존 개발 DB·브로커·서버는 재시작하지 않았다.
+
+- KST·UTC·음수 오프셋·연도 경계 문구, 0/1/500/501명 페이지 경계.
+- 저장 중복만 있는 페이지의 후속 인계, 다음 작업 발행 실패 전파, 전달 실패 후 인계 유지.
+- 실제 SQL로 1만 명 날씨 알림 저장 및 삭제 사용자 제외, 원본 재처리 시 중복 페이지를 지나 마지막 페이지의 누락 행 복구.
+- 실제 팔로워 커서 조회, 페이지 중간 INSERT 실패 시 전체 롤백.
+- 단일 5개 유형 처리, 이벤트 팩토리 문구·업무 ID, API 공통 피드 리스너 커밋/롤백 경계.
+
+서비스 발행 연결, 실제 날씨 KMA→배치→SSE 수신, 브라우저·다중 API 및 운영 성능 목표는 이번 검증 범위가 아니다. DB 지연에는 별도 상한이 없으므로 500명 페이지 자체가 운영 poll 제한 이내인지 추가 측정해야 한다. 조회 인덱스·영구 실패 보관은 별도 검토 대상이다.
+
+최근 검증 항목: 원본 ID만 포함하는 직렬화, worker의 권한/댓글/DM 문구 조립, 빈 본문, 긴 Unicode 미리보기, 원본 없음, DM 멤버십, schemaVersion 1 생성 요청 거절. 이전 조립 테스트 수치는 해당 시점 기록이다.
+
+원본 ID 계약 전환 최종 검증: worker 38개, API 알림/관리자 26개, support 4개가 실패·건너뜀 없이 통과했다. 임시 PostgreSQL 컨테이너는 제거했다. 별도로 실행된 전체 API 테스트는 기본 DB 접속 오류로 contextLoads가 실패했으므로 전체 프로젝트 통과로 기록하지 않는다.

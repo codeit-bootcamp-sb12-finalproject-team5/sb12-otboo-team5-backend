@@ -49,7 +49,7 @@ public class NotificationCreateListener {
     @KafkaListener(topics = NotificationTopics.CREATE, containerFactory = "notificationCreateFactory")
     public void receive(ConsumerRecord<String, NotificationCreateMessage<JsonNode>> record) {
         NotificationCreateMessage<JsonNode> message = record.value();
-        if (message == null || message.schemaVersion() != 1 || message.eventId() == null
+        if (message == null || message.schemaVersion() != NotificationCreateMessage.CURRENT_SCHEMA_VERSION || message.eventId() == null
                 || message.occurredAt() == null || message.type() == null || message.payload() == null
                 || message.deduplicationKey() == null || message.deduplicationKey().isBlank()
                 || message.deduplicationKey().length() > 200
@@ -62,10 +62,17 @@ public class NotificationCreateListener {
                     .addDetail("type", message.type());
         }
         // handler 내부의 별도 트랜잭션 프록시가 정상 반환한 뒤에만 발행한다.
-        for (var notification : handler.handle(message)) {
+        var result = handler.handle(message);
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(12);
+        for (var notification : result.notifications()) {
+            if (System.nanoTime() >= deadline) {
+                log.error("NOTIFICATION_BROADCAST_BUDGET_EXCEEDED eventId={} topic={} partition={} offset={}",
+                        message.eventId(), record.topic(), record.partition(), record.offset());
+                break; // 남은 실시간 전송은 목록 조회로 보완하고 다음 페이지 인계는 계속한다.
+            }
             try {
                 publisher.publishBroadcast(NotificationBroadcastEvent.of(notification))
-                        .get(12, TimeUnit.SECONDS);
+                        .get(Math.max(1, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
             } catch (InterruptedException exception) {
                 Thread.currentThread().interrupt();
                 throw new NotificationException(ErrorCode.NOTIFICATION_PROCESSING_INTERRUPTED, exception);
@@ -74,6 +81,19 @@ public class NotificationCreateListener {
                 log.error("NOTIFICATION_BROADCAST_FAILED notificationId={} eventId={} topic={} partition={} offset={}",
                         notification.id(), message.eventId(), record.topic(), record.partition(),
                         record.offset(), exception);
+            }
+        }
+        if (result.continuation() != null) {
+            try {
+                publisher.publishCreate(result.continuationKey(), result.continuation())
+                        .get(12, TimeUnit.SECONDS);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new NotificationException(ErrorCode.NOTIFICATION_PROCESSING_INTERRUPTED, exception);
+            } catch (ExecutionException | TimeoutException | RuntimeException exception) {
+                // 재시도 소진 시 원본 topic/partition/offset으로 현재 페이지를 재발행해야 한다.
+                throw new NotificationException(ErrorCode.NOTIFICATION_CONTINUATION_FAILED, exception)
+                        .addDetail("eventId", message.eventId());
             }
         }
     }
