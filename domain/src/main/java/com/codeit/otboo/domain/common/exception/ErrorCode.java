@@ -58,7 +58,12 @@ public enum ErrorCode {
     FORBIDDEN(403, "해당 DM 방에서 메시지를 전송할 권한이 없습니다."),
 
     // ===== 알림 =====
-    // 담당자가 추가
+    NOTIFICATION_NOT_FOUND(400, "알림을 찾을 수 없습니다."),
+    NOTIFICATION_STREAM_UNAVAILABLE(503, "알림 연결을 준비 중입니다. 잠시 후 다시 시도해 주세요."),
+    INVALID_NOTIFICATION_BROADCAST(400, "알림 브로드캐스트 메시지가 올바르지 않습니다."),
+    UNSUPPORTED_NOTIFICATION_TYPE(400, "지원하지 않는 알림 유형입니다."),
+    DUPLICATE_NOTIFICATION_HANDLER(500, "알림 유형의 처리기가 중복 등록되었습니다."),
+    NOTIFICATION_PROCESSING_INTERRUPTED(500, "알림 처리가 중단되었습니다.")
     ;
 
     private final int status;

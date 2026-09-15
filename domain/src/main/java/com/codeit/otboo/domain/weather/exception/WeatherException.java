@@ -1,4 +1,4 @@
-package com.codeit.otboo.api.weather.exception;
+package com.codeit.otboo.domain.weather.exception;
 
 import com.codeit.otboo.domain.common.exception.BusinessException;
 import com.codeit.otboo.domain.common.exception.ErrorCode;

@@ -4,6 +4,9 @@ spring:
   config:
     import: optional:dotenv:../
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/${POSTGRES_DB}
@@ -34,9 +37,6 @@ spring:
       chat:
         options:
           model: gpt-5-mini
-      embedding:
-        options:
-          model: text-embedding-3-small
 
 jwt:
   secret: ${JWT_SECRET}
@@ -68,3 +68,7 @@ cloud:
     credentials:
       access-key: ${AWS_ACCESS_KEY_ID}
       secret-key: ${AWS_SECRET_ACCESS_KEY}
+
+notification:
+  kafka:
+    enabled: ${NOTIFICATION_KAFKA_ENABLED:false}

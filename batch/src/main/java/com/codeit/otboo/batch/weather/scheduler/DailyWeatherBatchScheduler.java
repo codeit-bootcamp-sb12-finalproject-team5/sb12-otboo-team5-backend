@@ -18,8 +18,10 @@ public class DailyWeatherBatchScheduler {
     private final JobLauncher jobLauncher;
     private final Job dailyWeatherSyncJob;
 
-    public DailyWeatherBatchScheduler(JobLauncher jobLauncher,
-            @Qualifier("dailyWeatherSyncJob") Job dailyWeatherSyncJob) {
+    public DailyWeatherBatchScheduler(
+        JobLauncher jobLauncher,
+        @Qualifier("dailyWeatherSyncJob") Job dailyWeatherSyncJob
+    ) {
         this.jobLauncher = jobLauncher;
         this.dailyWeatherSyncJob = dailyWeatherSyncJob;
     }
