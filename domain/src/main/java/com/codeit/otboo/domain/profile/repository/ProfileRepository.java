@@ -12,6 +12,8 @@ import org.springframework.data.repository.query.Param;
 public interface ProfileRepository extends JpaRepository<Profile, UUID> {
     Optional<Profile> findByUser_Id(UUID userId);
 
+    Optional<Profile> findByUser_Id(UUID userId);
+
     @Query("""
             select profile.user.id as userId,
                 profile.profileImageUrl as profileImageUrl

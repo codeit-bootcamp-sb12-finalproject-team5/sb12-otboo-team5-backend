@@ -24,6 +24,9 @@ public enum ErrorCode {
     TEMP_PASSWORD_EXPIRED(401, "임시 비밀번호가 만료되었습니다."),
     ACCESS_DENIED(403, "접근 권한이 없습니다."),
 
+    // ===== 프로필 =====
+    PROFILE_NOT_FOUND(404, "프로필을 찾을 수 없습니다."),
+
     // ===== 의상 =====
     CLOTHES_NOT_FOUND(404, "의상을 찾을 수 없습니다"),
     CLOTHES_ANALYSIS_FAILED(502, "의상 분석에 실패했습니다."),
