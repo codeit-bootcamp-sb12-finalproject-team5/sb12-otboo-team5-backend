@@ -12,4 +12,8 @@ public class ProfileException extends BusinessException {
     public static ProfileException notFound() {
         return new ProfileException(ErrorCode.PROFILE_NOT_FOUND);
     }
+
+    public static ProfileException invalidTemperatureSensitivity() {
+        return new ProfileException(ErrorCode.INVALID_INPUT_VALUE);
+    }
 }
