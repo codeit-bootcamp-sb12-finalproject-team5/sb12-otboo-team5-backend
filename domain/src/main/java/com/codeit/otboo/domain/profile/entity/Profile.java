@@ -1,6 +1,7 @@
 package com.codeit.otboo.domain.profile.entity;
 
 import com.codeit.otboo.domain.common.UpdatableEntity;
+import com.codeit.otboo.domain.profile.exception.ProfileException;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.weather.entity.WeatherGrid;
 import jakarta.persistence.*;
@@ -72,9 +73,8 @@ public class Profile extends UpdatableEntity {
 
 	public void updateTemperatureSensitivity(Short sensitivity){
 		if (sensitivity == null || sensitivity < -5 || sensitivity > 5) {
-			throw new IllegalArgumentException(
-					"온도 민감도는 -5~5 사이여야 합니다."
-			);
+			throw ProfileException.invalidTemperatureSensitivity()
+				.addDetail("temperatureSensitivity", "온도 민감도는 -5~5 사이여야 합니다.");
 		}
 		this.temperatureSensitivity = sensitivity;
 	}
