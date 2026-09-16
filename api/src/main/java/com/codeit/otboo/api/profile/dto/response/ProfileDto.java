@@ -31,4 +31,19 @@ public record ProfileDto(
         profile.getProfileImageUrl()
     );
   }
+
+  public static ProfileDto from(Profile profile, String profileImageUrl) {
+    return new ProfileDto(
+        profile.getUser().getId(),
+        profile.getUser().getName(),
+        profile.getGender(),
+        profile.getBirthDate(),
+        profile.getWeatherGrid() != null
+            ? profile.getWeatherGrid().getLocationNames()
+            : List.of(),
+        profile.getLocationSource(),
+        profile.getTemperatureSensitivity(),
+        profileImageUrl
+    );
+  }
 }

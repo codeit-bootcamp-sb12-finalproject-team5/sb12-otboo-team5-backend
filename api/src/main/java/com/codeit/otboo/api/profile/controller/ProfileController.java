@@ -35,7 +35,7 @@ public class ProfileController {
       @RequestPart("request") ProfileUpdateRequest request,
       @RequestPart(value = "image", required = false) MultipartFile image
   ) {
-    return ResponseEntity.ok(profileService.updateProfile(userId, request));
+    return ResponseEntity.ok(profileService.updateProfile(userId, request, image));
   }
 
 }

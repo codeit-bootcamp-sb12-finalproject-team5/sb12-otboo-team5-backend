@@ -10,11 +10,13 @@ import com.codeit.otboo.domain.profile.repository.ProfileRepository;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.weather.entity.WeatherGrid;
 import com.codeit.otboo.domain.weather.repository.WeatherGridRepository;
+import com.codeit.otboo.support.storage.S3StorageService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ public class ProfileService {
   private final ProfileRepository profileRepository;
   private final WeatherService weatherService;
   private final WeatherGridRepository weatherGridRepository;
+  private final S3StorageService s3StorageService;
 
   @Transactional
   public Profile createProfile(User user) {
@@ -46,11 +49,16 @@ public class ProfileService {
   public ProfileDto getProfile(UUID userId) {
     Profile profile = profileRepository.findByUser_Id(userId)
         .orElseThrow(ProfileException::notFound);
-    return ProfileDto.from(profile);
+    String profileImageUrl = s3StorageService.getPresignedUrl(profile.getProfileImageUrl());
+    return ProfileDto.from(profile, profileImageUrl);
   }
 
   @Transactional
-  public ProfileDto updateProfile(UUID userId, ProfileUpdateRequest request) {
+  public ProfileDto updateProfile(
+      UUID userId,
+      ProfileUpdateRequest request,
+      MultipartFile image
+  ) {
     Profile profile = profileRepository.findByUser_Id(userId)
         .orElseThrow(ProfileException::notFound);
 
@@ -75,8 +83,16 @@ public class ProfileService {
               .orElseThrow(ProfileException::resourceNotFound);
       profile.updateLocation(weatherGrid, request.locationSource());
     }
-
-    return ProfileDto.from(profile);
+    if (image != null && !image.isEmpty()) {
+      String oldObjectKey = profile.getProfileImageUrl();
+      if (oldObjectKey != null && !oldObjectKey.equals("profile/default.png")) {
+        s3StorageService.deleteOne(oldObjectKey);
+      }
+      String objectKey = s3StorageService.saveProfile(image, userId);
+      profile.updateProfileImageUrl(objectKey);
+    }
+    String profileImageUrl = s3StorageService.getPresignedUrl(profile.getProfileImageUrl());
+    return ProfileDto.from(profile, profileImageUrl);
   }
 
 }
