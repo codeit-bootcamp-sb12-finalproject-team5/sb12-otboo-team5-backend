@@ -38,6 +38,10 @@ spring:
         options:
           model: gpt-5-mini
 
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  model: ${GEMINI_MODEL}
+
 jwt:
   secret: ${JWT_SECRET}
   access-token-validity-seconds: 1800
