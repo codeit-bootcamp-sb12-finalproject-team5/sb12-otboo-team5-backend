@@ -110,6 +110,8 @@ public class SingleNotificationHandler implements NotificationRequestHandler {
         );
     }
 
+
+
     private NotificationContent content(UUID receiverId, String title, String body) {
         if (receiverId == null || title == null || title.isBlank() || body == null) {
             throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE);

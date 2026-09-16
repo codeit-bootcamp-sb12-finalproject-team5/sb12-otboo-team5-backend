@@ -39,9 +39,11 @@ public class NotificationSaveService {
             String title, String content, NotificationLevel level) {
         List<NotificationDto> saved = new ArrayList<>();
         for (UUID receiver : receivers) {
-            repository.insert(type, key, new NotificationContent(receiver, title, content, level))
+            repository.insert(
+                type, key, new NotificationContent(receiver, title, content, level))
                     .ifPresent(saved::add);
         }
+
         return List.copyOf(saved);
     }
 }
