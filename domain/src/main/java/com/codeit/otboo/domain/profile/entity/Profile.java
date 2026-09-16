@@ -70,11 +70,9 @@ public class Profile extends UpdatableEntity {
 		this.locationSource = locationSource;
 	}
 
-	public void updateTemperatureSensitivity(Short sensitivity){
-		if (sensitivity == null || sensitivity < 1 || sensitivity > 5) {
-			throw new IllegalArgumentException(
-					"더위를 타는 정도는 1~5 사이여야 합니다."
-			);
+	public void updateTemperatureSensitivity(Short sensitivity) {
+		if (sensitivity == null || sensitivity < -5 || sensitivity > 5) {
+			throw new IllegalArgumentException("온도 민감도는 -5~5 사이여야 합니다.");
 		}
 		this.temperatureSensitivity = sensitivity;
 	}
