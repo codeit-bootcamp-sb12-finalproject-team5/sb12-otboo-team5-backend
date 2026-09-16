@@ -41,6 +41,7 @@ spring:
 gemini:
   api-key: ${GEMINI_API_KEY}
   model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
+  timeout-seconds: ${GEMINI_TIMEOUT_SECONDS:10}
 
 jwt:
   secret: ${JWT_SECRET}

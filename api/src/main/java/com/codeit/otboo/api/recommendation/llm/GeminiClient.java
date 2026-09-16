@@ -7,23 +7,31 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.client.WebClient;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
+@Slf4j
 public class GeminiClient {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final String model;
+    private final Duration timeout;
 
     public GeminiClient(
         WebClient.Builder webClientBuilder,
         ObjectMapper objectMapper,
         @Value("${gemini.api-key}") String apiKey,
-        @Value("${gemini.model}") String model
+        @Value("${gemini.model}") String model,
+        @Value("${gemini.timeout-seconds}") long timeoutSeconds
     ) {
         this.webClient = webClientBuilder
             .baseUrl("https://generativelanguage.googleapis.com")
@@ -31,11 +39,28 @@ public class GeminiClient {
             .build();
         this.objectMapper = objectMapper;
         this.model = model;
+        this.timeout = Duration.ofSeconds(timeoutSeconds);
     }
 
     public GeminiRecommendationResult generate(String prompt, LlmRecommendationRequest request) {
-        String context = serialize(request);
+        return generate(prompt, request, null);
+    }
 
+    public GeminiRecommendationResult generate(String prompt, LlmRecommendationRequest request, String correctionContext) {
+        String context = serialize(request) + (correctionContext == null ? "" : "\n\nCorrection context: " + correctionContext);
+        for (int attempt = 0; attempt < 2; attempt++) {
+            try {
+                return request(prompt, context);
+            } catch (RuntimeException exception) {
+                if (attempt == 1 || !isRetryable(exception)) throw exception;
+                log.warn("[recommendation] Gemini request failed; retrying. attempt={}, status={}", attempt + 1, status(exception));
+                backoff();
+            }
+        }
+        throw new IllegalStateException("Unreachable Gemini retry state");
+    }
+
+    private GeminiRecommendationResult request(String prompt, String context) {
         JsonNode rawResponse = webClient.post()
             .uri("/v1beta/models/{model}:generateContent", model)
             .contentType(MediaType.APPLICATION_JSON)
@@ -48,7 +73,7 @@ public class GeminiClient {
                 )
             ))
             .retrieve()
-            .bodyToMono(JsonNode.class)
+            .bodyToMono(JsonNode.class).timeout(timeout)
             .block();
 
         if (rawResponse == null) {
@@ -73,6 +98,33 @@ public class GeminiClient {
                     optionalInt(usage, "totalTokenCount")));
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Failed to parse Gemini structured output", exception);
+        }
+    }
+
+    private boolean isRetryable(RuntimeException exception) {
+        if (hasCause(exception, TimeoutException.class)) return true;
+        if (exception instanceof WebClientRequestException) return true;
+        return exception instanceof WebClientResponseException response
+            && (response.getStatusCode().value() == 429 || response.getStatusCode().is5xxServerError());
+    }
+
+    private boolean hasCause(Throwable throwable, Class<? extends Throwable> type) {
+        for (Throwable current = throwable; current != null; current = current.getCause()) {
+            if (type.isInstance(current)) return true;
+        }
+        return false;
+    }
+
+    private String status(RuntimeException exception) {
+        return exception instanceof WebClientResponseException response ? String.valueOf(response.getStatusCode().value()) : "connection-or-timeout";
+    }
+
+    private void backoff() {
+        try {
+            Thread.sleep(300);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Gemini retry interrupted", exception);
         }
     }
 
