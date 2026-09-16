@@ -4,6 +4,7 @@ import com.codeit.otboo.api.profile.dto.request.ProfileUpdateRequest;
 import com.codeit.otboo.api.profile.dto.response.ProfileDto;
 import com.codeit.otboo.api.weather.dto.response.WeatherGridDto;
 import com.codeit.otboo.api.weather.service.WeatherService;
+import com.codeit.otboo.domain.profile.entity.LocationSource;
 import com.codeit.otboo.domain.profile.entity.Profile;
 import com.codeit.otboo.domain.profile.exception.ProfileException;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
@@ -77,11 +78,11 @@ public class ProfileService {
       profile.updateTemperatureSensitivity(request.temperatureSensitivity());
     }
 
-    if (request.longitude() != null && request.latitude() != null && request.locationSource() != null) {
+    if (request.longitude() != null && request.latitude() != null) {
       WeatherGridDto weatherGridDto = weatherService.findGrid(request.longitude(), request.latitude());
       WeatherGrid weatherGrid = weatherGridRepository.findById(weatherGridDto.id())
               .orElseThrow(ProfileException::resourceNotFound);
-      profile.updateLocation(weatherGrid, request.locationSource());
+      profile.updateLocation(weatherGrid, LocationSource.GPS);
     }
     if (image != null && !image.isEmpty()) {
       String oldObjectKey = profile.getProfileImageUrl();
