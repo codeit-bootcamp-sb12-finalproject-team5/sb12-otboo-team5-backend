@@ -1,11 +1,10 @@
-package com.codeit.otboo.api.notification.service;
+package com.codeit.otboo.batch.notification.scheduler;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import com.codeit.otboo.api.notification.config.NotificationBroadcastConfig;
 import com.fasterxml.uuid.Generators;
 import java.util.Collection;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import org.apache.kafka.clients.admin.*;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.errors.GroupNotEmptyException;
@@ -23,19 +21,13 @@ import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 class NotificationConsumerGroupCleanupTest {
     private static final String OLD = "notification-sse-01900000-0000-7000-8000-000000000001";
     private final KafkaProperties properties = new KafkaProperties();
-    private final org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory<String,
-            com.codeit.otboo.domain.notification.event.NotificationBroadcastEvent> factory =
-            new NotificationBroadcastConfig().notificationBroadcastFactory(properties);
     private final NotificationConsumerGroupCleanup cleanup = new NotificationConsumerGroupCleanup(
-            new org.springframework.kafka.core.KafkaAdmin(properties.buildAdminProperties(null)), factory);
+            new org.springframework.kafka.core.KafkaAdmin(properties.buildAdminProperties(null)));
     private final Admin admin = mock(Admin.class);
 
     @Test
     void deletesOnlyOldEmptySseGroups() throws Exception {
-        String current = (String) factory.getConsumerFactory().getConfigurationProperties()
-                .get(ConsumerConfig.GROUP_ID_CONFIG);
         listing(List.of(group(OLD, ConsumerGroupState.EMPTY),
-                group(current, ConsumerGroupState.EMPTY),
                 group("notification-sse-" + Generators.timeBasedEpochGenerator().generate(), ConsumerGroupState.EMPTY),
                 group("notification-worker", ConsumerGroupState.EMPTY),
                 group("notification-sse-manual", ConsumerGroupState.EMPTY),

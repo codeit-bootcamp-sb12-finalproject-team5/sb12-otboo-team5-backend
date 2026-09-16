@@ -1,6 +1,5 @@
-package com.codeit.otboo.api.notification.service;
+package com.codeit.otboo.batch.notification.scheduler;
 
-import com.codeit.otboo.domain.notification.event.NotificationBroadcastEvent;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -8,14 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.DeleteConsumerGroupsOptions;
 import org.apache.kafka.clients.admin.ListConsumerGroupsOptions;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.ConsumerGroupState;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaAdmin;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -25,18 +21,12 @@ public class NotificationConsumerGroupCleanup {
     private static final String PREFIX = "notification-sse-";
     private static final long MIN_AGE_MILLIS = Duration.ofHours(1).toMillis();
     private final KafkaAdmin kafkaAdmin;
-    private final String currentGroup;
 
-    public NotificationConsumerGroupCleanup(KafkaAdmin kafkaAdmin,
-            @Qualifier("notificationBroadcastFactory")
-            ConcurrentKafkaListenerContainerFactory<String, NotificationBroadcastEvent> factory) {
+    public NotificationConsumerGroupCleanup(KafkaAdmin kafkaAdmin) {
         this.kafkaAdmin = kafkaAdmin;
-        this.currentGroup = (String) factory.getConsumerFactory().getConfigurationProperties()
-                .get(ConsumerConfig.GROUP_ID_CONFIG);
     }
 
-    // Kafka 관리 요청이 SSE heartbeat 스케줄러를 막지 않도록 기존 비동기 실행기를 사용한다.
-    @Async("taskExecutor")
+    @Async("notificationCleanupExecutor")
     @Scheduled(initialDelay = 60_000, fixedDelay = 3_600_000)
     public void cleanup() {
         Admin admin = null;
@@ -73,7 +63,7 @@ public class NotificationConsumerGroupCleanup {
     }
 
     private boolean isOldSseGroup(String group, long cutoff) {
-        if (group.equals(currentGroup) || !group.startsWith(PREFIX)) {
+        if (!group.startsWith(PREFIX)) {
             return false;
         }
         try {

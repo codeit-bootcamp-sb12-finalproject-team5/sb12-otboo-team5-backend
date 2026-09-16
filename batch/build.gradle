@@ -9,6 +9,9 @@ dependencies {
     implementation project(':domain')
     implementation project(':support')
 
+    // Notification Kafka group cleanup
+    implementation 'org.springframework.kafka:spring-kafka'
+
     // Spring Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
