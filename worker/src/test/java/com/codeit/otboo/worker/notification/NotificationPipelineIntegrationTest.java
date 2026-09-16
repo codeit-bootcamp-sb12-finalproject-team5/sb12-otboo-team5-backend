@@ -234,11 +234,12 @@ class NotificationPipelineIntegrationTest {
         jdbc.update("INSERT INTO feed_comment(id,feed_id,user_id,content) VALUES (?,?,?,?)", comment, feed, author, "실제 댓글 내용");
         jdbc.update("INSERT INTO feed_like(id,feed_id,user_id) VALUES (?,?,?)", like, feed, author);
         jdbc.update("INSERT INTO follow(id,follower_id,followee_id) VALUES (?,?,?)", follow, author, receiver);
-        for (var pair : java.util.Map.of(NotificationType.FEED_COMMENTED, comment,
-                NotificationType.FEED_LIKED, like, NotificationType.FOLLOWED, follow).entrySet()) {
-            singleHandler.handle(sourceEvent(pair.getKey(), pair.getValue(),
-                    new com.codeit.otboo.domain.notification.event.NotificationSourceEvent(pair.getValue())));
-        }
+        singleHandler.handle(sourceEvent(NotificationType.FEED_COMMENTED, comment,
+                new com.codeit.otboo.domain.notification.event.FeedCommentNotificationPayload(comment)));
+        singleHandler.handle(sourceEvent(NotificationType.FEED_LIKED, like,
+                new com.codeit.otboo.domain.notification.event.FeedLikeNotificationPayload(like)));
+        singleHandler.handle(sourceEvent(NotificationType.FOLLOWED, follow,
+                new com.codeit.otboo.domain.notification.event.FollowNotificationPayload(follow)));
         assertThat(jdbc.queryForObject("SELECT content FROM notification WHERE type='FEED_COMMENTED'", String.class))
                 .isEqualTo("실제 댓글 내용");
         assertThat(jdbc.queryForObject("SELECT content FROM notification WHERE type='FOLLOWED'", String.class)).isEmpty();

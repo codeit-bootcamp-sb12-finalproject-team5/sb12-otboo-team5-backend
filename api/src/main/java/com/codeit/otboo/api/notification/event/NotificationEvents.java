@@ -4,7 +4,9 @@ import com.codeit.otboo.domain.notification.entity.NotificationType;
 import com.codeit.otboo.domain.notification.event.DirectMessageNotificationEvent;
 import com.codeit.otboo.domain.notification.event.FeedNotificationCreateEvent;
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
-import com.codeit.otboo.domain.notification.event.NotificationSourceEvent;
+import com.codeit.otboo.domain.notification.event.FeedLikeNotificationPayload;
+import com.codeit.otboo.domain.notification.event.FeedCommentNotificationPayload;
+import com.codeit.otboo.domain.notification.event.FollowNotificationPayload;
 import com.codeit.otboo.domain.notification.event.RoleChangedNotificationEvent;
 import com.codeit.otboo.domain.user.entity.UserRole;
 import com.fasterxml.uuid.Generators;
@@ -24,27 +26,27 @@ public final class NotificationEvents {
         );
     }
 
-    public static NotificationCreateMessage<NotificationSourceEvent> feedLiked(UUID likeId) {
+    public static NotificationCreateMessage<FeedLikeNotificationPayload> feedLiked(UUID likeId) {
         return create(
             NotificationType.FEED_LIKED,
             likeId,
-            new NotificationSourceEvent(likeId)
+            new FeedLikeNotificationPayload(likeId)
         );
     }
 
-    public static NotificationCreateMessage<NotificationSourceEvent> commentCreated(UUID commentId) {
+    public static NotificationCreateMessage<FeedCommentNotificationPayload> commentCreated(UUID commentId) {
         return create(
             NotificationType.FEED_COMMENTED,
             commentId,
-            new NotificationSourceEvent(commentId)
+            new FeedCommentNotificationPayload(commentId)
         );
     }
 
-    public static NotificationCreateMessage<NotificationSourceEvent> followCreated(UUID followId) {
+    public static NotificationCreateMessage<FollowNotificationPayload> followCreated(UUID followId) {
         return create(
             NotificationType.FOLLOWED,
             followId,
-            new NotificationSourceEvent(followId)
+            new FollowNotificationPayload(followId)
         );
     }
 

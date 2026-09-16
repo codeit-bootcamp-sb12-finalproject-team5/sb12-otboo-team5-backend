@@ -1,7 +1,9 @@
 package com.codeit.otboo.api.notification.event;
 
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
-import com.codeit.otboo.domain.notification.event.NotificationSourceEvent;
+import com.codeit.otboo.domain.notification.event.FeedLikeNotificationPayload;
+import com.codeit.otboo.domain.notification.event.FeedCommentNotificationPayload;
+import com.codeit.otboo.domain.notification.event.FollowNotificationPayload;
 import com.codeit.otboo.domain.notification.event.RoleChangedNotificationEvent;
 import com.codeit.otboo.domain.notification.event.DirectMessageNotificationEvent;
 import com.codeit.otboo.domain.notification.event.FeedNotificationCreateEvent;
@@ -31,8 +33,12 @@ public class NotificationCommittedListener {
                 key = payload.receiverId().toString();
             } else if (message.payload() instanceof DirectMessageNotificationEvent payload) {
                 key = payload.receiverId().toString();
-            } else if (message.payload() instanceof NotificationSourceEvent payload) {
-                key = payload.sourceId().toString();
+            } else if (message.payload() instanceof FeedLikeNotificationPayload payload) {
+                key = payload.likeId().toString();
+            } else if (message.payload() instanceof FeedCommentNotificationPayload payload) {
+                key = payload.commentId().toString();
+            } else if (message.payload() instanceof FollowNotificationPayload payload) {
+                key = payload.followId().toString();
             } else if (message.payload() instanceof FeedNotificationCreateEvent payload) {
                 key = payload.feedId().toString();
             } else {

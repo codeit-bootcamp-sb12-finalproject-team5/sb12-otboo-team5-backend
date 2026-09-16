@@ -6,7 +6,9 @@ import com.codeit.otboo.domain.notification.entity.NotificationLevel;
 import com.codeit.otboo.domain.notification.entity.NotificationType;
 import com.codeit.otboo.domain.notification.event.DirectMessageNotificationEvent;
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
-import com.codeit.otboo.domain.notification.event.NotificationSourceEvent;
+import com.codeit.otboo.domain.notification.event.FeedLikeNotificationPayload;
+import com.codeit.otboo.domain.notification.event.FeedCommentNotificationPayload;
+import com.codeit.otboo.domain.notification.event.FollowNotificationPayload;
 import com.codeit.otboo.domain.notification.event.RoleChangedNotificationEvent;
 import com.codeit.otboo.domain.notification.exception.NotificationException;
 import com.codeit.otboo.domain.user.entity.UserRole;
@@ -70,14 +72,19 @@ public class SingleNotificationHandler implements NotificationRequestHandler {
                 source.content()
             );
         } else {
-            var event = payload(message, NotificationSourceEvent.class);
+            UUID sourceId = switch (message.type()) {
+                case FEED_LIKED -> payload(message, FeedLikeNotificationPayload.class).likeId();
+                case FEED_COMMENTED -> payload(message, FeedCommentNotificationPayload.class).commentId();
+                case FOLLOWED -> payload(message, FollowNotificationPayload.class).followId();
+                default -> throw new NotificationException(ErrorCode.UNSUPPORTED_NOTIFICATION_TYPE);
+            };
 
-            requireSource(message, event.sourceId());
+            requireSource(message, sourceId);
 
             var source = switch (message.type()) {
-                case FEED_LIKED -> sources.findLike(event.sourceId());
-                case FEED_COMMENTED -> sources.findComment(event.sourceId());
-                case FOLLOWED -> sources.findFollow(event.sourceId());
+                case FEED_LIKED -> sources.findLike(sourceId);
+                case FEED_COMMENTED -> sources.findComment(sourceId);
+                case FOLLOWED -> sources.findFollow(sourceId);
                 default -> throw new NotificationException(ErrorCode.UNSUPPORTED_NOTIFICATION_TYPE);
             };
 

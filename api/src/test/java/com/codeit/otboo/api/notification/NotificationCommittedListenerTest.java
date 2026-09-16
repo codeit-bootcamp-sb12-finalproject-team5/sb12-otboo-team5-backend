@@ -111,6 +111,23 @@ class NotificationCommittedListenerTest {
         }
     }
 
+    @Test
+    void distinctSourcePayloadsUseTheirBusinessIdsAsKafkaKeys() {
+        var publisher = mock(NotificationEventPublisher.class);
+        when(publisher.publishCreate(anyString(), any())).thenReturn(CompletableFuture.completedFuture(null));
+        var messages = java.util.List.of(
+                NotificationEvents.feedLiked(UUID.randomUUID()),
+                NotificationEvents.commentCreated(UUID.randomUUID()),
+                NotificationEvents.followCreated(UUID.randomUUID()));
+        try (var context = context(publisher)) {
+            var transaction = new TransactionTemplate(new TestTransactionManager());
+            for (var message : messages) {
+                transaction.executeWithoutResult(status -> context.publishEvent(message));
+                verify(publisher, timeout(3000)).publishCreate(message.eventId().toString(), message);
+            }
+        }
+    }
+
     private AnnotationConfigApplicationContext context(NotificationEventPublisher publisher) {
         var context = new AnnotationConfigApplicationContext();
         context.getEnvironment().getPropertySources().addFirst(

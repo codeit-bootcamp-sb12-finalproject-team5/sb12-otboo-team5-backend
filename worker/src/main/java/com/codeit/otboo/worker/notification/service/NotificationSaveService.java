@@ -38,6 +38,7 @@ public class NotificationSaveService {
     public List<NotificationDto> savePage(NotificationType type, String key, List<UUID> receivers,
             String title, String content, NotificationLevel level) {
         List<NotificationDto> saved = new ArrayList<>();
+
         for (UUID receiver : receivers) {
             repository.insert(
                 type, key, new NotificationContent(receiver, title, content, level))

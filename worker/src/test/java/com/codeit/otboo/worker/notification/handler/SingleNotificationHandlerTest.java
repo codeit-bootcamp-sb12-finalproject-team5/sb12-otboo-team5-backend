@@ -44,7 +44,7 @@ class SingleNotificationHandlerTest {
     @ValueSource(strings = {"댓글 원문", "", "   "})
     void commentContentIncludingEmptyStringIsPreserved(String body) {
         when(sources.findComment(id)).thenReturn(Optional.of(new NotificationSourceRepository.Source(receiver, "작성자", body)));
-        handler.handle(event(NotificationType.FEED_COMMENTED, new NotificationSourceEvent(id)));
+        handler.handle(event(NotificationType.FEED_COMMENTED, new FeedCommentNotificationPayload(id)));
         verify(save).save(eq(NotificationType.FEED_COMMENTED), anyString(), eq(new NotificationContent(
                 receiver, "작성자님이 댓글을 달았어요.", body, NotificationLevel.INFO)));
     }
@@ -55,8 +55,8 @@ class SingleNotificationHandlerTest {
         when(sources.findFollow(id)).thenReturn(Optional.of(source));
         when(sources.findLike(id)).thenReturn(Optional.of(
                 new NotificationSourceRepository.Source(receiver, "작성자", "피드 원문")));
-        handler.handle(event(NotificationType.FOLLOWED, new NotificationSourceEvent(id)));
-        handler.handle(event(NotificationType.FEED_LIKED, new NotificationSourceEvent(id)));
+        handler.handle(event(NotificationType.FOLLOWED, new FollowNotificationPayload(id)));
+        handler.handle(event(NotificationType.FEED_LIKED, new FeedLikeNotificationPayload(id)));
         verify(save).save(eq(NotificationType.FOLLOWED), anyString(), argThat(v -> v.content().isEmpty()));
         verify(save).save(eq(NotificationType.FEED_LIKED), anyString(), eq(new NotificationContent(
                 receiver, "작성자님이 내 피드를 좋아합니다.", "피드 원문", NotificationLevel.INFO)));
@@ -90,11 +90,18 @@ class SingleNotificationHandlerTest {
     }
 
     @Test
+    void payloadForAnotherTypeIsRejectedBeforeLookup() {
+        assertThatThrownBy(() -> handler.handle(event(NotificationType.FEED_COMMENTED,
+                new FeedLikeNotificationPayload(id)))).isInstanceOf(NotificationException.class);
+        verifyNoInteractions(save, sources);
+    }
+
+    @Test
     void invalidOrMissingSourceIdIsRejectedBeforeLookup() {
         assertThatThrownBy(() -> handler.handle(event(NotificationType.FEED_COMMENTED,
-                new NotificationSourceEvent(null)))).isInstanceOf(NotificationException.class);
+                new FeedCommentNotificationPayload(null)))).isInstanceOf(NotificationException.class);
         assertThatThrownBy(() -> handler.handle(event(NotificationType.FEED_COMMENTED,
-                new NotificationSourceEvent(UUID.randomUUID())))).isInstanceOf(NotificationException.class);
+                new FeedCommentNotificationPayload(UUID.randomUUID())))).isInstanceOf(NotificationException.class);
         verifyNoInteractions(save, sources);
     }
 }

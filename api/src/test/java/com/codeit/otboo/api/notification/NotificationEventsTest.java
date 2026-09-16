@@ -20,7 +20,14 @@ class NotificationEventsTest {
             assertThat(message.eventId()).isEqualTo(source);
             assertThat(message.schemaVersion()).isEqualTo(2);
             assertThat(message.deduplicationKey()).isEqualTo(message.type().name() + ":" + source);
-            assertThat(message.payload().sourceId()).isEqualTo(source);
+            String field = switch (message.type()) {
+                case FEED_LIKED -> "likeId";
+                case FEED_COMMENTED -> "commentId";
+                case FOLLOWED -> "followId";
+                default -> throw new AssertionError(message.type());
+            };
+            assertThat(NotificationKafkaJson.mapper().valueToTree(message.payload()).get(field).asText())
+                    .isEqualTo(source.toString());
             assertThat(NotificationKafkaJson.mapper().valueToTree(message.payload()).size()).isEqualTo(1);
         }
     }
