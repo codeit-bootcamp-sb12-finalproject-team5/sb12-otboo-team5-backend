@@ -2,6 +2,8 @@ package com.codeit.otboo.support.openai.clothes;
 
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
+import com.codeit.otboo.support.openai.clothes.exception.ClothesAnalysisClientException;
+import com.codeit.otboo.support.openai.clothes.exception.ProductImageResolutionException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;

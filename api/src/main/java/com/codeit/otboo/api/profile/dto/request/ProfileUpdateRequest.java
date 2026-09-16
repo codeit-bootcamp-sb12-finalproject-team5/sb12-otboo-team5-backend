@@ -22,7 +22,7 @@ public record ProfileUpdateRequest(
 
     LocationSource locationSource,
 
-    @Min(1)
+    @Min(-5)
     @Max(5)
     Short temperatureSensitivity
 ) {
