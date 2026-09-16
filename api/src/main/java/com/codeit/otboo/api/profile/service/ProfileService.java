@@ -14,6 +14,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +23,24 @@ public class ProfileService {
   private final ProfileRepository profileRepository;
   private final WeatherService weatherService;
   private final WeatherGridRepository weatherGridRepository;
+
+  @Transactional
+  public Profile createProfile(User user) {
+
+    Float[] preferenceVector = new Float[1536];
+    Arrays.fill(preferenceVector, 0f);
+
+    Profile profile = Profile.builder()
+        .user(user)
+        .preferenceVector(preferenceVector)
+        .profileImageUrl("profile/default.png")
+        .temperatureSensitivity((short) 0)
+        .build();
+
+    profileRepository.save(profile);
+
+    return profile;
+  }
 
   @Transactional(readOnly = true)
   public ProfileDto getProfile(UUID userId) {
