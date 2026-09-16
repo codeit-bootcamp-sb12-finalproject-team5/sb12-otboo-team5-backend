@@ -11,6 +11,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework:spring-web'
     implementation 'org.springframework.boot:spring-boot-starter-json'
+    implementation 'org.springframework.security:spring-security-core'
 
     // api/batch 양쪽에서 CacheConfig, @Cacheable 등을 그대로 사용할 수 있도록 api로 노출
     api 'org.springframework.boot:spring-boot-starter-data-redis'

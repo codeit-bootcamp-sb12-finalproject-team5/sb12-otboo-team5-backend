@@ -8,7 +8,6 @@ import com.codeit.otboo.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.Array;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -54,9 +53,8 @@ public class Clothes extends SoftDeletableEntity {
 
 	@Setter
 	@JdbcTypeCode(SqlTypes.VECTOR)
-	@Array(length = 1536)
 	@Column(name = "attribute_vector", columnDefinition = "vector(1536)")
-	private Float[] attributeVector;
+	private float[] attributeVector;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
