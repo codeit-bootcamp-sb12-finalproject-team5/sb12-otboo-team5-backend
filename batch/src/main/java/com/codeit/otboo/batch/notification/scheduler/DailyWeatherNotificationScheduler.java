@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.task.TaskExecutor;
@@ -33,10 +35,15 @@ public class DailyWeatherNotificationScheduler {
         var parameters = new JobParametersBuilder()
                 .addString("collectionDate", LocalDate.now(ZoneOffset.ofHours(9)).toString())
                 .toJobParameters();
+
         try {
             executor.execute(() -> {
                 try {
                     launcher.run(job, parameters);
+                } catch (JobInstanceAlreadyCompleteException exception) {
+                    log.info("[WEATHER-NOTIFICATION] 이미 완료된 날짜이므로 실행 생략 parameters={}", parameters);
+                } catch (JobExecutionAlreadyRunningException exception) {
+                    log.info("[WEATHER-NOTIFICATION] 이미 실행 중이므로 실행 생략 parameters={}", parameters);
                 } catch (Exception exception) {
                     log.error("[WEATHER-NOTIFICATION] 배치 실행 실패 parameters={}", parameters, exception);
                 }

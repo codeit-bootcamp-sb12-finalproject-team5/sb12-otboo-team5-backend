@@ -85,6 +85,7 @@ public class WeatherNotificationJobConfig {
     @StepScope
     public JdbcPagingItemReader<WeatherNotificationGrid> weatherNotificationGridReader(DataSource dataSource) {
         var query = new PostgresPagingQueryProvider();
+
         query.setSelectClause("SELECT g.id, g.nx, g.ny, g.region_1depth, g.region_2depth, g.region_3depth, g.region_4depth");
         query.setFromClause("FROM weather_grid g");
         query.setWhereClause("""
@@ -94,6 +95,7 @@ public class WeatherNotificationJobConfig {
                 )
                 """);
         query.setSortKeys(Map.of("id", Order.ASCENDING));
+
         return new JdbcPagingItemReaderBuilder<WeatherNotificationGrid>()
                 .name("weatherNotificationGridReader").dataSource(dataSource)
                 .queryProvider(query).pageSize(100).saveState(true)

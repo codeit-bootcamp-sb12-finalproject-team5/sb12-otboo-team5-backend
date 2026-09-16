@@ -18,6 +18,7 @@ import org.springframework.batch.item.ItemWriter;
 @RequiredArgsConstructor
 public class WeatherNotificationEventWriter implements
         ItemWriter<NotificationCreateMessage<WeatherNotificationCreateEvent>> {
+
     private final NotificationEventPublisher publisher;
     private final Clock clock;
 
@@ -26,10 +27,12 @@ public class WeatherNotificationEventWriter implements
         for (var message : chunk) {
             // Processor 처리 중 자정을 넘긴 경우도 발행하지 않는다.
             LocalDate target = LocalDate.parse(message.deduplicationKey().substring("WEATHER_FORECAST:".length()));
+
             if (!LocalDate.now(clock.withZone(ZoneOffset.ofHours(9))).isBefore(target)) {
                 throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE)
                         .addDetail("reason", "날씨 알림 발행 기한 만료");
             }
+
             try {
                 publisher.publishCreate(message.payload().weatherGridId().toString(), message)
                         .get(15, TimeUnit.SECONDS);

@@ -55,7 +55,9 @@ public class FanOutNotificationHandler implements NotificationRequestHandler {
                 || payload.content().isBlank() || payload.content().length() > 1000) {
             throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE);
         }
+
         LocalDate forecastDate;
+
         try {
             String prefix = "WEATHER_FORECAST:";
             if (message.deduplicationKey() == null || !message.deduplicationKey().startsWith(prefix)) {
@@ -68,17 +70,20 @@ public class FanOutNotificationHandler implements NotificationRequestHandler {
         } catch (DateTimeParseException exception) {
             throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE, exception);
         }
-        // 최초 요청과 continuation 모두 대상일 00시부터 신규 저장을 중단한다.
+
         if (!LocalDate.now(KST).isBefore(forecastDate)) {
             log.info("[WEATHER-NOTIFICATION] 만료 grid={}, forecastDate={}, cursor={} 필요 작업 종료",
                     payload.weatherGridId(), forecastDate, payload.afterReceiverId());
             return new NotificationHandlingResult(List.of(), null, null);
         }
+
         var page = recipients.findGridUsers(payload.weatherGridId(), payload.afterReceiverId(), PAGE_SIZE + 1);
         var receivers = page.subList(0, Math.min(page.size(), PAGE_SIZE));
+
         Object next = page.size() > PAGE_SIZE ? new WeatherNotificationCreateEvent(
                 payload.weatherGridId(), payload.title(), payload.content(),
                 receivers.get(receivers.size() - 1)) : null;
+
         return save(message, receivers, payload.title(), payload.content(), next,
                 payload.weatherGridId().toString());
     }
