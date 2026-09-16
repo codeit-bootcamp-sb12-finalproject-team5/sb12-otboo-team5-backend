@@ -1,6 +1,8 @@
-package com.codeit.otboo.support.openai.clothes;
+package com.codeit.otboo.support.openai.clothes.impl;
 
 import com.codeit.otboo.domain.clothes.enums.*;
+import com.codeit.otboo.support.openai.clothes.ClothesAnalysisClient;
+import com.codeit.otboo.support.openai.clothes.ClothesAnalysisResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Arrays;
@@ -17,8 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Component
-public class OpenAiWebSearchClient {
+//@Component
+public class OpenAiWebSearchClient implements ClothesAnalysisClient {
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -36,6 +37,7 @@ public class OpenAiWebSearchClient {
         this.objectMapper = objectMapper;
     }
 
+    @Override
     public ClothesAnalysisResult analyze(String prompt) {
         long start = System.currentTimeMillis();
 
@@ -83,7 +85,6 @@ public class OpenAiWebSearchClient {
         }
     }
     private Map<String, Object> createRequest(String prompt) {
-
         Map<String, Object> webSearchTool = Map.of(
             "type", "web_search",
             "search_context_size", "low",
@@ -93,16 +94,12 @@ public class OpenAiWebSearchClient {
                 )
             )
         );
-
         return Map.of(
             "model", "gpt-5-mini",
-
             "tools", List.of(
                 webSearchTool
             ),
-
             "input", prompt,
-
             "text", Map.of(
                 "format", Map.of(
                     "type", "json_schema",
@@ -114,71 +111,57 @@ public class OpenAiWebSearchClient {
         );
     }
     private Map<String, Object> createSchema() {
-
         Map<String, Object> properties = new LinkedHashMap<>();
-
         properties.put(
             "name",
             Map.of("type", "string")
         );
-
         properties.put(
             "imageUrl",
             Map.of("type", "string")
         );
-
         properties.put(
             "gender",
             enumSchema(ClothesGender.values())
         );
-
         properties.put(
             "category",
             enumSchema(ClothesCategory.values())
         );
-
         properties.put(
             "subcategory",
             enumSchema(ClothesSubCategory.values())
         );
-
         properties.put(
             "color",
             enumSchema(ClothesColor.values())
         );
-
         properties.put(
             "fit",
             enumSchema(ClothesFit.values())
         );
-
         properties.put(
             "material",
             enumSchema(ClothesMaterial.values())
         );
-
         properties.put(
             "pattern",
             enumSchema(ClothesPattern.values())
         );
-
         properties.put(
             "style",
             enumSchema(ClothesStyle.values())
         );
-
         properties.put(
             "season",
             enumSchema(ClothesSeason.values())
         );
-
         properties.put(
             "brand",
             Map.of(
                 "type", "string"
             )
         );
-
         properties.put(
             "description",
             Map.of(
@@ -188,9 +171,7 @@ public class OpenAiWebSearchClient {
 
         return Map.of(
             "type", "object",
-
             "properties", properties,
-
             "required", List.of(
                 "name",
                 "imageUrl",
@@ -206,7 +187,6 @@ public class OpenAiWebSearchClient {
                 "brand",
                 "description"
             ),
-
             "additionalProperties", false
         );
     }
@@ -221,7 +201,6 @@ public class OpenAiWebSearchClient {
         );
     }
     private String extractOutputText(JsonNode root) {
-
         for (JsonNode output : root.path("output")) {
 
             if (!"message".equals(output.path("type").asText())) {
@@ -235,7 +214,6 @@ public class OpenAiWebSearchClient {
                 }
             }
         }
-
         throw new IllegalStateException(
             "OpenAI 응답에서 분석 결과를 찾을 수 없습니다."
         );

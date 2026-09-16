@@ -37,6 +37,7 @@ public class AdminInitializer implements ApplicationRunner {
 
         try {
             User admin = User.builder()
+                    .id(adminProperties.id())
                     .email(adminProperties.email())
                     .name(adminProperties.name())
                     .password(passwordEncoder.encode(adminProperties.password()))
