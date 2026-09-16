@@ -33,7 +33,7 @@ public class NotificationSaveService {
 
         return repository.insert(type, key, payload);
     }
-    /** 한 페이지를 하나의 트랜잭션으로 저장한다. 조회 후 탈퇴한 수신자는 INSERT에서 제외한다. */
+
     @Transactional
     public List<NotificationDto> savePage(NotificationType type, String key, List<UUID> receivers,
             String title, String content, NotificationLevel level) {

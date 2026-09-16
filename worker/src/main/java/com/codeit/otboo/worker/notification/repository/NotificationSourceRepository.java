@@ -29,7 +29,7 @@ public class NotificationSourceRepository {
 
     public Optional<Source> findLike(UUID id) {
         return source("""
-                SELECT f.user_id AS receiver_id, u.name AS actor_name, '' AS content
+                SELECT f.user_id AS receiver_id, u.name AS actor_name, COALESCE(f.content, '') AS content
                 FROM feed_like l JOIN feed f ON f.id = l.feed_id
                 JOIN users u ON u.id = l.user_id
                 WHERE l.id = ? AND f.deleted_at IS NULL AND f.is_visible = true AND u.deleted_at IS NULL

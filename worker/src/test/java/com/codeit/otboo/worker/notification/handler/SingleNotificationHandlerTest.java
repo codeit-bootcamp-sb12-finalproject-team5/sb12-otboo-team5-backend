@@ -46,18 +46,20 @@ class SingleNotificationHandlerTest {
         when(sources.findComment(id)).thenReturn(Optional.of(new NotificationSourceRepository.Source(receiver, "작성자", body)));
         handler.handle(event(NotificationType.FEED_COMMENTED, new NotificationSourceEvent(id)));
         verify(save).save(eq(NotificationType.FEED_COMMENTED), anyString(), eq(new NotificationContent(
-                receiver, "작성자님이 댓글을 남겼습니다.", body, NotificationLevel.INFO)));
+                receiver, "작성자님이 댓글을 달았어요.", body, NotificationLevel.INFO)));
     }
 
     @Test
-    void followUsesEmptyBodyAndLikeUsesSourceActor() {
+    void followUsesEmptyBodyAndLikeUsesFeedContent() {
         var source = new NotificationSourceRepository.Source(receiver, "작성자", "");
         when(sources.findFollow(id)).thenReturn(Optional.of(source));
-        when(sources.findLike(id)).thenReturn(Optional.of(source));
+        when(sources.findLike(id)).thenReturn(Optional.of(
+                new NotificationSourceRepository.Source(receiver, "작성자", "피드 원문")));
         handler.handle(event(NotificationType.FOLLOWED, new NotificationSourceEvent(id)));
         handler.handle(event(NotificationType.FEED_LIKED, new NotificationSourceEvent(id)));
         verify(save).save(eq(NotificationType.FOLLOWED), anyString(), argThat(v -> v.content().isEmpty()));
-        verify(save).save(eq(NotificationType.FEED_LIKED), anyString(), argThat(v -> v.content().contains("작성자")));
+        verify(save).save(eq(NotificationType.FEED_LIKED), anyString(), eq(new NotificationContent(
+                receiver, "작성자님이 내 피드를 좋아합니다.", "피드 원문", NotificationLevel.INFO)));
     }
 
     @Test

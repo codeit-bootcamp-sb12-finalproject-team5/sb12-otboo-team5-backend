@@ -24,6 +24,7 @@ public class NotificationCommittedListener {
     public void onCommitted(NotificationCreateMessage<?> message) {
         try {
             String key;
+
             if (message.payload() instanceof RoleChangedNotificationEvent payload) {
                 key = payload.receiverId().toString();
             } else if (message.payload() instanceof DirectMessageNotificationEvent payload) {
@@ -35,6 +36,7 @@ public class NotificationCommittedListener {
             } else {
                 return;
             }
+
             publisher.publishCreate(key, message)
                     .whenComplete((ignored, error) -> {
                         if (error != null) {

@@ -36,6 +36,7 @@ public class NotificationCreateListener {
         NotificationEventPublisher publisher
     ) {
         this.publisher = publisher;
+
         for (NotificationRequestHandler handler : handlers) {
             for (NotificationType type : handler.supportedTypes()) {
                 if (this.handlers.putIfAbsent(type, handler) != null) {
@@ -49,6 +50,7 @@ public class NotificationCreateListener {
     @KafkaListener(topics = NotificationTopics.CREATE, containerFactory = "notificationCreateFactory")
     public void receive(ConsumerRecord<String, NotificationCreateMessage<JsonNode>> record) {
         NotificationCreateMessage<JsonNode> message = record.value();
+
         if (message == null || message.schemaVersion() != NotificationCreateMessage.CURRENT_SCHEMA_VERSION || message.eventId() == null
                 || message.occurredAt() == null || message.type() == null || message.payload() == null
                 || message.deduplicationKey() == null || message.deduplicationKey().isBlank()
@@ -56,7 +58,9 @@ public class NotificationCreateListener {
                 || !message.deduplicationKey().startsWith(message.type().name() + ":")) {
             throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE);
         }
+
         NotificationRequestHandler handler = handlers.get(message.type());
+
         if (handler == null) {
             throw new NotificationException(ErrorCode.UNSUPPORTED_NOTIFICATION_TYPE)
                     .addDetail("type", message.type());
@@ -64,17 +68,20 @@ public class NotificationCreateListener {
         // handler 내부의 별도 트랜잭션 프록시가 정상 반환한 뒤에만 발행한다.
         var result = handler.handle(message);
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(12);
+
         for (var notification : result.notifications()) {
             if (System.nanoTime() >= deadline) {
                 log.error("NOTIFICATION_BROADCAST_BUDGET_EXCEEDED eventId={} topic={} partition={} offset={}",
                         message.eventId(), record.topic(), record.partition(), record.offset());
                 break; // 남은 실시간 전송은 목록 조회로 보완하고 다음 페이지 인계는 계속한다.
             }
+
             try {
                 publisher.publishBroadcast(NotificationBroadcastEvent.of(notification))
                         .get(Math.max(1, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
             } catch (InterruptedException exception) {
                 Thread.currentThread().interrupt();
+
                 throw new NotificationException(ErrorCode.NOTIFICATION_PROCESSING_INTERRUPTED, exception);
             } catch (ExecutionException | TimeoutException | RuntimeException exception) {
                 // 저장 성공 후 실시간 전달 실패는 목록 조회로 복구한다. 원본은 완료 처리한다.
@@ -83,6 +90,7 @@ public class NotificationCreateListener {
                         record.offset(), exception);
             }
         }
+
         if (result.continuation() != null) {
             try {
                 publisher.publishCreate(result.continuationKey(), result.continuation())

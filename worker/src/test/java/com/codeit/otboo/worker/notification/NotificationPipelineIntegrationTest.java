@@ -91,7 +91,7 @@ class NotificationPipelineIntegrationTest {
         jdbc.execute("CREATE TABLE users (id UUID PRIMARY KEY, name VARCHAR(50) NOT NULL DEFAULT '작성자', deleted_at TIMESTAMPTZ)");
         jdbc.execute("CREATE TABLE profile (user_id UUID UNIQUE REFERENCES users(id), weather_grid_id UUID)");
         jdbc.execute("CREATE TABLE follow (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), follower_id UUID REFERENCES users(id), followee_id UUID REFERENCES users(id), UNIQUE(follower_id, followee_id))");
-        jdbc.execute("CREATE TABLE feed (id UUID PRIMARY KEY, user_id UUID REFERENCES users(id), is_visible BOOLEAN DEFAULT true, deleted_at TIMESTAMPTZ)");
+        jdbc.execute("CREATE TABLE feed (id UUID PRIMARY KEY, user_id UUID REFERENCES users(id), content TEXT, is_visible BOOLEAN DEFAULT true, deleted_at TIMESTAMPTZ)");
         jdbc.execute("CREATE TABLE feed_comment (id UUID PRIMARY KEY, feed_id UUID REFERENCES feed(id), user_id UUID REFERENCES users(id), content VARCHAR(1000))");
         jdbc.execute("CREATE TABLE feed_like (id UUID PRIMARY KEY, feed_id UUID REFERENCES feed(id), user_id UUID REFERENCES users(id))");
         jdbc.execute("CREATE TABLE direct_message (id UUID PRIMARY KEY, dm_room_id UUID, sender_id UUID REFERENCES users(id), content TEXT, created_at TIMESTAMPTZ)");
@@ -230,7 +230,7 @@ class NotificationPipelineIntegrationTest {
     void workerLoadsCommentLikeFollowAndFeedWithoutProducerText() {
         UUID author = payload().receiverId(), receiver = payload().receiverId();
         UUID feed = UUID.randomUUID(), comment = UUID.randomUUID(), like = UUID.randomUUID(), follow = UUID.randomUUID();
-        jdbc.update("INSERT INTO feed(id,user_id) VALUES (?,?)", feed, receiver);
+        jdbc.update("INSERT INTO feed(id,user_id,content) VALUES (?,?,?)", feed, receiver, "피드 원문");
         jdbc.update("INSERT INTO feed_comment(id,feed_id,user_id,content) VALUES (?,?,?,?)", comment, feed, author, "실제 댓글 내용");
         jdbc.update("INSERT INTO feed_like(id,feed_id,user_id) VALUES (?,?,?)", like, feed, author);
         jdbc.update("INSERT INTO follow(id,follower_id,followee_id) VALUES (?,?,?)", follow, author, receiver);
@@ -242,6 +242,10 @@ class NotificationPipelineIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT content FROM notification WHERE type='FEED_COMMENTED'", String.class))
                 .isEqualTo("실제 댓글 내용");
         assertThat(jdbc.queryForObject("SELECT content FROM notification WHERE type='FOLLOWED'", String.class)).isEmpty();
+        assertThat(jdbc.queryForObject("SELECT content FROM notification WHERE type='FEED_LIKED'", String.class))
+                .isEqualTo("피드 원문");
+        jdbc.update("UPDATE feed SET content=null WHERE id=?", feed);
+        assertThat(sources.findLike(like).orElseThrow().content()).isEmpty();
         var result = fanOutHandler.handle(sourceEvent(NotificationType.FEED_CREATED, feed,
                 new com.codeit.otboo.domain.notification.event.FeedNotificationCreateEvent(feed)));
         assertThat(result.notifications()).hasSize(1);
