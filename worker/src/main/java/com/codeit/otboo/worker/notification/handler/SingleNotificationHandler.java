@@ -53,7 +53,8 @@ public class SingleNotificationHandler implements NotificationRequestHandler {
                 event.receiverId(),
                 "권한이 변경되었습니다",
                 "회원님의 권한이 %s(으)로 변경되었습니다. 다시 로그인해 주세요."
-                    .formatted(event.role() == UserRole.ADMIN ? "관리자" : "일반 사용자"));
+                    .formatted(event.role() == UserRole.ADMIN ? "관리자" : "일반 사용자")
+            );
         } else if (message.type() == NotificationType.DM_RECEIVED) {
             var event = payload(message, DirectMessageNotificationEvent.class);
 

@@ -13,33 +13,35 @@ import com.codeit.otboo.worker.notification.repository.NotificationSourceReposit
 import com.codeit.otboo.worker.notification.service.NotificationSaveService;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class FanOutNotificationHandler implements NotificationRequestHandler {
 
     static final int PAGE_SIZE = 500;
     private static final ZoneOffset KST = ZoneOffset.ofHours(9);
-    private static final DateTimeFormatter RAIN_TIME = DateTimeFormatter.ofPattern("M월 d일 H시");
     private final NotificationRecipientRepository recipients;
     private final NotificationSaveService saveService;
     private final NotificationSourceRepository sources;
 
     @Override
     public Set<NotificationType> supportedTypes() {
-        return Set.of(NotificationType.WEATHER_RAIN, NotificationType.FEED_CREATED);
+        return Set.of(NotificationType.WEATHER_FORECAST, NotificationType.FEED_CREATED);
     }
 
     @Override
     public NotificationHandlingResult handle(NotificationCreateMessage<JsonNode> message) {
         return switch (message.type()) {
-            case WEATHER_RAIN -> weather(message);
+            case WEATHER_FORECAST -> weather(message);
             case FEED_CREATED -> feed(message);
             default -> throw new NotificationException(ErrorCode.UNSUPPORTED_NOTIFICATION_TYPE);
         };
@@ -48,30 +50,37 @@ public class FanOutNotificationHandler implements NotificationRequestHandler {
     private NotificationHandlingResult weather(NotificationCreateMessage<JsonNode> message) {
         var payload = payload(message, WeatherNotificationCreateEvent.class);
 
-        if (payload.gridId() == null || payload.firstRainAt() == null
-                || !"RAIN".equals(payload.precipitationType())) {
+        if (payload.weatherGridId() == null || payload.title() == null || payload.title().isBlank()
+                || payload.title().length() > 100 || payload.content() == null
+                || payload.content().isBlank() || payload.content().length() > 1000) {
             throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE);
         }
-
-        var rainAt = payload.firstRainAt().withOffsetSameInstant(KST);
-
-        if (!message.deduplicationKey().equals("WEATHER_RAIN:" + rainAt.toLocalDate())) {
-            throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE);
+        LocalDate forecastDate;
+        try {
+            String prefix = "WEATHER_FORECAST:";
+            if (message.deduplicationKey() == null || !message.deduplicationKey().startsWith(prefix)) {
+                throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+            forecastDate = LocalDate.parse(message.deduplicationKey().substring(prefix.length()));
+            if (!message.deduplicationKey().equals(prefix + forecastDate)) {
+                throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+        } catch (DateTimeParseException exception) {
+            throw new NotificationException(ErrorCode.INVALID_INPUT_VALUE, exception);
         }
-
-        var page = recipients.findGridUsers(payload.gridId(), payload.afterReceiverId(), PAGE_SIZE + 1);
+        // 최초 요청과 continuation 모두 대상일 00시부터 신규 저장을 중단한다.
+        if (!LocalDate.now(KST).isBefore(forecastDate)) {
+            log.info("[WEATHER-NOTIFICATION] 만료 grid={}, forecastDate={}, cursor={} 필요 작업 종료",
+                    payload.weatherGridId(), forecastDate, payload.afterReceiverId());
+            return new NotificationHandlingResult(List.of(), null, null);
+        }
+        var page = recipients.findGridUsers(payload.weatherGridId(), payload.afterReceiverId(), PAGE_SIZE + 1);
         var receivers = page.subList(0, Math.min(page.size(), PAGE_SIZE));
-
         Object next = page.size() > PAGE_SIZE ? new WeatherNotificationCreateEvent(
-                payload.gridId(), payload.precipitationType(), payload.firstRainAt(),
+                payload.weatherGridId(), payload.title(), payload.content(),
                 receivers.get(receivers.size() - 1)) : null;
-
-        return save(
-            message,
-            receivers,
-            "%d월 %d일 비 예보".formatted(rainAt.getMonthValue(), rainAt.getDayOfMonth()),
-            "%s부터 비가 올 것으로 예상됩니다.".formatted(rainAt.format(RAIN_TIME)),
-            next, payload.gridId().toString());
+        return save(message, receivers, payload.title(), payload.content(), next,
+                payload.weatherGridId().toString());
     }
 
     private NotificationHandlingResult feed(NotificationCreateMessage<JsonNode> message) {

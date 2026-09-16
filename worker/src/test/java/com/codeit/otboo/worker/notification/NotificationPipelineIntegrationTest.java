@@ -104,7 +104,8 @@ class NotificationPipelineIntegrationTest {
                     CHECK (level IN ('INFO','WARNING','ERROR')), read_at TIMESTAMPTZ)
                 """);
         new ResourceDatabasePopulator(new ClassPathResource(
-                "db/migration/V3__add_notification_type_and_deduplication_key.sql"))
+                "db/migration/V3__add_notification_type_and_deduplication_key.sql"), new ClassPathResource(
+                "db/migration/V5__replace_weather_notification_type.sql"))
                 .execute(jdbc.getDataSource());
         listeners.getListenerContainers().forEach(container -> ContainerTestUtils.waitForAssignment(container, 1));
     }
@@ -134,6 +135,25 @@ class NotificationPipelineIntegrationTest {
             assertThat(consumer.poll(Duration.ofSeconds(2))).isEmpty();
             assertThat(jdbc.queryForObject("SELECT count(*) FROM notification", Integer.class)).isEqualTo(1);
         }
+    }
+
+    @Test
+    void weatherTypeMigrationPreservesHistoricalContentAndRejectsOldType() {
+        var receiver = payload().receiverId();
+        jdbc.execute("ALTER TABLE notification DROP CONSTRAINT ck_notification_type");
+        jdbc.execute("ALTER TABLE notification ADD CONSTRAINT ck_notification_type CHECK (type IN ('WEATHER_RAIN', 'LEGACY'))");
+        UUID oldId = UUID.randomUUID();
+        jdbc.update("INSERT INTO notification(id, created_at, receiver_id, title, content, level, type, deduplication_key, read_at) "
+                + "VALUES (?, now(), ?, '과거 제목', '과거 내용', 'INFO', 'WEATHER_RAIN', 'WEATHER_RAIN:old', now())", oldId, receiver);
+        new ResourceDatabasePopulator(new ClassPathResource("db/migration/V5__replace_weather_notification_type.sql"))
+                .execute(jdbc.getDataSource());
+        var row = jdbc.queryForMap("SELECT * FROM notification WHERE id=?", oldId);
+        assertThat(row).containsEntry("type", "LEGACY").containsEntry("title", "과거 제목")
+                .containsEntry("content", "과거 내용").containsEntry("deduplication_key", "WEATHER_RAIN:old");
+        assertThat(row.get("read_at")).isNotNull();
+        assertThatThrownBy(() -> jdbc.update("UPDATE notification SET type='WEATHER_RAIN' WHERE id=?", oldId))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        jdbc.update("UPDATE notification SET type='WEATHER_FORECAST' WHERE id=?", oldId);
     }
 
     @Test
@@ -179,14 +199,14 @@ class NotificationPipelineIntegrationTest {
         jdbc.update("INSERT INTO users(id) SELECT md5(i::text)::uuid FROM generate_series(1, 10001) i");
         jdbc.update("INSERT INTO profile(user_id, weather_grid_id) SELECT id, ? FROM users", grid);
         jdbc.update("UPDATE users SET deleted_at = now() WHERE id = md5('10001')::uuid");
-        var message = new NotificationCreateMessage<>(UUID.randomUUID(), 2, NotificationType.WEATHER_RAIN,
-                OffsetDateTime.now(), "WEATHER_RAIN:2026-09-13", new WeatherNotificationCreateEvent(
-                        grid, "RAIN", OffsetDateTime.parse("2026-09-12T22:00:00Z")));
+        var message = new NotificationCreateMessage<>(UUID.randomUUID(), 2, NotificationType.WEATHER_FORECAST,
+                OffsetDateTime.now(), "WEATHER_FORECAST:" + java.time.LocalDate.now(java.time.ZoneOffset.ofHours(9)).plusDays(1), new WeatherNotificationCreateEvent(
+                        grid, "내일 날씨 예보입니다. | 서울시 은평구 진관동", "최고 27도, 최저 14도 | 14시부터 비 예정"));
         publisher.publishCreate(grid.toString(), message).get(10, TimeUnit.SECONDS);
         await().atMost(Duration.ofSeconds(60)).untilAsserted(() ->
                 assertThat(jdbc.queryForObject("SELECT count(*) FROM notification", Integer.class)).isEqualTo(10000));
         assertThat(jdbc.queryForObject("SELECT count(*) FROM notification WHERE title = ? AND content = ?",
-                Integer.class, "9월 13일 비 예보", "9월 13일 7시부터 비가 올 것으로 예상됩니다.")).isEqualTo(10000);
+                Integer.class, "내일 날씨 예보입니다. | 서울시 은평구 진관동", "최고 27도, 최저 14도 | 14시부터 비 예정")).isEqualTo(10000);
         // 원본 페이지 재처리: 중복 저장이 0건이어도 후속 페이지까지 도달해야 한다.
         jdbc.update("DELETE FROM notification WHERE receiver_id = (SELECT id FROM users WHERE deleted_at IS NULL ORDER BY id DESC LIMIT 1)");
         publisher.publishCreate(grid.toString(), message).get(10, TimeUnit.SECONDS);
