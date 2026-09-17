@@ -1,7 +1,7 @@
 package com.codeit.otboo.support.openai.clothes.impl;
 
 import com.codeit.otboo.domain.clothes.enums.*;
-import com.codeit.otboo.support.openai.clothes.ClothesAnalysisClientException;
+import com.codeit.otboo.support.openai.clothes.exception.ClothesAnalysisClientException;
 import com.codeit.otboo.support.openai.jackson.DisplayNameEnumModule;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

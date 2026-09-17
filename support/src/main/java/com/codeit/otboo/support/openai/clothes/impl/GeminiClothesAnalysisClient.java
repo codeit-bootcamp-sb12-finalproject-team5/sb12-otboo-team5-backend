@@ -2,7 +2,7 @@ package com.codeit.otboo.support.openai.clothes.impl;
 
 import com.codeit.otboo.domain.clothes.enums.*;
 import com.codeit.otboo.support.openai.clothes.ClothesAnalysisClient;
-import com.codeit.otboo.support.openai.clothes.ClothesAnalysisClientException;
+import com.codeit.otboo.support.openai.clothes.exception.ClothesAnalysisClientException;
 import com.codeit.otboo.support.openai.clothes.ClothesAnalysisResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
