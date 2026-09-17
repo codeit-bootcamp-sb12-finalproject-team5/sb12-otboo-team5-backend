@@ -1,29 +1,20 @@
 package com.codeit.otboo.api.recommendation.ranking;
 
-import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.BOTTOM_LIMIT;
-import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.NEUTRAL_PREFERENCE;
-import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.OUTER_LIMIT;
-import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.PREFERENCE_MAX;
-import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.PREFERENCE_WEIGHT;
-import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.SHOES_LIMIT;
-import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.SIMILARITY_WEIGHT;
-import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.TOP_LIMIT;
-import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.VECTOR_DIMENSION;
-
 import com.codeit.otboo.api.recommendation.RecommendationType;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
 import com.codeit.otboo.domain.profile.entity.Profile;
 import com.codeit.otboo.domain.profile.exception.ProfileException;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.*;
 
 @Slf4j
 @Component
