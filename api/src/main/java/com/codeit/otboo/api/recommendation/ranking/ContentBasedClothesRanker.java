@@ -55,7 +55,7 @@ public class ContentBasedClothesRanker {
             return RankedClothesCandidates.empty();
         }
 
-        Float[] preferenceVector = profile.getPreferenceVector();
+        float[] preferenceVector = profile.getPreferenceVector();
 
         if (!isValidVector(preferenceVector)) {
             log.warn("[recommendation] preference vector is invalid. userId={}", profile.getUser().getId());

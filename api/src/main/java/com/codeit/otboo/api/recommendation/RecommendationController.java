@@ -3,16 +3,13 @@ package com.codeit.otboo.api.recommendation;
 import com.codeit.otboo.api.common.security.CustomUserDetails;
 import com.codeit.otboo.api.recommendation.dto.RecommendationResponse;
 import com.codeit.otboo.api.recommendation.dto.UserPreferenceRequest;
-
-import java.util.UUID;
-
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,7 +25,8 @@ public class RecommendationController {
     @GetMapping("/outfits")
     public ResponseEntity<RecommendationResponse> outfits(@AuthenticationPrincipal CustomUserDetails principal, @RequestParam UUID weatherId) {
         return ResponseEntity.ok(recommendationService.recommendOutfit(principal.getUserId(), weatherId));
-      
+    }
+
     @PostMapping("/preferences")
     public ResponseEntity<Void> setUserPreferences(
             @Valid @RequestBody UserPreferenceRequest userPreferenceRequest,
