@@ -35,6 +35,7 @@ public enum ErrorCode {
     CLOTHES_ATTRIBUTE_PARSE_FAILED(500, "의상 속성작업에 실패했습니다."),
 
     // ===== 아웃핏 =====
+    DUPLICATE_OUTFIT_CLOTHES(409, "Outfit에 동일한 의상이 중복되어 있습니다."),
     RECOMMENDATION_GENERATION_FAILED(502, "추천 생성에 실패했습니다."),
 
     // ===== 피드 =====
