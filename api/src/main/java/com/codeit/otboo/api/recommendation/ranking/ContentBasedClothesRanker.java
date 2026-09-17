@@ -55,7 +55,7 @@ public class ContentBasedClothesRanker {
             return RankedClothesCandidates.empty();
         }
 
-        Float[] preferenceVector = profile.getPreferenceVector();
+        float[] preferenceVector = profile.getPreferenceVector();
 
         if (!isValidVector(preferenceVector)) {
             log.warn("[recommendation] preference vector is invalid. userId={}", profile.getUser().getId());
@@ -91,7 +91,7 @@ public class ContentBasedClothesRanker {
     private RankedClothes rankWithPreferenceVector(
         RecommendationType recommendationType,
         Clothes clothes,
-        Float[] preferenceVector
+        float[] preferenceVector
     ) {
         double similarity = cosineSimilarity(preferenceVector, clothes.getAttributeVector());
         if (recommendationType == RecommendationType.OUTFIT) {
@@ -160,7 +160,7 @@ public class ContentBasedClothesRanker {
         return false;
     }
 
-    private boolean isValidVector(Float[] vector) {
+    private boolean isValidVector(float[] vector) {
         if (vector == null || vector.length != VECTOR_DIMENSION) {
             return false;
         }
@@ -176,7 +176,7 @@ public class ContentBasedClothesRanker {
         return squaredNorm > 0;
     }
 
-    private double cosineSimilarity(Float[] first, Float[] second) {
+    private double cosineSimilarity(float[] first, float[] second) {
         double dotProduct = 0;
         double firstSquaredNorm = 0;
         double secondSquaredNorm = 0;
