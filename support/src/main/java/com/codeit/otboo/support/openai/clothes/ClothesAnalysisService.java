@@ -2,6 +2,8 @@ package com.codeit.otboo.support.openai.clothes;
 
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
+import com.codeit.otboo.support.openai.clothes.exception.ClothesAnalysisClientException;
+import com.codeit.otboo.support.openai.clothes.exception.ProductImageResolutionException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;
@@ -10,14 +12,18 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ClothesAnalysisService {
     private final ClothesPromptBuilder promptBuilder;
-    private final OpenAiWebSearchClient webSearchClient;
+    private final ClothesAnalysisClient webSearchClient;
+    private final ProductImageResolver productImageResolver;
     private final EmbeddingModel embeddingModel;
 
     public ClothesAnalysisResult analyze(String url) {
         String prompt = promptBuilder.build(url);
         try {
-            return webSearchClient.analyze(prompt);
-        } catch (OpenAiClientException e) {
+            String imageUrl = productImageResolver.resolve(url);
+            return webSearchClient.analyze(prompt)
+                    .withImageUrl(imageUrl)
+                    .withoutBracketedNameAndBrand();
+        } catch (ClothesAnalysisClientException | ProductImageResolutionException e) {
             throw new ClothesException(
                 ErrorCode.CLOTHES_ANALYSIS_FAILED,
                 e
@@ -25,7 +31,7 @@ public class ClothesAnalysisService {
         }
     }
 
-    public Float[] embed(String text) {
+    public float[] embed(String text) {
         float[] vector = embeddingModel.embed(text);
         if (vector.length != 1536) {
             throw new IllegalStateException(
@@ -33,10 +39,6 @@ public class ClothesAnalysisService {
                             + vector.length
             );
         }
-        Float[] result = new Float[vector.length];
-        for (int i = 0; i < vector.length; i++) {
-            result[i] = vector[i];
-        }
-        return result;
+        return vector;
     }
 }

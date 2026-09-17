@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -19,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
  * users.email 의 UNIQUE 제약을 최종 방어선으로 둡니다.
  */
 @Slf4j
-@Component
+//@Component
 @RequiredArgsConstructor
 public class AdminInitializer implements ApplicationRunner {
 
@@ -37,6 +36,7 @@ public class AdminInitializer implements ApplicationRunner {
 
         try {
             User admin = User.builder()
+                    .id(adminProperties.id())
                     .email(adminProperties.email())
                     .name(adminProperties.name())
                     .password(passwordEncoder.encode(adminProperties.password()))

@@ -3,6 +3,8 @@ package com.codeit.otboo.domain.clothes.repository;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
+
+import java.util.List;
 import java.util.UUID;
 
 public interface ClothesQueryRepository {
@@ -14,5 +16,9 @@ public interface ClothesQueryRepository {
         ClothesCategory typeEqual,
         UUID ownerId
     );
+
+    List<Clothes> findOwnedCandidatesByUserId(UUID userId);
+
+    List<Clothes> findOutfitCandidates();
 
 }

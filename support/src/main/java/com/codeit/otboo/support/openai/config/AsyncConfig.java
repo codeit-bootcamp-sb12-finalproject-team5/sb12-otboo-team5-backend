@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 
 import java.util.concurrent.Executor;
 
@@ -15,7 +16,7 @@ public class AsyncConfig {
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
-        executor.setCorePoolSize(2);
+        executor.setCorePoolSize(5);
         executor.setMaxPoolSize(5);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("async-task-");
@@ -29,13 +30,13 @@ public class AsyncConfig {
     public Executor bulkExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(5);
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("async-bulk-");
 
         executor.initialize();
 
-        return executor;
+        return new DelegatingSecurityContextAsyncTaskExecutor(executor);
     }
 }

@@ -20,8 +20,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -37,6 +37,25 @@ spring:
       chat:
         options:
           model: gpt-5-mini
+      embedding:
+        options:
+          model: text-embedding-3-small
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY}
+        chat:
+          options:
+            model: gemini-3.5-flash-lite
+
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
+  timeout-seconds: ${GEMINI_TIMEOUT_SECONDS:10}
+
+clothes:
+  analysis:
+    gemini:
+      min-request-interval: 6s
 
 jwt:
   secret: ${JWT_SECRET}
@@ -54,6 +73,7 @@ weather:
     ttl: PT3H
 
 admin:
+  id: ${ADMIN_ID:01a0a35e-1c51-76f2-82a1-6b87eab6ccfa}
   email: ${ADMIN_EMAIL:system@otboo.io}
   password: ${ADMIN_PASSWORD:otboo1!}
   name: ${ADMIN_NAME:system}

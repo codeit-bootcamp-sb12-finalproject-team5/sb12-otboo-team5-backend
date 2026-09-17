@@ -49,7 +49,8 @@ public class ProfileService {
   @Transactional(readOnly = true)
   public ProfileDto getProfile(UUID userId) {
     Profile profile = profileRepository.findByUser_Id(userId)
-        .orElseThrow(ProfileException::notFound);
+        .orElseThrow(ProfileException::profileNotFound);
+
     String profileImageUrl = s3StorageService.getPresignedUrl(profile.getProfileImageUrl());
     return ProfileDto.from(profile, profileImageUrl);
   }
@@ -61,7 +62,7 @@ public class ProfileService {
       MultipartFile image
   ) {
     Profile profile = profileRepository.findByUser_Id(userId)
-        .orElseThrow(ProfileException::notFound);
+        .orElseThrow(ProfileException::profileNotFound);
 
     User user = profile.getUser();
     if (request.name() != null) {
