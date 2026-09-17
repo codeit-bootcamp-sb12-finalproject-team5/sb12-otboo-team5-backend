@@ -2,6 +2,7 @@ package com.codeit.otboo.api.recommendation;
 
 import com.codeit.otboo.api.common.security.CustomUserDetails;
 import com.codeit.otboo.api.recommendation.dto.RecommendationResponse;
+import com.codeit.otboo.api.recommendation.dto.UserPreferenceRequest;
 
 import java.util.UUID;
 
@@ -27,5 +28,14 @@ public class RecommendationController {
     @GetMapping("/outfits")
     public ResponseEntity<RecommendationResponse> outfits(@AuthenticationPrincipal CustomUserDetails principal, @RequestParam UUID weatherId) {
         return ResponseEntity.ok(recommendationService.recommendOutfit(principal.getUserId(), weatherId));
+      
+    @PostMapping("/preferences")
+    public ResponseEntity<Void> setUserPreferences(
+            @Valid @RequestBody UserPreferenceRequest userPreferenceRequest,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        recommendationService.initializePreferenceVector(
+                principal.getUserId(), userPreferenceRequest);
+        return ResponseEntity.noContent().build();
     }
 }

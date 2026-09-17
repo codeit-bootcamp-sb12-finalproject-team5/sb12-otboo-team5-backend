@@ -1,5 +1,6 @@
 package com.codeit.otboo.support.openai.clothes;
 
+import com.codeit.otboo.support.openai.clothes.exception.ProductImageResolutionException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;

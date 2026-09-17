@@ -1,4 +1,4 @@
-package com.codeit.otboo.support.openai.clothes;
+package com.codeit.otboo.support.openai.clothes.exception;
 
 public class ClothesAnalysisClientException extends RuntimeException {
 

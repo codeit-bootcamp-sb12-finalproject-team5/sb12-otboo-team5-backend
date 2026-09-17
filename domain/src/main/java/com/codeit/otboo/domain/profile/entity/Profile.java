@@ -36,7 +36,6 @@ public class Profile extends UpdatableEntity {
 	private Short temperatureSensitivity = 0;
 
 	@JdbcTypeCode(SqlTypes.VECTOR)
-
 	@Column(name = "preference_vector", nullable = false, columnDefinition = "vector(1536)")
 	private float[] preferenceVector;
 
@@ -76,6 +75,13 @@ public class Profile extends UpdatableEntity {
 				.addDetail("temperatureSensitivity", "온도 민감도는 -5~5 사이여야 합니다.");
 		}
 		this.temperatureSensitivity = sensitivity;
+	}
+
+	public void updatePreferenceVector(float[] preferenceVector) {
+		if (preferenceVector == null || preferenceVector.length != 1536) {
+			throw new IllegalArgumentException("선호 벡터는 1536차원이어야 합니다.");
+		}
+		this.preferenceVector = preferenceVector;
 	}
 
 	public void updateProfileImageUrl(String profileImageUrl){

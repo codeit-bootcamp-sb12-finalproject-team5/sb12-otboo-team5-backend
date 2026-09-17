@@ -26,6 +26,8 @@ public class RecommendationService {
     private final RecommendationRankingService rankingService;
     private final WeatherForecastRepository weatherForecastRepository;
     private final LlmRecommendationService llmRecommendationService;
+    private final ProfileRepository profileRepository;
+    private final ClothesAnalysisService clothesAnalysisService;
 
     public RecommendationResponse recommendOotd(UUID userId, UUID weatherId) {
         return recommend(userId, weatherId, RecommendationType.OOTD);
@@ -63,5 +65,14 @@ public class RecommendationService {
                 outfit.styleTags())
             ).toList()
         );
+    }
+      
+    @Transactional
+    public void initializePreferenceVector(UUID userId, UserPreferenceRequest request) {
+        Profile profile = profileRepository.findByUser_Id(userId)
+                .orElseThrow(ProfileException::notFound);
+
+        float[] preferenceVector = clothesAnalysisService.embed(request.toEmbeddingText());
+        profile.updatePreferenceVector(preferenceVector);
     }
 }
