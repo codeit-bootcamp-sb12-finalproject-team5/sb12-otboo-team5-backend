@@ -24,7 +24,7 @@ public class EmbeddingAsyncService {
             UUID clothesId,
             String attributeText
     ) {
-        Float[] vector =
+        float[] vector =
                 clothesEmbeddingService.embed(attributeText);
         Clothes clothes =
                 clothesRepository.findById(clothesId)

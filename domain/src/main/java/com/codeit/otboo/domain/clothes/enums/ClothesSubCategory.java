@@ -111,7 +111,7 @@ public enum ClothesSubCategory implements Displayable {
         ClothesCategory.OUTER
     ),
 
-    TRACK_JACKET(
+    TRAINING_JACKET(
         "트레이닝재킷",
         ClothesCategory.OUTER
     ),
@@ -210,6 +210,11 @@ public enum ClothesSubCategory implements Displayable {
         ClothesCategory.PANTS
     ),
 
+    OTHER_PANTS(
+        "기타",
+        ClothesCategory.PANTS
+    ),
+
     // =========================
     // BOTTOM - SKIRT
     // =========================
@@ -229,7 +234,7 @@ public enum ClothesSubCategory implements Displayable {
         ClothesCategory.SKIRT
     ),
 
-    OTHER_BOTTOM(
+    OTHER_SKIRT(
         "기타",
         ClothesCategory.SKIRT
     ),
@@ -250,6 +255,11 @@ public enum ClothesSubCategory implements Displayable {
 
     MAXI_DRESS(
         "맥시원피스",
+        ClothesCategory.DRESS
+    ),
+
+    OTHER_DRESS(
+        "기타",
         ClothesCategory.DRESS
     ),
 
@@ -309,6 +319,11 @@ public enum ClothesSubCategory implements Displayable {
 
     CLUTCH_BAG(
         "클러치백",
+        ClothesCategory.BAG
+    ),
+
+    OTHER_BAG(
+        "기타",
         ClothesCategory.BAG
     ),
 

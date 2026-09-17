@@ -10,7 +10,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.Array;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -37,9 +36,9 @@ public class Profile extends UpdatableEntity {
 	private Short temperatureSensitivity = 0;
 
 	@JdbcTypeCode(SqlTypes.VECTOR)
-	@Array(length = 1536)
+
 	@Column(name = "preference_vector", nullable = false, columnDefinition = "vector(1536)")
-	private Float[] preferenceVector;
+	private float[] preferenceVector;
 
 	@Column(name = "profile_image_url", nullable = false, length = 500)
 	private String profileImageUrl;
