@@ -20,9 +20,7 @@ public record ProfileUpdateRequest(
     @DecimalMax(value = "90", inclusive = false)
     Double latitude,
 
-    LocationSource locationSource,
-
-    @Min(1)
+    @Min(-5)
     @Max(5)
     Short temperatureSensitivity
 ) {

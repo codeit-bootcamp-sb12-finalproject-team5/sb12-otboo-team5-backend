@@ -1,12 +1,15 @@
 package com.codeit.otboo.api.profile.controller;
 
+import com.codeit.otboo.api.common.security.CustomUserDetails;
 import com.codeit.otboo.api.profile.dto.request.ProfileUpdateRequest;
 import com.codeit.otboo.api.profile.dto.response.ProfileDto;
 import com.codeit.otboo.api.profile.service.ProfileService;
+import com.codeit.otboo.domain.profile.exception.ProfileException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,8 +27,12 @@ public class ProfileController {
 
   @GetMapping
   public ResponseEntity<ProfileDto> getProfile(
-      @PathVariable UUID userId
+      @PathVariable UUID userId,
+      @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
+    if (!userId.equals(userDetails.getUserId())) {
+      throw ProfileException.accessDenied();
+    }
     return ResponseEntity.ok(profileService.getProfile(userId));
   }
 
@@ -33,9 +40,13 @@ public class ProfileController {
   public ResponseEntity<ProfileDto> updateProfile(
       @PathVariable UUID userId,
       @RequestPart("request") ProfileUpdateRequest request,
-      @RequestPart(value = "image", required = false) MultipartFile image
+      @RequestPart(value = "image", required = false) MultipartFile image,
+      @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
-    return ResponseEntity.ok(profileService.updateProfile(userId, request));
+    if (!userId.equals(userDetails.getUserId())) {
+      throw ProfileException.accessDenied();
+    }
+    return ResponseEntity.ok(profileService.updateProfile(userId, request, image));
   }
 
 }
