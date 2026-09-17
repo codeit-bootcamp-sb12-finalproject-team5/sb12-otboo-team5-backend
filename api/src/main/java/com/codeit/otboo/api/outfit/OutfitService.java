@@ -2,6 +2,8 @@ package com.codeit.otboo.api.outfit;
 
 import com.codeit.otboo.api.outfit.dto.OutfitCreateRequest;
 import com.codeit.otboo.api.outfit.dto.OutfitCreateResponse;
+import com.codeit.otboo.api.outfit.dto.OutfitUpdateRequest;
+import com.codeit.otboo.api.outfit.dto.OutfitUpdateResponse;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.entity.OutfitClothes;
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
@@ -45,6 +47,35 @@ public class OutfitService {
             .toList());
 
         return OutfitCreateResponse.of(outfit, clothes);
+    }
+
+    @Transactional
+    public OutfitUpdateResponse update(UUID outfitId, UUID userId, OutfitUpdateRequest request) {
+        Outfit outfit = outfitRepository.findByIdAndDeletedAtIsNull(outfitId)
+            .orElseThrow(() -> new OutfitException(ErrorCode.OUTFIT_NOT_FOUND));
+
+        if (!outfit.getUser().getId().equals(userId)) {
+            throw new OutfitException(ErrorCode.ACCESS_DENIED);
+        }
+
+        outfit.update(request.name(), request.description());
+        outfitRepository.saveAndFlush(outfit);
+
+        List<Clothes> clothes;
+        if (request.clothesIds() != null) {
+            validateNoDuplicateClothesIds(request.clothesIds());
+            clothes = getClothesInRequestOrder(request.clothesIds());
+            outfitClothesRepository.deleteAllByOutfitId(outfitId);
+            outfitClothesRepository.saveAll(clothes.stream()
+                .map(clothesItem -> new OutfitClothes(outfit, clothesItem))
+                .toList());
+        } else {
+            clothes = outfitClothesRepository.findAllByOutfit_Id(outfitId).stream()
+                .map(OutfitClothes::getClothes)
+                .toList();
+        }
+
+        return OutfitUpdateResponse.of(outfit, clothes);
     }
 
     private void validateNoDuplicateClothesIds(List<UUID> clothesIds) {

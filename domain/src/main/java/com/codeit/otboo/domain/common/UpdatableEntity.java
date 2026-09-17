@@ -26,4 +26,8 @@ public abstract class UpdatableEntity extends BaseEntity {
 	@Column(name = "updated_at", nullable = false)
 	private OffsetDateTime updatedAt;
 
+	protected void touch() {
+		this.updatedAt = OffsetDateTime.now();
+	}
+
 }
