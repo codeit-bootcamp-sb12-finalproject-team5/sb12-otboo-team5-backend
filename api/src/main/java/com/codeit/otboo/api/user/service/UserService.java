@@ -1,5 +1,6 @@
 package com.codeit.otboo.api.user.service;
 
+import com.codeit.otboo.api.profile.service.ProfileService;
 import com.codeit.otboo.api.user.dto.ChangePasswordRequest;
 import com.codeit.otboo.api.user.dto.UserCreateRequest;
 import com.codeit.otboo.api.user.dto.UserDto;
@@ -21,6 +22,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ProfileService profileService;
 
     @Transactional
     public UserDto create(UserCreateRequest request) {
@@ -39,6 +41,7 @@ public class UserService {
                 .build();
 
         User saved = userRepository.save(user);
+        profileService.createProfile(saved);
         log.info("회원가입 완료: {}", saved.getEmail());
 
         return UserDto.from(saved);

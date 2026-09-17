@@ -20,4 +20,8 @@ public class ProfileException extends BusinessException {
   public static ProfileException resourceNotFound() {
     return new ProfileException(ErrorCode.RESOURCE_NOT_FOUND);
   }
+
+  public static ProfileException accessDenied() {
+    return new ProfileException(ErrorCode.ACCESS_DENIED);
+  }
 }
