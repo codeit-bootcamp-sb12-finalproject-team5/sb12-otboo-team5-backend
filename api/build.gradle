@@ -5,6 +5,10 @@ plugins {
 description = 'api'
 
 dependencies {
+    // Monitoring
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
     // Domain
     implementation project(':domain')
     implementation project(':support')
