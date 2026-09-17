@@ -12,6 +12,8 @@ public interface OutfitClothesRepository extends JpaRepository<OutfitClothes, UU
 
     List<OutfitClothes> findAllByOutfit_Id(UUID outfitId);
 
+    List<OutfitClothes> findAllByOutfit_IdIn(List<UUID> outfitIds);
+
     @Modifying(flushAutomatically = true)
     @Query("delete from OutfitClothes outfitClothes where outfitClothes.outfit.id = :outfitId")
     void deleteAllByOutfitId(@Param("outfitId") UUID outfitId);
