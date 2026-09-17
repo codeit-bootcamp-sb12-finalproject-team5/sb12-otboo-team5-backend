@@ -23,6 +23,18 @@ class WeatherRepositoryTest {
             mock(WeatherObservationRepository.class), mock(WeatherForecastRepository.class));
 
     @Test
+    void fillsMissingNamesUnderLockWithoutOverwritingCompleteNames() {
+        var id = java.util.UUID.randomUUID();
+        var grid = WeatherGrid.builder().id(id).nx(60).ny(127).build();
+        when(grids.findByIdForUpdate(id)).thenReturn(Optional.of(grid));
+        assertThat(repository.fillGridLocationNames(id, List.of("서울", "중구"))).isSameAs(grid);
+        assertThat(grid.getLocationNames()).containsExactly("서울", "중구", "", "");
+        repository.fillGridLocationNames(id, List.of("다른 지역"));
+        repository.fillGridLocationNames(id, List.of());
+        assertThat(grid.getLocationNames()).containsExactly("서울", "중구", "", "");
+    }
+
+    @Test
     void createsEnabledGridWithRegionNames() {
         when(grids.findByNxAndNy(60, 127)).thenReturn(Optional.empty());
         when(grids.saveAndFlush(any(WeatherGrid.class))).thenAnswer(call -> call.getArgument(0));

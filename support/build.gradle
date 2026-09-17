@@ -7,6 +7,7 @@ description = 'support'
 dependencies {
     // Domain
     implementation project(':domain')
+    implementation 'org.springframework.kafka:spring-kafka'
 
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework:spring-web'

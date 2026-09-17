@@ -8,7 +8,7 @@ import static org.mockito.Mockito.*;
 import com.codeit.otboo.api.weather.dto.request.LocationReadRequest;
 import com.codeit.otboo.api.weather.dto.request.WeatherReadRequest;
 import com.codeit.otboo.api.weather.dto.response.WeatherAPILocation;
-import com.codeit.otboo.api.weather.exception.WeatherException;
+import com.codeit.otboo.domain.weather.exception.WeatherException;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.api.weather.service.Impl.WeatherServiceImpl;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
@@ -154,6 +154,51 @@ class WeatherServiceImplTest {
         assertThat(result.get(0).humidity().comparedToDayBefore()).isNull();
         verify(kma).findObservation(target.minusDays(1), 60, 127);
         verify(kma, never()).findLatestVillageForecast(anyInt(), anyInt());
+    }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {true, false})
+    void threeHoursLaterFetchesOnlyMissingPreviousObservation(boolean available) {
+        var nextTarget = target.plusHours(3);
+        var previousAt = nextTarget.minusDays(1);
+        var observations = new java.util.HashMap<OffsetDateTime, WeatherObservation>();
+        observations.put(target.minusDays(1), observation("22", "65"));
+        when(repository.findForecasts(eq(grid.getId()), any(), any()))
+                .thenReturn(List.of(forecast(target, "25", "60"),
+                        forecast(nextTarget, "28", "70")));
+        when(repository.findObservation(eq(grid.getId()), any()))
+                .thenAnswer(invocation -> Optional.ofNullable(observations.get(invocation.getArgument(1))));
+        doAnswer(invocation -> {
+            List<WeatherObservation> saved = invocation.getArgument(0);
+            saved.forEach(value -> observations.put(value.getObservedAt(), value));
+            return null;
+        }).when(repository).upsertObservations(any());
+        when(kma.findObservation(previousAt, 60, 127)).thenReturn(available
+                ? Optional.of(new KmaObservationDto(previousAt, 60, 127,
+                        Map.of("T1H", "24", "REH", "65"))) : Optional.empty());
+
+        var first = service.findWeather(request);
+        assertThat(first.get(0).forecastAt()).isEqualTo(target.toLocalDateTime());
+        verifyNoInteractions(kma);
+
+        var later = nextTarget.minusMinutes(30);
+        time.when(() -> OffsetDateTime.now(KmaTimeCalculator.KST)).thenReturn(later);
+        var result = service.findWeather(request);
+
+        assertThat(result.get(0).forecastAt()).isEqualTo(nextTarget.toLocalDateTime());
+        verify(kma).findObservation(previousAt, 60, 127);
+        verifyNoMoreInteractions(kma);
+        verify(repository, never()).upsertForecasts(any());
+        if (available) {
+            verify(repository).upsertObservations(argThat(values -> values.size() == 1
+                    && values.get(0).getObservedAt().isEqual(previousAt)));
+            assertThat(result.get(0).temperature().comparedToDayBefore()).isEqualByComparingTo("4");
+            assertThat(result.get(0).humidity().comparedToDayBefore()).isEqualByComparingTo("5");
+        } else {
+            verify(repository, never()).upsertObservations(any());
+            assertThat(result.get(0).temperature().comparedToDayBefore()).isNull();
+            assertThat(result.get(0).humidity().comparedToDayBefore()).isNull();
+        }
     }
 
     @Test

@@ -26,14 +26,14 @@ public class ProfileService {
   @Transactional(readOnly = true)
   public ProfileDto getProfile(UUID userId) {
     Profile profile = profileRepository.findByUser_Id(userId)
-        .orElseThrow(ProfileException::notFound);
+        .orElseThrow(ProfileException::profileNotFound);
     return ProfileDto.from(profile);
   }
 
   @Transactional
   public ProfileDto updateProfile(UUID userId, ProfileUpdateRequest request) {
     Profile profile = profileRepository.findByUser_Id(userId)
-        .orElseThrow(ProfileException::notFound);
+        .orElseThrow(ProfileException::profileNotFound);
 
     User user = profile.getUser();
     if (request.name() != null) {

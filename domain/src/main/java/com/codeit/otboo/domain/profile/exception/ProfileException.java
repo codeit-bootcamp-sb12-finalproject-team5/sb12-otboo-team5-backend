@@ -13,7 +13,7 @@ public class ProfileException extends BusinessException {
         super(errorCode, cause);
     }
 
-    public static ProfileException notFound() {
+    public static ProfileException profileNotFound() {
         return new ProfileException(ErrorCode.PROFILE_NOT_FOUND);
     }
 
@@ -23,5 +23,9 @@ public class ProfileException extends BusinessException {
 
     public static ProfileException invalidTemperatureSensitivity() {
         return new ProfileException(ErrorCode.INVALID_INPUT_VALUE);
+    }
+
+    public static ProfileException preferenceVectorNotReady() {
+        return new ProfileException(ErrorCode.PROFILE_PREFERENCE_NOT_READY);
     }
 }

@@ -26,6 +26,7 @@ public enum ErrorCode {
 
     // ===== 프로필 =====
     PROFILE_NOT_FOUND(404, "프로필을 찾을 수 없습니다."),
+    PROFILE_PREFERENCE_NOT_READY(422, "사용자 선호 정보가 부족하여 Outfit 추천을 수행할 수 없습니다."),
 
     // ===== 의상 =====
     CLOTHES_NOT_FOUND(404, "의상을 찾을 수 없습니다"),
@@ -34,7 +35,7 @@ public enum ErrorCode {
     CLOTHES_ATTRIBUTE_PARSE_FAILED(500, "의상 속성작업에 실패했습니다."),
 
     // ===== 아웃핏 =====
-    // 담당자가 추가
+    RECOMMENDATION_GENERATION_FAILED(502, "추천 생성에 실패했습니다."),
 
     // ===== 피드 =====
     // 담당자가 추가
@@ -57,7 +58,12 @@ public enum ErrorCode {
     FORBIDDEN(403, "해당 DM 방에서 메시지를 전송할 권한이 없습니다."),
 
     // ===== 알림 =====
-    // 담당자가 추가
+    NOTIFICATION_NOT_FOUND(400, "알림을 찾을 수 없습니다."),
+    NOTIFICATION_STREAM_UNAVAILABLE(503, "알림 연결을 준비 중입니다. 잠시 후 다시 시도해 주세요."),
+    INVALID_NOTIFICATION_BROADCAST(400, "알림 브로드캐스트 메시지가 올바르지 않습니다."),
+    UNSUPPORTED_NOTIFICATION_TYPE(400, "지원하지 않는 알림 유형입니다."),
+    DUPLICATE_NOTIFICATION_HANDLER(500, "알림 유형의 처리기가 중복 등록되었습니다."),
+    NOTIFICATION_PROCESSING_INTERRUPTED(500, "알림 처리가 중단되었습니다.")
     ;
 
     private final int status;

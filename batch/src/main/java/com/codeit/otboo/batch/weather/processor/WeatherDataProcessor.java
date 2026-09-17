@@ -41,6 +41,7 @@ public class WeatherDataProcessor implements ItemProcessor<GridCollectionResult,
 
         OffsetDateTime windowStart = WeatherCollectionWindow.forecastRangeStart(collectionDate);
         OffsetDateTime windowEnd = WeatherCollectionWindow.forecastRangeEnd(collectionDate);
+
         long futureForecastCount = normalizedForecasts.stream()
                 .filter(forecast -> !forecast.getForecastAt().isBefore(windowStart)
                         && forecast.getForecastAt().isBefore(windowEnd))

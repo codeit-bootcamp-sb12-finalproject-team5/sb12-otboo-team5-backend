@@ -4,13 +4,13 @@ import com.codeit.otboo.api.recommendation.candidate.ClothesCandidateProvider;
 import com.codeit.otboo.api.recommendation.filter.ClothesFilteringContext;
 import com.codeit.otboo.api.recommendation.filter.RuleBasedClothesFilter;
 import com.codeit.otboo.api.recommendation.temperature.TemperatureAdjustmentPolicy;
-import com.codeit.otboo.api.weather.exception.WeatherException;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.profile.entity.Profile;
 import com.codeit.otboo.domain.profile.exception.ProfileException;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
 import com.codeit.otboo.domain.weather.entity.WeatherForecast;
+import com.codeit.otboo.domain.weather.exception.WeatherException;
 import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
 
 import java.math.BigDecimal;
@@ -39,15 +39,36 @@ public class RecommendationFilteringService {
         return filter(RecommendationType.OOTD, userId, weatherId);
     }
 
+    public List<Clothes> filterOotd(UUID userId, UUID weatherId, Profile profile) {
+        return filter(RecommendationType.OOTD, userId, weatherId, profile);
+    }
+
     public List<Clothes> filterOutfit(UUID userId, UUID weatherId) {
         return filter(RecommendationType.OUTFIT, userId, weatherId);
     }
 
-    private List<Clothes> filter(RecommendationType type, UUID userId, UUID weatherId) {
+    public List<Clothes> filterOutfit(UUID userId, UUID weatherId, Profile profile) {
+        return filter(RecommendationType.OUTFIT, userId, weatherId, profile);
+    }
+
+    private List<Clothes> filter(
+        RecommendationType type,
+        UUID userId,
+        UUID weatherId
+    ) {
+        Profile profile = profileRepository.findByUser_Id(userId)
+            .orElseThrow(ProfileException::profileNotFound);
+        return filter(type, userId, weatherId, profile);
+    }
+
+    private List<Clothes> filter(
+        RecommendationType type,
+        UUID userId,
+        UUID weatherId,
+        Profile profile
+    ) {
         List<Clothes> candidates = providersByType().get(type).findCandidates(userId);
 
-        Profile profile = profileRepository.findByUser_Id(userId)
-            .orElseThrow(ProfileException::notFound);
         WeatherForecast weather = weatherForecastRepository.findById(weatherId)
             .orElseThrow(() -> new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE));
 

@@ -10,6 +10,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
 public final class WeatherCollectionWindow {
 
     private static final int OBSERVATION_CONFIRM_MINUTE = 40;
@@ -17,12 +20,11 @@ public final class WeatherCollectionWindow {
     private static final int FORECAST_START_DAY_OFFSET = 1;
     private static final int FORECAST_END_DAY_OFFSET = 6;
 
-    private WeatherCollectionWindow() {}
-
     public static OffsetDateTime collectionAt(String value) {
         if (value == null || value.isBlank()) {
             throw new BatchException(ErrorCode.INVALID_BATCH_COLLECTION_TIME);
         }
+
         try {
             return OffsetDateTime.parse(value).withOffsetSameInstant(KmaTimeCalculator.KST);
         } catch (DateTimeParseException exception) {
@@ -35,15 +37,18 @@ public final class WeatherCollectionWindow {
         OffsetDateTime confirmedHour = kst.getMinute() >= OBSERVATION_CONFIRM_MINUTE
                 ? kst.truncatedTo(ChronoUnit.HOURS)
                 : kst.truncatedTo(ChronoUnit.HOURS).minusHours(1);
+
         return confirmedHour.minusHours(confirmedHour.getHour() % 3);
     }
 
     public static List<OffsetDateTime> observationSlots(OffsetDateTime now) {
         OffsetDateTime anchor = observationAnchor(now);
         List<OffsetDateTime> slots = new ArrayList<>();
+
         for (int i = 0; i < OBSERVATION_SLOT_COUNT; i++) {
             slots.add(anchor.minusHours(3L * i));
         }
+
         return List.copyOf(slots);
     }
 

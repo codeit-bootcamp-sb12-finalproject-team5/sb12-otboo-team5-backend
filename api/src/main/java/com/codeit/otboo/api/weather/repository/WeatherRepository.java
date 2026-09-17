@@ -48,6 +48,16 @@ public class WeatherRepository {
     }
 
     @Transactional
+    public WeatherGrid fillGridLocationNames(UUID gridId, List<String> names) {
+        WeatherGrid grid = gridRepository.findByIdForUpdate(gridId).orElseThrow();
+        if (grid.getLocationNames().get(0).isBlank()
+                && !names.isEmpty() && !names.get(0).isBlank()) {
+            grid.updateForRequest(names);
+        }
+        return grid;
+    }
+
+    @Transactional
     public void upsertObservations(List<WeatherObservation> observations) {
         if (observations.isEmpty()) return;
 
