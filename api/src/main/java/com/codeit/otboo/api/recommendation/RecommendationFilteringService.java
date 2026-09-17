@@ -80,7 +80,11 @@ public class RecommendationFilteringService {
         BigDecimal effectiveTemperature = temperatureAdjustmentPolicy.calculateEffectiveTemperature(
             currentTemperature, profile.getTemperatureSensitivity());
 
-        return ruleBasedClothesFilter.filter(candidates, new ClothesFilteringContext(effectiveTemperature));
+        return ruleBasedClothesFilter.filter(candidates, new ClothesFilteringContext(
+            effectiveTemperature,
+            type,
+            profile.getGender()
+        ));
     }
 
     private Map<RecommendationType, ClothesCandidateProvider> providersByType() {
