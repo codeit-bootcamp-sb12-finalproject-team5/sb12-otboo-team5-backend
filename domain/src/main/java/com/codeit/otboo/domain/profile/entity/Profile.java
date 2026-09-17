@@ -38,7 +38,7 @@ public class Profile extends UpdatableEntity {
 	@JdbcTypeCode(SqlTypes.VECTOR)
 	@Array(length = 1536)
 	@Column(name = "preference_vector", nullable = false, columnDefinition = "vector(1536)")
-	private Float[] preferenceVector;
+	private float[] preferenceVector;
 
 	@Column(name = "profile_image_url", nullable = false, length = 500)
 	private String profileImageUrl;

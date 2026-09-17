@@ -31,7 +31,7 @@ public class ProfileService {
   @Transactional
   public Profile createProfile(User user) {
 
-    Float[] preferenceVector = new Float[1536];
+    float[] preferenceVector = new float[1536];
     Arrays.fill(preferenceVector, 0f);
 
     Profile profile = Profile.builder()
