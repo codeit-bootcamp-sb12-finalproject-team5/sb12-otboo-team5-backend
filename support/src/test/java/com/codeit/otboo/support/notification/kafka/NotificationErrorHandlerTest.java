@@ -24,7 +24,7 @@ class NotificationErrorHandlerTest {
     @Test
     void permanentNotificationErrorsAreRecoveredWithoutRetryEvenWhenWrapped() {
         for (ErrorCode code : new ErrorCode[]{ErrorCode.INVALID_INPUT_VALUE,
-                ErrorCode.USER_NOT_FOUND, ErrorCode.UNSUPPORTED_NOTIFICATION_TYPE}) {
+                ErrorCode.USER_NOT_FOUND, ErrorCode.UNSUPPORTED_NOTIFICATION_TYPE, ErrorCode.NOTIFICATION_SOURCE_NOT_FOUND}) {
             var exception = new ListenerExecutionFailedException("listener failed", new NotificationException(code));
             assertThat(handler().handleOne(exception,
                     new ConsumerRecord<>("notification-create", 0, 0, "key", "value"),

@@ -62,6 +62,9 @@ public enum ErrorCode {
     INVALID_NOTIFICATION_BROADCAST(400, "알림 브로드캐스트 메시지가 올바르지 않습니다."),
     UNSUPPORTED_NOTIFICATION_TYPE(400, "지원하지 않는 알림 유형입니다."),
     DUPLICATE_NOTIFICATION_HANDLER(500, "알림 유형의 처리기가 중복 등록되었습니다."),
+    NOTIFICATION_SOURCE_NOT_FOUND(404, "알림 원본이 없거나 수신자가 접근할 수 없습니다."),
+    NOTIFICATION_PUBLICATION_FAILED(503, "알림 생성 이벤트 발행에 실패했습니다."),
+    NOTIFICATION_CONTINUATION_FAILED(500, "다음 알림 페이지 작업을 전달하지 못했습니다."),
     NOTIFICATION_PROCESSING_INTERRUPTED(500, "알림 처리가 중단되었습니다.")
     ;
 

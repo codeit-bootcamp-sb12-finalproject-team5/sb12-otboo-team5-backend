@@ -3,7 +3,7 @@ package com.codeit.otboo.worker.notification.repository;
 import com.codeit.otboo.domain.notification.dto.NotificationDto;
 import com.codeit.otboo.domain.notification.entity.NotificationLevel;
 import com.codeit.otboo.domain.notification.entity.NotificationType;
-import com.codeit.otboo.domain.notification.event.SingleNotificationCreateEvent;
+import com.codeit.otboo.domain.notification.dto.NotificationContent;
 import com.fasterxml.uuid.Generators;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -27,7 +27,7 @@ public class NotificationInsertRepository {
     }
 
     public Optional<NotificationDto> insert(
-            NotificationType type, String deduplicationKey, SingleNotificationCreateEvent payload
+            NotificationType type, String deduplicationKey, NotificationContent payload
     ) {
         return jdbc.query("""
                 INSERT INTO notification

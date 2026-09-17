@@ -1,6 +1,7 @@
 package com.codeit.otboo.worker.notification.listener;
 
 import com.codeit.otboo.worker.notification.handler.NotificationRequestHandler;
+import com.codeit.otboo.worker.notification.handler.NotificationHandlingResult;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,7 +34,7 @@ class NotificationCreateListenerTest {
 
     private ConsumerRecord<String, NotificationCreateMessage<JsonNode>> record() {
         return new ConsumerRecord<>("notification-create", 0, 1, "receiver",
-                new NotificationCreateMessage<>(UUID.randomUUID(), 1, NotificationType.ROLE_CHANGED,
+                new NotificationCreateMessage<>(UUID.randomUUID(), 2, NotificationType.ROLE_CHANGED,
                         OffsetDateTime.now(), "ROLE_CHANGED:business-1",
                         NotificationKafkaJson.mapper().createObjectNode()));
     }
@@ -50,7 +51,7 @@ class NotificationCreateListenerTest {
     @Test
     void duplicateDoesNotBroadcast() {
         var listener = listener();
-        when(handler.handle(any())).thenReturn(List.of());
+        when(handler.handle(any())).thenReturn(NotificationHandlingResult.completed(List.of()));
         listener.receive(record());
         verifyNoInteractions(publisher);
     }
@@ -58,8 +59,8 @@ class NotificationCreateListenerTest {
     @Test
     void savedNotificationRemainsSuccessfulWhenBroadcastFails() {
         var listener = listener();
-        when(handler.handle(any())).thenReturn(List.of(new NotificationDto(UUID.randomUUID(),
-                OffsetDateTime.now(), UUID.randomUUID(), "title", "content", NotificationLevel.INFO)));
+        when(handler.handle(any())).thenReturn(NotificationHandlingResult.completed(List.of(new NotificationDto(UUID.randomUUID(),
+                OffsetDateTime.now(), UUID.randomUUID(), "title", "content", NotificationLevel.INFO))));
         when(publisher.publishBroadcast(any())).thenReturn(
                 CompletableFuture.failedFuture(new IllegalStateException("broker down")));
         assertThatCode(() -> listener.receive(record())).doesNotThrowAnyException();
@@ -101,11 +102,11 @@ class NotificationCreateListenerTest {
     @SuppressWarnings("unchecked")
     void interruptionKeepsCauseAndThreadFlag() throws Exception {
         var listener = listener();
-        when(handler.handle(any())).thenReturn(List.of(new NotificationDto(UUID.randomUUID(),
-                OffsetDateTime.now(), UUID.randomUUID(), "title", "content", NotificationLevel.INFO)));
+        when(handler.handle(any())).thenReturn(NotificationHandlingResult.completed(List.of(new NotificationDto(UUID.randomUUID(),
+                OffsetDateTime.now(), UUID.randomUUID(), "title", "content", NotificationLevel.INFO))));
         CompletableFuture<Void> pending = mock(CompletableFuture.class);
         var interrupted = new InterruptedException("test interruption");
-        when(pending.get(12, java.util.concurrent.TimeUnit.SECONDS)).thenThrow(interrupted);
+        when(pending.get(anyLong(), eq(java.util.concurrent.TimeUnit.NANOSECONDS))).thenThrow(interrupted);
         when(publisher.publishBroadcast(any())).thenReturn(pending);
         try {
             assertThatThrownBy(() -> listener.receive(record()))
@@ -117,5 +118,44 @@ class NotificationCreateListenerTest {
         } finally {
             Thread.interrupted();
         }
+    }
+
+    @Test
+    void duplicatePageStillHandsOffAndHandoffFailurePropagates() {
+        var listener = listener();
+        var next = record().value();
+        when(handler.handle(any())).thenReturn(new NotificationHandlingResult(List.of(), next, "grid"));
+        when(publisher.publishCreate("grid", next)).thenReturn(CompletableFuture.completedFuture(null));
+        listener.receive(record());
+        verify(publisher).publishCreate("grid", next);
+        when(publisher.publishCreate("grid", next)).thenReturn(
+                CompletableFuture.failedFuture(new IllegalStateException("broker down")));
+        assertThatThrownBy(() -> listener.receive(record())).isInstanceOfSatisfying(NotificationException.class,
+                e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.NOTIFICATION_CONTINUATION_FAILED));
+        verify(publisher, never()).publishBroadcast(any());
+    }
+
+    @Test
+    void broadcastFailureDoesNotPreventNextPage() {
+        var listener = listener();
+        var next = record().value();
+        var notification = new NotificationDto(UUID.randomUUID(), OffsetDateTime.now(), UUID.randomUUID(),
+                "title", "content", NotificationLevel.INFO);
+        when(handler.handle(any())).thenReturn(new NotificationHandlingResult(List.of(notification), next, "grid"));
+        when(publisher.publishBroadcast(any())).thenReturn(CompletableFuture.failedFuture(new IllegalStateException()));
+        when(publisher.publishCreate("grid", next)).thenReturn(CompletableFuture.completedFuture(null));
+        listener.receive(record());
+        verify(publisher).publishCreate("grid", next);
+    }
+
+    @Test
+    void oldCreateSchemaIsRejectedBeforeAssembly() {
+        var listener = listener();
+        var current = record().value();
+        var old = new NotificationCreateMessage<>(current.eventId(), 1, current.type(), current.occurredAt(),
+                current.deduplicationKey(), current.payload());
+        assertThatThrownBy(() -> listener.receive(new ConsumerRecord<>("notification-create", 0, 1, "key", old)))
+                .isInstanceOf(NotificationException.class);
+        verify(handler, never()).handle(any());
     }
 }

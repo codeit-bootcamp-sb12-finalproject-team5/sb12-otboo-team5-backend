@@ -1,6 +1,7 @@
 package com.codeit.otboo.api.dm.service;
 
 import com.codeit.otboo.api.dm.dto.DirectMessageResponse;
+import com.codeit.otboo.api.notification.event.NotificationEvents;
 import com.codeit.otboo.domain.dm.entity.DirectMessage;
 import com.codeit.otboo.domain.dm.entity.DmRoom;
 import com.codeit.otboo.domain.dm.entity.DmRoomMember;
@@ -14,6 +15,8 @@ import com.codeit.otboo.domain.user.repository.UserRepository;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +28,7 @@ public class DirectMessageService {
     private final DmRoomMemberRepository dmRoomMemberRepository;
     private final DirectMessageRepository directMessageRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 인증된 사용자가 DM 방의 상대방에게 메시지를 저장하고 방의 마지막 메시지 시각을 갱신한다.
     @Transactional
@@ -42,6 +46,10 @@ public class DirectMessageService {
             .build());
 
         room.updateLastMessageAt(message.getCreatedAt());
+
+        eventPublisher.publishEvent(
+            NotificationEvents.directMessageReceived(message.getId(), receiverId)
+        );
 
         return DirectMessageResponse.from(message);
     }

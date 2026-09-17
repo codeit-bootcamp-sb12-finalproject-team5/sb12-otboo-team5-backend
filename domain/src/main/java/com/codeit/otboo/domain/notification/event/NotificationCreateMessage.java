@@ -4,7 +4,6 @@ import com.codeit.otboo.domain.notification.entity.NotificationType;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-/** Kafka 재발행 시 eventId와 업무 중복 방지 키를 유지한다. */
 public record NotificationCreateMessage<T>(
         UUID eventId,
         int schemaVersion,
@@ -13,5 +12,5 @@ public record NotificationCreateMessage<T>(
         String deduplicationKey,
         T payload
 ) {
-    public static final int CURRENT_SCHEMA_VERSION = 1;
+    public static final int CURRENT_SCHEMA_VERSION = 2;
 }

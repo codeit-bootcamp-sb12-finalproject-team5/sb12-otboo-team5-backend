@@ -3,13 +3,17 @@ package com.codeit.otboo.api.notification;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.codeit.otboo.api.notification.event.NotificationCommittedListener;
 import com.codeit.otboo.api.notification.event.NotificationEvents;
 import com.codeit.otboo.domain.user.entity.UserRole;
 import com.codeit.otboo.support.notification.kafka.NotificationEventPublisher;
+import com.codeit.otboo.support.openai.config.AsyncConfig;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.transaction.TransactionDefinition;
@@ -50,7 +54,28 @@ class NotificationCommittedListenerTest {
                 context.publishEvent(message);
                 verifyNoInteractions(publisher);
             });
-            verify(publisher).publishCreate(message.payload().receiverId().toString(), message);
+            verify(publisher, timeout(3000)).publishCreate(message.payload().receiverId().toString(), message);
+        }
+    }
+
+    @Test
+    void publishesOnDefaultAsyncExecutorAfterCommit() throws Exception {
+        var publisher = mock(NotificationEventPublisher.class);
+        var publishingThread = new CompletableFuture<Thread>();
+        when(publisher.publishCreate(anyString(), any())).thenAnswer(invocation -> {
+            publishingThread.complete(Thread.currentThread());
+            return CompletableFuture.completedFuture(null);
+        });
+        try (var context = context(publisher)) {
+            var callerThread = Thread.currentThread();
+            var transaction = new TransactionTemplate(new TestTransactionManager());
+            transaction.executeWithoutResult(status -> {
+                context.publishEvent(NotificationEvents.roleChanged(UUID.randomUUID(), UserRole.ADMIN));
+                verifyNoInteractions(publisher);
+            });
+            var thread = publishingThread.get(3, TimeUnit.SECONDS);
+            assertNotSame(callerThread, thread);
+            assertTrue(thread.getName().startsWith("async-task-"));
         }
     }
 
@@ -62,7 +87,44 @@ class NotificationCommittedListenerTest {
             var transaction = new TransactionTemplate(new TestTransactionManager());
             transaction.executeWithoutResult(status -> context.publishEvent(
                     NotificationEvents.roleChanged(UUID.randomUUID(), UserRole.ADMIN)));
-            verify(publisher).publishCreate(anyString(), any());
+            verify(publisher, timeout(3000)).publishCreate(anyString(), any());
+        }
+    }
+
+    @Test
+    void feedUsesSourceKeyOnlyAfterCommit() {
+        var publisher = mock(NotificationEventPublisher.class);
+        when(publisher.publishCreate(anyString(), any())).thenReturn(CompletableFuture.completedFuture(null));
+        var message = NotificationEvents.feedCreated(UUID.randomUUID());
+        try (var context = context(publisher)) {
+            var transaction = new TransactionTemplate(new TestTransactionManager());
+            transaction.executeWithoutResult(status -> {
+                context.publishEvent(message);
+                status.setRollbackOnly();
+            });
+            verifyNoInteractions(publisher);
+            transaction.executeWithoutResult(status -> {
+                context.publishEvent(message);
+                verifyNoInteractions(publisher);
+            });
+            verify(publisher, timeout(3000)).publishCreate(message.payload().feedId().toString(), message);
+        }
+    }
+
+    @Test
+    void distinctSourcePayloadsUseTheirBusinessIdsAsKafkaKeys() {
+        var publisher = mock(NotificationEventPublisher.class);
+        when(publisher.publishCreate(anyString(), any())).thenReturn(CompletableFuture.completedFuture(null));
+        var messages = java.util.List.of(
+                NotificationEvents.feedLiked(UUID.randomUUID()),
+                NotificationEvents.commentCreated(UUID.randomUUID()),
+                NotificationEvents.followCreated(UUID.randomUUID()));
+        try (var context = context(publisher)) {
+            var transaction = new TransactionTemplate(new TestTransactionManager());
+            for (var message : messages) {
+                transaction.executeWithoutResult(status -> context.publishEvent(message));
+                verify(publisher, timeout(3000)).publishCreate(message.eventId().toString(), message);
+            }
         }
     }
 
@@ -72,7 +134,7 @@ class NotificationCommittedListenerTest {
                 new org.springframework.core.env.MapPropertySource("test",
                         java.util.Map.of("notification.kafka.enabled", "true")));
         context.registerBean(NotificationEventPublisher.class, () -> publisher);
-        context.register(Config.class, NotificationCommittedListener.class);
+        context.register(Config.class, AsyncConfig.class, NotificationCommittedListener.class);
         context.refresh();
         return context;
     }

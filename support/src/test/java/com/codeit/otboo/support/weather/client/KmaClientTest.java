@@ -110,6 +110,36 @@ class KmaClientTest {
         server.verify();
     }
 
+    private String notificationPage(int page, String baseTime) {
+        return """
+            {"response":{"header":{"resultCode":"00"},"body":{"totalCount":2,"pageNo":%d,"items":{"item":[
+              {"baseDate":"20260916","baseTime":"%s","nx":60,"ny":127,
+               "fcstDate":"20260917","fcstTime":"%s","category":"TMP","fcstValue":"20"}
+            ]}}}}
+            """.formatted(page, baseTime, page == 1 ? "0000" : "0100");
+    }
+
+    @Test
+    void notificationForecastReadsAllPagesOfFixedBase() {
+        for (int page = 1; page <= 2; page++) {
+            server.expect(queryParam("pageNo", String.valueOf(page)))
+                    .andExpect(queryParam("base_time", "1700"))
+                    .andRespond(withSuccess(notificationPage(page, "1700"), MediaType.APPLICATION_JSON));
+        }
+        var result = client.findDailyNotificationForecast(OffsetDateTime.parse("2026-09-16T08:00:00Z"), 60, 127);
+        assertThat(result).isPresent();
+        assertThat(result.orElseThrow().points()).hasSize(2);
+        server.verify();
+    }
+
+    @Test
+    void notificationForecastRejectsDifferentIssueWithoutFallback() {
+        server.expect(queryParam("base_time", "1700"))
+                .andRespond(withSuccess(notificationPage(1, "1400"), MediaType.APPLICATION_JSON));
+        assertThat(client.findDailyNotificationForecast(OffsetDateTime.parse("2026-09-16T17:00:00+09:00"), 60, 127)).isEmpty();
+        server.verify();
+    }
+
     @Test
     void blankKeySkipsRequests() {
         RestClient.Builder builder = RestClient.builder();
