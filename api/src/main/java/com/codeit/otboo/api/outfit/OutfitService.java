@@ -2,6 +2,7 @@ package com.codeit.otboo.api.outfit;
 
 import com.codeit.otboo.api.outfit.dto.OutfitCreateRequest;
 import com.codeit.otboo.api.outfit.dto.OutfitCreateResponse;
+import com.codeit.otboo.api.outfit.dto.OutfitDetailResponse;
 import com.codeit.otboo.api.outfit.dto.OutfitUpdateRequest;
 import com.codeit.otboo.api.outfit.dto.OutfitUpdateResponse;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
@@ -47,6 +48,21 @@ public class OutfitService {
             .toList());
 
         return OutfitCreateResponse.of(outfit, clothes);
+    }
+
+    @Transactional(readOnly = true)
+    public OutfitDetailResponse get(UUID outfitId, UUID userId) {
+        Outfit outfit = outfitRepository.findByIdAndDeletedAtIsNull(outfitId)
+            .orElseThrow(() -> new OutfitException(ErrorCode.OUTFIT_NOT_FOUND));
+
+        if (!outfit.getUser().getId().equals(userId)) {
+            throw new OutfitException(ErrorCode.ACCESS_DENIED);
+        }
+
+        List<Clothes> clothes = outfitClothesRepository.findAllByOutfit_Id(outfitId).stream()
+            .map(OutfitClothes::getClothes)
+            .toList();
+        return OutfitDetailResponse.of(outfit, clothes);
     }
 
     @Transactional
