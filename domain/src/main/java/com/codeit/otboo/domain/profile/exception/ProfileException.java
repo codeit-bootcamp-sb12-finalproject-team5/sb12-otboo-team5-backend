@@ -17,6 +17,7 @@ public class ProfileException extends BusinessException {
         return new ProfileException(ErrorCode.PROFILE_NOT_FOUND);
     }
 
+
     public static ProfileException resourceNotFound() {
         return new ProfileException(ErrorCode.RESOURCE_NOT_FOUND);
     }
@@ -28,4 +29,9 @@ public class ProfileException extends BusinessException {
     public static ProfileException preferenceVectorNotReady() {
         return new ProfileException(ErrorCode.PROFILE_PREFERENCE_NOT_READY);
     }
+
+  public static ProfileException accessDenied() {
+    return new ProfileException(ErrorCode.ACCESS_DENIED);
+  }
+
 }

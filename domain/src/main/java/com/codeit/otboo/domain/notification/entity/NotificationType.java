@@ -1,7 +1,7 @@
 package com.codeit.otboo.domain.notification.entity;
 
 public enum NotificationType {
-    WEATHER_RAIN,
+    WEATHER_FORECAST,
     FEED_CREATED,
     ROLE_CHANGED,
     FEED_LIKED,

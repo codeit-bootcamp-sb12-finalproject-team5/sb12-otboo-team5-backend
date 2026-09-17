@@ -35,7 +35,6 @@ public class Profile extends UpdatableEntity {
 	@Column(name = "temperature_sensitivity", nullable = false)
 	private Short temperatureSensitivity = 0;
 
-	@JdbcTypeCode(SqlTypes.VECTOR)
 	@Column(name = "preference_vector", nullable = false, columnDefinition = "vector(1536)")
 	private float[] preferenceVector;
 
@@ -74,6 +73,7 @@ public class Profile extends UpdatableEntity {
 			throw ProfileException.invalidTemperatureSensitivity()
 				.addDetail("temperatureSensitivity", "온도 민감도는 -5~5 사이여야 합니다.");
 		}
+
 		this.temperatureSensitivity = sensitivity;
 	}
 

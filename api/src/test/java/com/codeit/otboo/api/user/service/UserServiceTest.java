@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.codeit.otboo.api.profile.service.ProfileService;
 import com.codeit.otboo.api.user.dto.ChangePasswordRequest;
 import com.codeit.otboo.api.user.dto.UserCreateRequest;
 import com.codeit.otboo.api.user.dto.UserDto;
@@ -26,7 +27,8 @@ class UserServiceTest {
 
     private final UserRepository userRepository = mock(UserRepository.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
-    private final UserService userService = new UserService(userRepository, passwordEncoder);
+    private final ProfileService profileService = mock(ProfileService.class);
+    private final UserService userService = new UserService(userRepository, passwordEncoder, profileService);
 
     /** 회원가입 시 비밀번호를 암호화하고 USER 권한으로 저장하는지 확인합니다. */
     @Test
@@ -44,6 +46,7 @@ class UserServiceTest {
         assertThat(result.role()).isEqualTo("USER");
         assertThat(result.locked()).isFalse();
         verify(passwordEncoder).encode("otboo1234");
+        verify(profileService).createProfile(any(User.class));
     }
 
     /** 이미 사용 중인 이메일이면 저장하지 않고 예외를 던지는지 확인합니다. */
@@ -58,6 +61,7 @@ class UserServiceTest {
                         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_EMAIL));
 
         verify(userRepository, never()).save(any(User.class));
+        verify(profileService, never()).createProfile(any(User.class));
     }
 
     /** 비밀번호 변경 시 임시 비밀번호가 함께 파기되는지 확인합니다. */

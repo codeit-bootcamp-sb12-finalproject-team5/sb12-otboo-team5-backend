@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import com.codeit.otboo.domain.notification.entity.NotificationLevel;
 import com.codeit.otboo.domain.notification.entity.NotificationType;
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
-import com.codeit.otboo.domain.notification.event.SingleNotificationCreateEvent;
+import com.codeit.otboo.domain.notification.event.RoleChangedNotificationEvent;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -20,14 +20,14 @@ class NotificationTransportTest {
     void roundTripKeepsOffsetAndUsesExplicitPayloadType() throws Exception {
         var mapper = NotificationKafkaJson.mapper();
         var time = OffsetDateTime.parse("2026-09-14T10:30:00+09:00");
-        var payload = new SingleNotificationCreateEvent(UUID.randomUUID(), "권한 변경", "관리자", NotificationLevel.INFO);
-        var message = new NotificationCreateMessage<>(UUID.randomUUID(), 1, NotificationType.ROLE_CHANGED,
+        var payload = new RoleChangedNotificationEvent(UUID.randomUUID(), com.codeit.otboo.domain.user.entity.UserRole.ADMIN);
+        var message = new NotificationCreateMessage<>(UUID.randomUUID(), 2, NotificationType.ROLE_CHANGED,
                 time, "ROLE_CHANGED:1", payload);
         var type = mapper.getTypeFactory().constructParametricType(NotificationCreateMessage.class, JsonNode.class);
         NotificationCreateMessage<JsonNode> restored = mapper.readValue(mapper.writeValueAsBytes(message), type);
         assertThat(restored.occurredAt()).isEqualTo(time);
         assertThat(restored.occurredAt().getOffset()).isEqualTo(time.getOffset());
-        assertThat(mapper.convertValue(restored.payload(), SingleNotificationCreateEvent.class)).isEqualTo(payload);
+        assertThat(mapper.convertValue(restored.payload(), RoleChangedNotificationEvent.class)).isEqualTo(payload);
     }
 
     @Test
@@ -44,7 +44,7 @@ class NotificationTransportTest {
     }
 
     private NotificationCreateMessage<String> message() {
-        return new NotificationCreateMessage<>(UUID.randomUUID(), 1, NotificationType.ROLE_CHANGED,
+        return new NotificationCreateMessage<>(UUID.randomUUID(), 2, NotificationType.ROLE_CHANGED,
                 OffsetDateTime.now(), "ROLE_CHANGED:1", "payload");
     }
 }

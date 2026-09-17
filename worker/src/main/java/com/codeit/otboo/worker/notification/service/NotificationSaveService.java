@@ -6,8 +6,12 @@ import com.codeit.otboo.worker.notification.repository.NotificationInsertReposit
 
 import com.codeit.otboo.domain.notification.dto.NotificationDto;
 import com.codeit.otboo.domain.notification.entity.NotificationType;
-import com.codeit.otboo.domain.notification.event.SingleNotificationCreateEvent;
+import com.codeit.otboo.domain.notification.dto.NotificationContent;
 import java.util.Optional;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.UUID;
+import com.codeit.otboo.domain.notification.entity.NotificationLevel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +24,7 @@ public class NotificationSaveService {
     @Transactional
     public Optional<NotificationDto> save(
         NotificationType type, String key,
-        SingleNotificationCreateEvent payload
+        NotificationContent payload
     ) {
         if (!repository.receiverExists(payload.receiverId())) {
             throw new NotificationException(ErrorCode.USER_NOT_FOUND)
@@ -28,5 +32,19 @@ public class NotificationSaveService {
         }
 
         return repository.insert(type, key, payload);
+    }
+
+    @Transactional
+    public List<NotificationDto> savePage(NotificationType type, String key, List<UUID> receivers,
+            String title, String content, NotificationLevel level) {
+        List<NotificationDto> saved = new ArrayList<>();
+
+        for (UUID receiver : receivers) {
+            repository.insert(
+                type, key, new NotificationContent(receiver, title, content, level))
+                    .ifPresent(saved::add);
+        }
+
+        return List.copyOf(saved);
     }
 }

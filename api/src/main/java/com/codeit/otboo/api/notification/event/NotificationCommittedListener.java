@@ -1,12 +1,18 @@
 package com.codeit.otboo.api.notification.event;
 
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
-import com.codeit.otboo.domain.notification.event.SingleNotificationCreateEvent;
+import com.codeit.otboo.domain.notification.event.FeedLikeNotificationPayload;
+import com.codeit.otboo.domain.notification.event.FeedCommentNotificationPayload;
+import com.codeit.otboo.domain.notification.event.FollowNotificationPayload;
+import com.codeit.otboo.domain.notification.event.RoleChangedNotificationEvent;
+import com.codeit.otboo.domain.notification.event.DirectMessageNotificationEvent;
+import com.codeit.otboo.domain.notification.event.FeedNotificationCreateEvent;
 import com.codeit.otboo.support.notification.kafka.NotificationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -17,14 +23,29 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class NotificationCommittedListener {
     private final NotificationEventPublisher publisher;
 
+    @Async("taskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onCommitted(NotificationCreateMessage<?> message) {
-        // 추후 1:N 요청은 별도 payload 리스너로 확장한다.
-        if (!(message.payload() instanceof SingleNotificationCreateEvent payload)) {
-            return;
-        }
         try {
-            publisher.publishCreate(payload.receiverId().toString(), message)
+            String key;
+
+            if (message.payload() instanceof RoleChangedNotificationEvent payload) {
+                key = payload.receiverId().toString();
+            } else if (message.payload() instanceof DirectMessageNotificationEvent payload) {
+                key = payload.receiverId().toString();
+            } else if (message.payload() instanceof FeedLikeNotificationPayload payload) {
+                key = payload.likeId().toString();
+            } else if (message.payload() instanceof FeedCommentNotificationPayload payload) {
+                key = payload.commentId().toString();
+            } else if (message.payload() instanceof FollowNotificationPayload payload) {
+                key = payload.followId().toString();
+            } else if (message.payload() instanceof FeedNotificationCreateEvent payload) {
+                key = payload.feedId().toString();
+            } else {
+                return;
+            }
+
+            publisher.publishCreate(key, message)
                     .whenComplete((ignored, error) -> {
                         if (error != null) {
                             log.error("NOTIFICATION_CREATE_FAILED eventId={} type={} deduplicationKey={}",
@@ -32,7 +53,7 @@ public class NotificationCommittedListener {
                         }
                     });
         } catch (RuntimeException error) {
-            // 이미 커밋된 권한 변경의 응답을 Kafka 실패 때문에 실패 응답으로 바꾸지 않는다.
+            // 이미 커밋된 업무의 응답을 Kafka 실패 때문에 실패 응답으로 바꾸지 않는다.
             log.error("NOTIFICATION_CREATE_FAILED eventId={}", message.eventId(), error);
         }
     }

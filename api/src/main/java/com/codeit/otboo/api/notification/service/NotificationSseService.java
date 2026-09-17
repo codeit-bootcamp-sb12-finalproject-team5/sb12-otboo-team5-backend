@@ -72,7 +72,9 @@ public class NotificationSseService {
                         .id(notification.id().toString()).data(notification)));
     }
 
-    @Scheduled(initialDelay = 2, fixedDelay = 2, timeUnit = TimeUnit.MINUTES)
+    // 프록시(ALB 기본 60초)가 유휴로 판단해 끊기 전에 두 번은 보내야 한 번 밀려도 살아남는다.
+    // fixedDelay는 "이전 실행이 끝난 뒤"부터 재므로 전송이 느려지면 실제 주기가 늘어난다. fixedRate를 쓴다.
+    @Scheduled(initialDelay = 25, fixedRate = 25, timeUnit = TimeUnit.SECONDS)
     public void heartbeat() {
         emitterRepository.findAll().forEach((receiverId, emitters) -> emitters.forEach(emitter ->
                 send(receiverId, emitter, SseEmitter.event().comment("heartbeat"))));
