@@ -19,6 +19,7 @@ import com.codeit.otboo.domain.profile.repository.ProfileRepository;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -52,23 +53,58 @@ public class ContentBasedClothesRanker {
         List<Clothes> filteredClothes
     ) {
         if (filteredClothes.isEmpty()) {
+            log.info(
+                "[recommendation][ranking] 필터를 통과한 후보가 없어 랭킹 생략 type={}, userId={}",
+                recommendationType,
+                profile.getUser().getId()
+            );
             return RankedClothesCandidates.empty();
         }
 
         float[] preferenceVector = profile.getPreferenceVector();
 
+        log.info(
+            "[recommendation][ranking] 랭킹 시작 type={}, userId={}, inputCount={}, "
+                + "preferenceVectorValid={}",
+            recommendationType,
+            profile.getUser().getId(),
+            filteredClothes.size(),
+            isValidVector(preferenceVector)
+        );
+
         if (!isValidVector(preferenceVector)) {
-            log.warn("[recommendation] preference vector is invalid. userId={}", profile.getUser().getId());
+            log.warn(
+                "[recommendation][ranking] 사용자 선호 벡터 유효하지 않음 type={}, userId={}",
+                recommendationType,
+                profile.getUser().getId()
+            );
             return rankWithoutPreferenceVector(recommendationType, filteredClothes);
         }
 
-        List<RankedClothes> rankedClothes = filteredClothes.stream()
+        List<Clothes> includedCategories = filteredClothes.stream()
             .filter(this::isIncludedCategory)
+            .toList();
+        List<Clothes> validVectorClothes = includedCategories.stream()
             .filter(clothes -> hasValidAttributeVector(clothes))
+            .toList();
+        List<RankedClothes> rankedClothes = validVectorClothes.stream()
             .map(clothes -> rankWithPreferenceVector(recommendationType, clothes, preferenceVector))
             .toList();
 
-        return selectTopK(rankedClothes);
+        log.info(
+            "[recommendation][ranking] 후보 점수 계산 완료 type={}, inputCount={}, "
+                + "includedCategoryCount={}, excludedCategoryCount={}, validVectorCount={}, invalidVectorCount={}",
+            recommendationType,
+            filteredClothes.size(),
+            includedCategories.size(),
+            filteredClothes.size() - includedCategories.size(),
+            validVectorClothes.size(),
+            includedCategories.size() - validVectorClothes.size()
+        );
+
+        RankedClothesCandidates result = selectTopK(rankedClothes);
+        logRankingResult(recommendationType, result);
+        return result;
     }
 
     // 선호벡터 없는 경우
@@ -85,7 +121,17 @@ public class ContentBasedClothesRanker {
             .map(this::rankByExplicitPreference)
             .toList();
 
-        return selectTopK(rankedClothes);
+        log.info(
+            "[recommendation][ranking] 옷에 설정된 선호도로 대체 랭킹 수행 "
+                + "type={}, inputCount={}, scoredCount={}",
+            recommendationType,
+            filteredClothes.size(),
+            rankedClothes.size()
+        );
+
+        RankedClothesCandidates result = selectTopK(rankedClothes);
+        logRankingResult(recommendationType, result);
+        return result;
     }
 
     private RankedClothes rankWithPreferenceVector(
@@ -156,8 +202,51 @@ public class ContentBasedClothesRanker {
             return true;
         }
 
-        log.warn("[recommendation] attribute vector is invalid. clothesId={}", clothes.getId());
+        log.warn("[recommendation][ranking] 옷 속성 벡터 유효하지 않음 clothesId={}", clothes.getId());
         return false;
+    }
+
+    private void logRankingResult(
+        RecommendationType recommendationType,
+        RankedClothesCandidates result
+    ) {
+        log.info(
+            "[recommendation][ranking] 카테고리별 상위 후보 선정 완료 "
+                + "type={}, topCount={}, bottomCount={}, outerCount={}, shoesCount={}",
+            recommendationType,
+            result.tops().size(),
+            result.bottoms().size(),
+            result.outers().size(),
+            result.shoes().size()
+        );
+        logSelected("TOP", result.tops());
+        logSelected("BOTTOM", result.bottoms());
+        logSelected("OUTER", result.outers());
+        logSelected("SHOES", result.shoes());
+    }
+
+    private void logSelected(String group, List<RankedClothes> selected) {
+        log.info(
+            "[recommendation][ranking] 선정된 후보 group={}, candidates={}",
+            group,
+            selected.stream().map(this::summarizeScore).toList()
+        );
+    }
+
+    private String summarizeScore(RankedClothes ranked) {
+        return String.format(
+            Locale.ROOT,
+            "{id=%s, category=%s, finalScore=%.4f, similarity=%s, preference=%s}",
+            ranked.clothes().getId(),
+            ranked.clothes().getCategory(),
+            ranked.finalScore(),
+            formatNullableScore(ranked.vectorSimilarity()),
+            formatNullableScore(ranked.normalizedPreference())
+        );
+    }
+
+    private String formatNullableScore(Double score) {
+        return score == null ? "N/A" : String.format(Locale.ROOT, "%.4f", score);
     }
 
     private boolean isValidVector(float[] vector) {

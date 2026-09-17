@@ -16,14 +16,17 @@ import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -35,16 +38,8 @@ public class RecommendationFilteringService {
     private final TemperatureAdjustmentPolicy temperatureAdjustmentPolicy;
     private final RuleBasedClothesFilter ruleBasedClothesFilter;
 
-    public List<Clothes> filterOotd(UUID userId, UUID weatherId) {
-        return filter(RecommendationType.OOTD, userId, weatherId);
-    }
-
     public List<Clothes> filterOotd(UUID userId, UUID weatherId, Profile profile) {
         return filter(RecommendationType.OOTD, userId, weatherId, profile);
-    }
-
-    public List<Clothes> filterOutfit(UUID userId, UUID weatherId) {
-        return filter(RecommendationType.OUTFIT, userId, weatherId);
     }
 
     public List<Clothes> filterOutfit(UUID userId, UUID weatherId, Profile profile) {
@@ -80,15 +75,47 @@ public class RecommendationFilteringService {
         BigDecimal effectiveTemperature = temperatureAdjustmentPolicy.calculateEffectiveTemperature(
             currentTemperature, profile.getTemperatureSensitivity());
 
-        return ruleBasedClothesFilter.filter(candidates, new ClothesFilteringContext(
+        log.info(
+            "[recommendation][filter] 필터링 시작 전. type={}, userId={}, weatherId={}, candidateCount={}, "
+                + "candidateCountByCategory={}, currentTemperature={}, effectiveTemperature={}, gender={}",
+            type,
+            userId,
+            weatherId,
+            candidates.size(),
+            countByCategory(candidates),
+            currentTemperature,
+            effectiveTemperature,
+            profile.getGender()
+        );
+
+        List<Clothes> filtered = ruleBasedClothesFilter.filter(candidates, new ClothesFilteringContext(
             effectiveTemperature,
             type,
             profile.getGender()
         ));
+
+        log.info(
+            "[recommendation][filter] 필터링 완료 type={}, userId={}, filteredCount={}, "
+                + "filteredCountByCategory={}",
+            type,
+            userId,
+            filtered.size(),
+            countByCategory(filtered)
+        );
+
+        return filtered;
     }
 
     private Map<RecommendationType, ClothesCandidateProvider> providersByType() {
         return candidateProviders.stream().collect(Collectors.toMap(
             ClothesCandidateProvider::getType, Function.identity()));
+    }
+
+    private Map<String, Long> countByCategory(List<Clothes> clothes) {
+        return clothes.stream().collect(Collectors.groupingBy(
+            item -> item.getCategory().name(),
+            TreeMap::new,
+            Collectors.counting()
+        ));
     }
 }
