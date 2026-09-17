@@ -1,24 +1,29 @@
 package com.codeit.otboo.api.recommendation;
 
 import com.codeit.otboo.api.recommendation.dto.RecommendationResponse;
+import com.codeit.otboo.api.recommendation.dto.UserPreferenceRequest;
 import com.codeit.otboo.api.recommendation.llm.GeminiRecommendationResult;
 import com.codeit.otboo.api.recommendation.llm.LlmRecommendationService;
 import com.codeit.otboo.api.recommendation.ranking.RankedClothes;
 import com.codeit.otboo.api.recommendation.ranking.RankedClothesCandidates;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
+import com.codeit.otboo.domain.common.exception.ErrorCode;
+import com.codeit.otboo.domain.profile.entity.Profile;
+import com.codeit.otboo.domain.profile.exception.ProfileException;
+import com.codeit.otboo.domain.profile.repository.ProfileRepository;
 import com.codeit.otboo.domain.weather.entity.WeatherForecast;
 import com.codeit.otboo.domain.weather.exception.WeatherException;
 import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
-import com.codeit.otboo.domain.common.exception.ErrorCode;
+import com.codeit.otboo.support.openai.clothes.ClothesAnalysisService;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -66,11 +71,11 @@ public class RecommendationService {
             ).toList()
         );
     }
-      
+
     @Transactional
     public void initializePreferenceVector(UUID userId, UserPreferenceRequest request) {
         Profile profile = profileRepository.findByUser_Id(userId)
-                .orElseThrow(ProfileException::notFound);
+                .orElseThrow(ProfileException::profileNotFound);
 
         float[] preferenceVector = clothesAnalysisService.embed(request.toEmbeddingText());
         profile.updatePreferenceVector(preferenceVector);
