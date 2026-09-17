@@ -78,6 +78,18 @@ public class OutfitService {
         return OutfitUpdateResponse.of(outfit, clothes);
     }
 
+    @Transactional
+    public void delete(UUID outfitId, UUID userId) {
+        Outfit outfit = outfitRepository.findByIdAndDeletedAtIsNull(outfitId)
+            .orElseThrow(() -> new OutfitException(ErrorCode.OUTFIT_NOT_FOUND));
+
+        if (!outfit.getUser().getId().equals(userId)) {
+            throw new OutfitException(ErrorCode.ACCESS_DENIED);
+        }
+
+        outfit.markDeleted();
+    }
+
     private void validateNoDuplicateClothesIds(List<UUID> clothesIds) {
         if (new HashSet<>(clothesIds).size() != clothesIds.size()) {
             throw new OutfitException(ErrorCode.DUPLICATE_OUTFIT_CLOTHES);
