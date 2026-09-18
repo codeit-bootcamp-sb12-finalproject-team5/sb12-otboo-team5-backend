@@ -4,6 +4,7 @@ import com.codeit.otboo.api.notification.repository.SseEmitterRepository;
 import com.codeit.otboo.domain.notification.dto.NotificationDto;
 import jakarta.annotation.PreDestroy;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -22,15 +23,19 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class NotificationSseService {
 
     private static final long CONNECTION_TIMEOUT_MILLIS = 30 * 60 * 1000L;
+    private static final int REPLAY_LIMIT = 50;
 
     private final BooleanSupplier ready;
     private final SseEmitterRepository emitterRepository;
+    private final NotificationService notificationService;
 
     public NotificationSseService(
             SseEmitterRepository emitterRepository,
+            NotificationService notificationService,
             ObjectProvider<KafkaListenerEndpointRegistry> registries,
             @Value("${notification.kafka.enabled:false}") boolean kafkaEnabled) {
         this.emitterRepository = emitterRepository;
+        this.notificationService = notificationService;
 
         this.ready = () -> {
             if (!kafkaEnabled) return true;
@@ -44,7 +49,7 @@ public class NotificationSseService {
 
     }
 
-    public SseEmitter subscribe(UUID receiverId) {
+    public SseEmitter subscribe(UUID receiverId, UUID lastEventId) {
         if (!ready.getAsBoolean()) {
             log.warn("[SSE] 구독 거부 receiverId={} 사유=브로드캐스트 수신 준비 안 됨", receiverId);
             throw new NotificationException(ErrorCode.NOTIFICATION_STREAM_UNAVAILABLE);
@@ -82,7 +87,35 @@ public class NotificationSseService {
         log.info("[SSE] 연결 시작 receiverId={} 이 사용자 연결={} 전체 연결={}",
                 receiverId, emitterRepository.countByReceiver(receiverId), emitterRepository.count());
 
+        // 등록한 뒤에 조회한다. 반대로 하면 조회와 등록 사이에 도착한 알림을 놓친다.
+        // 그래서 실시간 전달과 겹칠 수 있는데, 겹치는 건은 클라이언트가 id로 걸러낸다.
+        replayMissed(receiverId, lastEventId, emitter);
+
         return emitter;
+    }
+
+    // 끊겨 있는 동안 도착한 알림을 오래된 순서로 다시 보낸다.
+    private void replayMissed(UUID receiverId, UUID lastEventId, SseEmitter emitter) {
+        if (lastEventId == null) {
+            return;
+        }
+
+        List<NotificationDto> missed = notificationService.findMissed(receiverId, lastEventId, REPLAY_LIMIT);
+
+        for (NotificationDto notification : missed) {
+            if (!send(receiverId, emitter, "replay", notificationEvent(notification))) {
+                return;
+            }
+        }
+
+        if (!missed.isEmpty()) {
+            log.info("[SSE] 누락 알림 재전송 receiverId={} 건수={} 기준 id={}",
+                    receiverId, missed.size(), lastEventId);
+        }
+        if (missed.size() == REPLAY_LIMIT) {
+            log.warn("[SSE] 재전송 상한({}건) 도달 receiverId={} 나머지는 목록 API로 조회해야 한다",
+                    REPLAY_LIMIT, receiverId);
+        }
     }
 
     // 사용자당 연결은 1개만 유지한다. 새로고침으로 버려진 연결은 서버가 바로 알 수 없어,
@@ -108,9 +141,7 @@ public class NotificationSseService {
 
         int delivered = 0;
         for (SseEmitter emitter : emitters) {
-            if (send(notification.receiverId(), emitter, "notification",
-                    SseEmitter.event().name("notifications")
-                            .id(notification.id().toString()).data(notification))) {
+            if (send(notification.receiverId(), emitter, "notification", notificationEvent(notification))) {
                 delivered++;
             }
         }
@@ -143,6 +174,13 @@ public class NotificationSseService {
         } else if (sent > 0) {
             log.debug("[SSE] heartbeat 전송 성공={}", sent);
         }
+    }
+
+    // 프런트는 이벤트 이름 notifications를 구독하고, id로 중복을 걸러낸다.
+    private SseEmitter.SseEventBuilder notificationEvent(NotificationDto notification) {
+        return SseEmitter.event().name("notifications")
+                .id(notification.id().toString())
+                .data(notification);
     }
 
     private boolean send(UUID receiverId, SseEmitter emitter, String kind, SseEmitter.SseEventBuilder event) {

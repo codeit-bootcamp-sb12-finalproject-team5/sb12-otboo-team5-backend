@@ -10,6 +10,7 @@ import com.codeit.otboo.domain.notification.repository.NotificationRepository;
 import com.codeit.otboo.domain.notification.repository.NotificationQueryRepository;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,13 @@ public class NotificationService {
             page.sortBy(),
             page.sortDirection()
         );
+    }
+
+    /** SSE가 끊겨 있는 동안 도착한 알림. 이미 읽은 알림은 제외한다. */
+    public List<NotificationDto> findMissed(UUID receiverId, UUID lastEventId, int limit) {
+        return queryRepository.findUnreadAfter(receiverId, lastEventId, limit).stream()
+                .map(this::toDto)
+                .toList();
     }
 
     @Transactional

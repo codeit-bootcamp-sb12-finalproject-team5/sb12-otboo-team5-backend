@@ -18,15 +18,16 @@ class NotificationSseServiceTest {
     @SuppressWarnings("unchecked")
     private NotificationSseService newService() {
         // notification.kafka.enabled=false 이면 브로드캐스트 수신 여부를 보지 않는다.
-        return new NotificationSseService(emitterRepository, mock(ObjectProvider.class), false);
+        return new NotificationSseService(emitterRepository, mock(NotificationService.class),
+                mock(ObjectProvider.class), false);
     }
 
     @Test
     void keepsOnlyTheNewestConnectionPerUser() {
         UUID user = UUID.randomUUID();
 
-        SseEmitter first = service.subscribe(user);
-        SseEmitter second = service.subscribe(user);
+        SseEmitter first = service.subscribe(user, null);
+        SseEmitter second = service.subscribe(user, null);
 
         assertThat(emitterRepository.countByReceiver(user)).isEqualTo(1);
         assertThat(emitterRepository.findEmitters(user)).containsExactly(second);
@@ -37,10 +38,10 @@ class NotificationSseServiceTest {
     void closingOneUserConnectionDoesNotTouchOtherUsers() {
         UUID user = UUID.randomUUID();
         UUID other = UUID.randomUUID();
-        SseEmitter otherConnection = service.subscribe(other);
+        SseEmitter otherConnection = service.subscribe(other, null);
 
-        service.subscribe(user);
-        service.subscribe(user);
+        service.subscribe(user, null);
+        service.subscribe(user, null);
 
         assertThat(emitterRepository.findEmitters(other)).containsExactly(otherConnection);
         assertThat(emitterRepository.count()).isEqualTo(2);
@@ -49,7 +50,7 @@ class NotificationSseServiceTest {
     @Test
     void heartbeatKeepsTheStoredConnection() {
         UUID user = UUID.randomUUID();
-        SseEmitter connection = service.subscribe(user);
+        SseEmitter connection = service.subscribe(user, null);
 
         service.heartbeat();
 

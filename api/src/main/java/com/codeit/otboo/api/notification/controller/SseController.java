@@ -22,16 +22,25 @@ public class SseController {
     @GetMapping(value = "/api/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> subscribe(
             @AuthenticationPrincipal CustomUserDetails principal,
-            @RequestParam(name = "LastEventId", required = false) UUID lastEventId
+            // EventSource 폴리필은 재연결할 때 마지막으로 받은 이벤트 id를 이 이름으로 붙인다.
+            @RequestParam(name = "lastEventId", required = false) String lastEventId
     ) {
-        // 이벤트 이력을 보관하지 않는다. 재연결 시 누락 알림은 목록 API로 조회한다.
-        if (lastEventId != null) {
-            log.debug("[SSE] 구독 요청에 LastEventId가 있으나 이력 재전송은 지원하지 않는다 receiverId={} lastEventId={}",
-                    principal.getUserId(), lastEventId);
-        }
-
         return ResponseEntity.ok().header("Cache-Control", "no-cache")
                 .header("X-Accel-Buffering", "no")
-                .body(service.subscribe(principal.getUserId()));
+                .body(service.subscribe(principal.getUserId(), parseCursor(lastEventId)));
+    }
+
+    // 커서 하나 때문에 재연결이 실패하면 알림이 통째로 끊긴다. 형식이 잘못되면 버리고 연결만 이어간다.
+    private UUID parseCursor(String lastEventId) {
+        if (lastEventId == null || lastEventId.isBlank()) {
+            return null;
+        }
+
+        try {
+            return UUID.fromString(lastEventId);
+        } catch (IllegalArgumentException exception) {
+            log.debug("[SSE] 형식이 잘못된 lastEventId를 무시한다 value={}", lastEventId);
+            return null;
+        }
     }
 }
