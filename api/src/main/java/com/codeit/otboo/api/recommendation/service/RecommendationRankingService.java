@@ -1,5 +1,6 @@
-package com.codeit.otboo.api.recommendation;
+package com.codeit.otboo.api.recommendation.service;
 
+import com.codeit.otboo.api.recommendation.RecommendationType;
 import com.codeit.otboo.api.recommendation.ranking.ContentBasedClothesRanker;
 import com.codeit.otboo.api.recommendation.ranking.RankedClothesCandidates;
 import com.codeit.otboo.domain.clothes.entity.Clothes;

@@ -1,5 +1,6 @@
-package com.codeit.otboo.api.recommendation;
+package com.codeit.otboo.api.recommendation.service;
 
+import com.codeit.otboo.api.recommendation.RecommendationType;
 import com.codeit.otboo.api.recommendation.candidate.ClothesCandidateProvider;
 import com.codeit.otboo.api.recommendation.filter.ClothesFilteringContext;
 import com.codeit.otboo.api.recommendation.filter.RuleBasedClothesFilter;

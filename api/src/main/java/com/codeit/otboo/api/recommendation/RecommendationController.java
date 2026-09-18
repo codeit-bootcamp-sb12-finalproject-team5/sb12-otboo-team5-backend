@@ -3,6 +3,7 @@ package com.codeit.otboo.api.recommendation;
 import com.codeit.otboo.api.common.security.CustomUserDetails;
 import com.codeit.otboo.api.recommendation.dto.RecommendationResponse;
 import com.codeit.otboo.api.recommendation.dto.UserPreferenceRequest;
+import com.codeit.otboo.api.recommendation.service.RecommendationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
