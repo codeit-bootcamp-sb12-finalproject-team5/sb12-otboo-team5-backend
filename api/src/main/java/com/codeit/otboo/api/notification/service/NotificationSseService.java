@@ -142,10 +142,7 @@ public class NotificationSseService {
                 notification.receiverId(), notification.id(), delivered, emitters.size());
     }
 
-    // 주의: 아래 10분은 끊긴 연결이 언제 정리되는지 확인하려는 테스트용 값이다.
-    // 배포 전에 25초로 되돌린다. 프록시(ALB 기본 유휴 60초)보다 간격이 길면 연결이 그대로 끊긴다.
-    // fixedDelay는 "이전 실행이 끝난 뒤"부터 재므로 전송이 느려지면 실제 주기가 늘어난다. fixedRate를 쓴다.
-    @Scheduled(initialDelay = 10, fixedRate = 10, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 25, fixedRate = 25, timeUnit = TimeUnit.SECONDS)
     public void heartbeat() {
         int sent = 0;
         int failed = 0;
@@ -160,7 +157,6 @@ public class NotificationSseService {
             }
         }
 
-        // 정상일 때 25초마다 로그가 쌓이지 않도록, 끊긴 연결이 있을 때만 수준을 올린다.
         if (failed > 0) {
             log.info("[SSE] heartbeat 전송 성공={} 실패={} (실패한 연결은 정리함)", sent, failed);
         } else if (sent > 0) {
@@ -175,7 +171,6 @@ public class NotificationSseService {
     }
 
     private boolean send(UUID receiverId, SseEmitter emitter, String kind, SseEmitter.SseEventBuilder event) {
-        // heartbeat와 Kafka 수신 스레드의 동일 연결 전송이 겹치지 않도록
         synchronized (emitter) {
             try {
                 emitter.send(event);
