@@ -75,11 +75,24 @@ public class NotificationSseService {
             return emitter;
         }
 
+        // 새 연결이 살아난 뒤에 정리한다. 반대로 하면 초기 전송이 실패했을 때 멀쩡한 연결만 잃는다.
+        closeExistingConnections(receiverId);
         emitterRepository.save(receiverId, emitter);
+
         log.info("[SSE] 연결 시작 receiverId={} 이 사용자 연결={} 전체 연결={}",
                 receiverId, emitterRepository.countByReceiver(receiverId), emitterRepository.count());
 
         return emitter;
+    }
+
+    // 사용자당 연결은 1개만 유지한다. 새로고침으로 버려진 연결은 서버가 바로 알 수 없어,
+    // heartbeat 전송이 실패할 때까지 쌓이기 때문이다.
+    private void closeExistingConnections(UUID receiverId) {
+        for (SseEmitter previous : emitterRepository.findEmitters(receiverId)) {
+            emitterRepository.delete(receiverId, previous);
+            previous.complete();
+            log.info("[SSE] 기존 연결 종료 receiverId={} 사유=사용자당 연결 1개 유지", receiverId);
+        }
     }
 
     /** Kafka 브로드캐스팅 수신부에서 호출할 로컬 연결 전달 진입점. */
@@ -106,9 +119,10 @@ public class NotificationSseService {
                 notification.receiverId(), notification.id(), delivered, emitters.size());
     }
 
-    // 프록시(ALB 기본 60초)가 유휴로 판단해 끊기 전에 두 번은 보내야 한 번 밀려도 살아남는다.
+    // 주의: 아래 10분은 끊긴 연결이 언제 정리되는지 확인하려는 테스트용 값이다.
+    // 배포 전에 25초로 되돌린다. 프록시(ALB 기본 유휴 60초)보다 간격이 길면 연결이 그대로 끊긴다.
     // fixedDelay는 "이전 실행이 끝난 뒤"부터 재므로 전송이 느려지면 실제 주기가 늘어난다. fixedRate를 쓴다.
-    @Scheduled(initialDelay = 25, fixedRate = 25, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(initialDelay = 10, fixedRate = 10, timeUnit = TimeUnit.MINUTES)
     public void heartbeat() {
         int sent = 0;
         int failed = 0;

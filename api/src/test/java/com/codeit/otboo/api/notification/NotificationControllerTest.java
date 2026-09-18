@@ -96,19 +96,23 @@ class NotificationControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    // 사용자당 연결은 1개만 유지하므로, 나중에 연결한 쪽만 알림을 받는다.
     @Test
-    void broadcastsToBothUserConnectionsUsingFrontendEventContract() throws Exception {
-        var first = mvc.perform(get("/api/sse")).andReturn();
-        var second = mvc.perform(get("/api/sse")).andReturn();
+    void broadcastsToTheNewestUserConnectionUsingFrontendEventContract() throws Exception {
+        var replaced = mvc.perform(get("/api/sse")).andReturn();
+        var current = mvc.perform(get("/api/sse")).andReturn();
         var id = UUID.randomUUID();
         sse.publish(new NotificationDto(id, OffsetDateTime.now(), user,
                 "role changed", "ADMIN", NotificationLevel.INFO));
-        for (var result : List.of(first, second)) {
-            String body = result.getResponse().getContentAsString();
-            assertThat(body).contains("event:notifications", "id:" + id,
-                    "\"receiverId\":\"" + user);
-            assertThat(body.indexOf(":connected")).isLessThan(body.indexOf("event:notifications"));
-        }
+
+        String body = current.getResponse().getContentAsString();
+        assertThat(body).contains("event:notifications", "id:" + id,
+                "\"receiverId\":\"" + user);
+        assertThat(body.indexOf(":connected")).isLessThan(body.indexOf("event:notifications"));
+
+        assertThat(replaced.getResponse().getContentAsString())
+                .contains(":connected")
+                .doesNotContain("event:notifications");
     }
 
     @Test
