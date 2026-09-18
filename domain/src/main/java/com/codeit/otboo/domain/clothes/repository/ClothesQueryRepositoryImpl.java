@@ -6,9 +6,11 @@ import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -20,7 +22,7 @@ public class ClothesQueryRepositoryImpl implements ClothesQueryRepository {
 
     @Override
     public CursorResponse<Clothes> findAllByDynamicQuery(String cursor, UUID idAfter, Integer limit,
-        ClothesCategory typeEqual, UUID ownerId) {
+                                                         ClothesCategory typeEqual, UUID ownerId) {
         QClothes clothes = QClothes.clothes;
 
         List<Clothes> content = queryFactory
@@ -73,11 +75,37 @@ public class ClothesQueryRepositoryImpl implements ClothesQueryRepository {
             "DESCENDING"
         );
     }
+
+    @Override
+    public List<Clothes> findOwnedCandidatesByUserId(UUID userId) {
+        QClothes clothes = QClothes.clothes;
+
+        return queryFactory
+            .selectFrom(clothes)
+            .where(
+                clothes.user.id.eq(userId),
+                clothes.isOwned.isTrue(),
+                clothes.deletedAt.isNull()
+            )
+            .fetch();
+    }
+
+    @Override
+    public List<Clothes> findOutfitCandidates() {
+        QClothes clothes = QClothes.clothes;
+
+        return queryFactory
+            .selectFrom(clothes)
+            .where(clothes.deletedAt.isNull())
+            .fetch();
+    }
+
     private BooleanExpression typeEqualEq(QClothes clothes, ClothesCategory typeEqual) {
         return typeEqual != null
             ? clothes.category.eq(typeEqual)
             : null;
     }
+
     private BooleanExpression cursorCondition(QClothes clothes, String cursor, UUID idAfter) {
         if (cursor == null) {
             return null;

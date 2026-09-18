@@ -46,7 +46,10 @@ public class ClothesService {
         if (!req.ownerId().equals(user.getId())) {
             throw new ClothesException(ErrorCode.INVALID_INPUT_VALUE).addDetail("사용자 Id값 입력이 유효하지 않습니다", null);
         }
-//        User user = userRepository.findById(req.ownerId()).orElseThrow(() -> new ClothesException(ErrorCode.RESOURCE_NOT_FOUND));
+        return save(req, image, user);
+    }
+
+    private Clothes save(ClothesRequest req, MultipartFile image, User user) {
         ClothesCategory category = req.type();
         ClothesSubCategory subCategory = req.getSubCategory();
         if (subCategory != null && category != subCategory.getParentCategory()) {

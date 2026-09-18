@@ -24,17 +24,20 @@ public enum ErrorCode {
     TEMP_PASSWORD_EXPIRED(401, "임시 비밀번호가 만료되었습니다."),
     ACCESS_DENIED(403, "접근 권한이 없습니다."),
 
+    // ===== 프로필 =====
+    PROFILE_NOT_FOUND(404, "프로필을 찾을 수 없습니다."),
+    PROFILE_PREFERENCE_NOT_READY(422, "사용자 선호 정보가 부족하여 Outfit 추천을 수행할 수 없습니다."),
+
     // ===== 의상 =====
     CLOTHES_NOT_FOUND(404, "의상을 찾을 수 없습니다"),
     CLOTHES_ANALYSIS_FAILED(502, "의상 분석에 실패했습니다."),
     INVALID_ATTRIBUTE_VALUE(400, "유효하지 않은 의상 속성입니다."),
     CLOTHES_ATTRIBUTE_PARSE_FAILED(500, "의상 속성작업에 실패했습니다."),
 
-    // ===== 프로필 =====
-    PROFILE_NOT_FOUND(404, "프로필을 찾을 수 없습니다."),
-
     // ===== 아웃핏 =====
-    // 담당자가 추가
+    OUTFIT_NOT_FOUND(404, "Outfit을 찾을 수 없습니다."),
+    DUPLICATE_OUTFIT_CLOTHES(409, "Outfit에 동일한 의상이 중복되어 있습니다."),
+    RECOMMENDATION_GENERATION_FAILED(502, "추천 생성에 실패했습니다."),
 
     // ===== 피드 =====
     // 담당자가 추가

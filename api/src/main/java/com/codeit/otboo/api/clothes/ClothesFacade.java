@@ -44,47 +44,62 @@ public class ClothesFacade {
     }
 
     @Async("bulkExecutor")
-    public CompletableFuture<ClothesResponse> process(UUID userId, String url, int index, int total) {
-        log.info("[{}/{}] WebSearch 시작", index, total);
-
-        ClothesAnalysisResult analysis = clothesAnalysisService.analyze(url);
-
-        log.info("[{}/{}] WebSearch 완료", index, total);
-
-        ResponseEntity<byte[]> response = downloadImage(analysis.imageUrl());
-        byte[] image = response.getBody();
-        String contentType = Optional.ofNullable(response.getHeaders().getContentType())
-                .map(MediaType::toString).orElse("image/webp");
-        String extension = contentType.equals("image/webp") ? ".webp" : ".jpg";
-
-        log.info("[{}/{}] 이미지 다운로드 완료", index, total);
-
-        ClothesRequest request = ClothesRequest.of(userId, analysis);
-
-        MultipartFile multipartFile =
-                new MockMultipartFile(
-                        "image",
-                        "clothes" + extension,
-                        contentType,
-                        image
-                );
-
-        ClothesResponse clothesResponse = create(request, multipartFile);
-
-        log.info("[{}/{}] CREATE 완료", index, total);
-
-        return CompletableFuture.completedFuture(clothesResponse);
-    }
-    private ResponseEntity<byte[]> downloadImage(String imageUrl) {
+    public CompletableFuture<BulkClothesProcessResult> process(UUID userId, String url, int index, int total) {
         try {
-            return restClient.get()
-                    .uri(imageUrl)
-                    .retrieve()
-                    .toEntity(byte[].class);
-        } catch (Exception e) {
-            log.error("이미지 다운로드 실패: {}", imageUrl, e);
-            throw new RuntimeException("이미지 다운로드 실패: " + imageUrl, e);
+            log.info("[{}/{}] WebSearch 시작", index, total);
+
+            ClothesAnalysisResult analysis = clothesAnalysisService.analyze(url);
+
+            log.info("[{}/{}] WebSearch 완료", index, total);
+
+            ResponseEntity<byte[]> response = downloadImage(analysis.imageUrl());
+            byte[] image = response.getBody();
+            String contentType = Optional.ofNullable(response.getHeaders().getContentType())
+                    .map(MediaType::toString).orElse("image/webp");
+            String extension = contentType.equals("image/webp") ? ".webp" : ".jpg";
+
+            log.info("[{}/{}] 이미지 다운로드 완료", index, total);
+
+            ClothesRequest request = ClothesRequest.of(userId, analysis);
+
+            MultipartFile multipartFile =
+                    new MockMultipartFile(
+                            "image",
+                            "clothes" + extension,
+                            contentType,
+                            image
+                    );
+
+            create(request, multipartFile);
+
+            log.info("[{}/{}] CREATE 완료", index, total);
+
+            return CompletableFuture.completedFuture(BulkClothesProcessResult.success(index, url));
+        } catch (RuntimeException e) {
+            String reason = rootMessage(e);
+            log.warn("[{}/{}] 의류 적재 실패: url={}, reason={}", index, total, url, reason);
+            return CompletableFuture.completedFuture(BulkClothesProcessResult.failure(index, url, reason));
         }
+    }
+
+    private ResponseEntity<byte[]> downloadImage(String imageUrl) {
+        ResponseEntity<byte[]> response = restClient.get()
+                .uri(imageUrl)
+                .retrieve()
+                .toEntity(byte[].class);
+        MediaType contentType = response.getHeaders().getContentType();
+        if (contentType == null || !"image".equalsIgnoreCase(contentType.getType())) {
+            throw new IllegalStateException("이미지 응답이 아닙니다: " + contentType);
+        }
+        return response;
+    }
+
+    private String rootMessage(Throwable throwable) {
+        Throwable cause = throwable;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage();
     }
 
 }

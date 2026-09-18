@@ -80,7 +80,7 @@ public class ClothesController {
             @RequestBody BulkClothesRequest req
     ) {
         int total = req.links().size();
-        List<CompletableFuture<ClothesResponse>> futures =
+        List<CompletableFuture<BulkClothesProcessResult>> futures =
                 IntStream.range(0, total)
                         .mapToObj(i ->
                                 clothesFacade.process(
@@ -91,7 +91,14 @@ public class ClothesController {
                                 )
                         )
                         .toList();
-        futures.forEach(CompletableFuture::join);
+        List<BulkClothesProcessResult> results = futures.stream()
+                .map(CompletableFuture::join)
+                .toList();
+        long successCount = results.stream()
+                .filter(BulkClothesProcessResult::success)
+                .count();
+        log.info("벌크 의류 적재 완료: total={}, success={}, failure={}",
+                total, successCount, total - successCount);
         return ResponseEntity.ok().build();
     }
 

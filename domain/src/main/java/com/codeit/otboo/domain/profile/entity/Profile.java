@@ -1,6 +1,7 @@
 package com.codeit.otboo.domain.profile.entity;
 
 import com.codeit.otboo.domain.common.UpdatableEntity;
+import com.codeit.otboo.domain.profile.exception.ProfileException;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.weather.entity.WeatherGrid;
 import jakarta.persistence.*;
@@ -9,7 +10,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.Array;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -35,8 +35,6 @@ public class Profile extends UpdatableEntity {
 	@Column(name = "temperature_sensitivity", nullable = false)
 	private Short temperatureSensitivity = 0;
 
-	@JdbcTypeCode(SqlTypes.VECTOR)
-	@Array(length = 1536)
 	@Column(name = "preference_vector", nullable = false, columnDefinition = "vector(1536)")
 	private float[] preferenceVector;
 
@@ -70,11 +68,20 @@ public class Profile extends UpdatableEntity {
 		this.locationSource = locationSource;
 	}
 
-	public void updateTemperatureSensitivity(Short sensitivity) {
+	public void updateTemperatureSensitivity(Short sensitivity){
 		if (sensitivity == null || sensitivity < -5 || sensitivity > 5) {
-			throw new IllegalArgumentException("온도 민감도는 -5~5 사이여야 합니다.");
+			throw ProfileException.invalidTemperatureSensitivity()
+				.addDetail("temperatureSensitivity", "온도 민감도는 -5~5 사이여야 합니다.");
 		}
+
 		this.temperatureSensitivity = sensitivity;
+	}
+
+	public void updatePreferenceVector(float[] preferenceVector) {
+		if (preferenceVector == null || preferenceVector.length != 1536) {
+			throw new IllegalArgumentException("선호 벡터는 1536차원이어야 합니다.");
+		}
+		this.preferenceVector = preferenceVector;
 	}
 
 	public void updateProfileImageUrl(String profileImageUrl){
