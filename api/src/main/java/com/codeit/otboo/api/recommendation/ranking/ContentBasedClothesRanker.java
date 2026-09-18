@@ -5,15 +5,15 @@ import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
 import com.codeit.otboo.domain.profile.entity.Profile;
 import com.codeit.otboo.domain.profile.exception.ProfileException;
-import com.codeit.otboo.domain.profile.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
+import java.util.Map;
 
 import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.*;
 
@@ -22,21 +22,7 @@ import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingP
 @RequiredArgsConstructor
 public class ContentBasedClothesRanker {
 
-    private final ProfileRepository profileRepository;
-
-    public RankedClothesCandidates rank(
-        UUID userId,
-        RecommendationType recommendationType,
-        List<Clothes> filteredClothes
-    ) {
-        if (filteredClothes.isEmpty()) {
-            return RankedClothesCandidates.empty();
-        }
-
-        Profile profile = profileRepository.findByUser_Id(userId)
-            .orElseThrow(ProfileException::profileNotFound);
-        return rank(profile, recommendationType, filteredClothes);
-    }
+    private final RecommendationRankingProperties rankingProperties;
 
     public RankedClothesCandidates rank(
         Profile profile,
@@ -72,10 +58,7 @@ public class ContentBasedClothesRanker {
             return rankWithoutPreferenceVector(recommendationType, filteredClothes);
         }
 
-        List<Clothes> includedCategories = filteredClothes.stream()
-            .filter(this::isIncludedCategory)
-            .toList();
-        List<Clothes> validVectorClothes = includedCategories.stream()
+        List<Clothes> validVectorClothes = filteredClothes.stream()
             .filter(clothes -> hasValidAttributeVector(clothes))
             .toList();
         List<RankedClothes> rankedClothes = validVectorClothes.stream()
@@ -84,13 +67,11 @@ public class ContentBasedClothesRanker {
 
         log.info(
             "[recommendation][ranking] 후보 점수 계산 완료 type={}, inputCount={}, "
-                + "includedCategoryCount={}, excludedCategoryCount={}, validVectorCount={}, invalidVectorCount={}",
+                + "validVectorCount={}, invalidVectorCount={}",
             recommendationType,
             filteredClothes.size(),
-            includedCategories.size(),
-            filteredClothes.size() - includedCategories.size(),
             validVectorClothes.size(),
-            includedCategories.size() - validVectorClothes.size()
+            filteredClothes.size() - validVectorClothes.size()
         );
 
         RankedClothesCandidates result = selectTopK(rankedClothes);
@@ -108,7 +89,6 @@ public class ContentBasedClothesRanker {
         }
 
         List<RankedClothes> rankedClothes = filteredClothes.stream()
-            .filter(this::isIncludedCategory)
             .map(this::rankByExplicitPreference)
             .toList();
 
@@ -152,12 +132,11 @@ public class ContentBasedClothesRanker {
             .reversed()
             .thenComparing(ranked -> ranked.clothes().getId());
 
-        return new RankedClothesCandidates(
-            topK(rankedClothes, ClothesCategory.TOP, TOP_LIMIT, scoreOrder),
-            topK(rankedClothes, null, BOTTOM_LIMIT, scoreOrder),
-            topK(rankedClothes, ClothesCategory.OUTER, OUTER_LIMIT, scoreOrder),
-            topK(rankedClothes, ClothesCategory.SHOES, SHOES_LIMIT, scoreOrder)
+        Map<ClothesCategory, List<RankedClothes>> result = new EnumMap<>(ClothesCategory.class);
+        rankingProperties.limits().forEach((category, limit) ->
+            result.put(category, topK(rankedClothes, category, limit, scoreOrder))
         );
+        return new RankedClothesCandidates(result);
     }
 
     private List<RankedClothes> topK(
@@ -167,25 +146,10 @@ public class ContentBasedClothesRanker {
         Comparator<RankedClothes> scoreOrder
     ) {
         return rankedClothes.stream()
-            .filter(ranked -> belongsToGroup(ranked.clothes().getCategory(), category))
+            .filter(ranked -> ranked.clothes().getCategory() == category)
             .sorted(scoreOrder)
             .limit(limit)
             .toList();
-    }
-
-    private boolean isIncludedCategory(Clothes clothes) {
-        return belongsToGroup(clothes.getCategory(), ClothesCategory.TOP)
-            || belongsToGroup(clothes.getCategory(), null)  // BOTTOM
-            || belongsToGroup(clothes.getCategory(), ClothesCategory.OUTER)
-            || belongsToGroup(clothes.getCategory(), ClothesCategory.SHOES);
-    }
-
-    private boolean belongsToGroup(ClothesCategory clothesCategory, ClothesCategory category) {
-        if (category == null) {
-            return clothesCategory == ClothesCategory.PANTS || clothesCategory == ClothesCategory.SKIRT;
-        }
-
-        return clothesCategory == category;
     }
 
     private boolean hasValidAttributeVector(Clothes clothes) {
@@ -202,18 +166,13 @@ public class ContentBasedClothesRanker {
         RankedClothesCandidates result
     ) {
         log.info(
-            "[recommendation][ranking] 카테고리별 상위 후보 선정 완료 "
-                + "type={}, topCount={}, bottomCount={}, outerCount={}, shoesCount={}",
+            "[recommendation][ranking] 카테고리별 상위 후보 선정 완료 type={}, counts={}",
             recommendationType,
-            result.tops().size(),
-            result.bottoms().size(),
-            result.outers().size(),
-            result.shoes().size()
+            result.byCategory().entrySet().stream().collect(java.util.stream.Collectors.toMap(
+                entry -> entry.getKey().name(), entry -> entry.getValue().size()
+            ))
         );
-        logSelected("TOP", result.tops());
-        logSelected("BOTTOM", result.bottoms());
-        logSelected("OUTER", result.outers());
-        logSelected("SHOES", result.shoes());
+        result.byCategory().forEach((category, candidates) -> logSelected(category.name(), candidates));
     }
 
     private void logSelected(String group, List<RankedClothes> selected) {

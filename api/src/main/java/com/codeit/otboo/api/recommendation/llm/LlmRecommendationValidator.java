@@ -45,12 +45,20 @@ public class LlmRecommendationValidator {
 
             long tops = count(categories, ids, "TOP");
             long bottoms = count(categories, ids, "BOTTOM");
-            long outers = count(categories, ids, "OUTER");
-            long shoes = count(categories, ids, "SHOES");
-            if (tops < 1) return ValidationResult.invalid(ValidationFailureReason.INVALID_TOP_COUNT);
-            if (bottoms != 1) return ValidationResult.invalid(ValidationFailureReason.INVALID_BOTTOM_COUNT);
-            if (outers > 1) return ValidationResult.invalid(ValidationFailureReason.INVALID_OUTER_COUNT);
-            if (shoes > 1) return ValidationResult.invalid(ValidationFailureReason.INVALID_SHOES_COUNT);
+            long dresses = count(categories, ids, "DRESS");
+            boolean hasTwoPiece = tops >= 1 && bottoms == 1 && dresses == 0;
+            boolean hasOnePiece = dresses == 1 && tops == 0 && bottoms == 0;
+            if (!hasTwoPiece && !hasOnePiece) {
+                return ValidationResult.invalid(ValidationFailureReason.INVALID_BASIC_OUTFIT);
+            }
+
+            if (count(categories, ids, "OUTER") > 1
+                || count(categories, ids, "SHOES") > 1
+                || count(categories, ids, "HAT") > 1
+                || count(categories, ids, "BAG") > 1
+                || count(categories, ids, "ACCESSORY") > 1) {
+                return ValidationResult.invalid(ValidationFailureReason.INVALID_OPTIONAL_COUNT);
+            }
         }
 
         return ValidationResult.valid();
@@ -61,7 +69,9 @@ public class LlmRecommendationValidator {
     }
 
     private boolean isAllowedCategory(String category) {
-        return "TOP".equals(category) || "BOTTOM".equals(category) || "OUTER".equals(category) || "SHOES".equals(category);
+        return "TOP".equals(category) || "BOTTOM".equals(category) || "DRESS".equals(category)
+            || "OUTER".equals(category) || "SHOES".equals(category) || "HAT".equals(category)
+            || "BAG".equals(category) || "ACCESSORY".equals(category);
     }
 
     record ValidationResult(ValidationFailureReason reason) {

@@ -9,7 +9,6 @@ import com.codeit.otboo.domain.weather.entity.WeatherForecast;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.springframework.stereotype.Component;
 
@@ -18,13 +17,7 @@ import org.springframework.stereotype.Component;
 public class LlmRecommendationRequestMapper {
 
     public LlmRecommendationRequest map(WeatherForecast weather, RankedClothesCandidates rankedCandidates) {
-        List<LlmRecommendationRequest.LlmClothesCandidate> candidates = Stream.of(
-                rankedCandidates.tops(),
-                rankedCandidates.bottoms(),
-                rankedCandidates.outers(),
-                rankedCandidates.shoes()
-            )
-            .flatMap(List::stream)
+        List<LlmRecommendationRequest.LlmClothesCandidate> candidates = rankedCandidates.all()
             .map(this::mapCandidate)
             .toList();
 

@@ -66,8 +66,9 @@ public class LlmRecommendationService {
         return switch (reason) {
             case UNKNOWN_CLOTHES_ID ->
                 "The previous response contained an ID outside candidates. Use only provided candidate IDs.";
-            case INVALID_TOP_COUNT, INVALID_BOTTOM_COUNT, INVALID_OUTER_COUNT, INVALID_SHOES_COUNT ->
-                "Follow the outfit rule: at least one TOP, exactly one BOTTOM, at most one OUTER and one SHOES.";
+            case INVALID_BASIC_OUTFIT, INVALID_OPTIONAL_COUNT ->
+                "Use either TOP with exactly one BOTTOM, or exactly one DRESS. "
+                    + "Use at most one item from each optional category.";
             default ->
                 "The previous response violated the structured outfit rules. Regenerate valid, distinct outfits.";
         };

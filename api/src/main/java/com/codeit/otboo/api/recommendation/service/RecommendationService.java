@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -59,22 +58,16 @@ public class RecommendationService {
             ? rankingService.rankOotd(userId, weatherId) : rankingService.rankOutfit(userId, weatherId);
 
         log.info(
-            "[recommendation][pipeline] 랭킹 처리가 완료 type={}, topCount={}, bottomCount={}, "
-                + "outerCount={}, shoesCount={}",
-            type,
-            ranked.tops().size(),
-            ranked.bottoms().size(),
-            ranked.outers().size(),
-            ranked.shoes().size()
+            "[recommendation][pipeline] 랭킹 처리가 완료 type={}, categoryCounts={}", type,
+            ranked.byCategory().entrySet().stream().collect(java.util.stream.Collectors.toMap(
+                entry -> entry.getKey().name(), entry -> entry.getValue().size()
+            ))
         );
 
-        if (ranked.tops().isEmpty() || ranked.bottoms().isEmpty()) {
+        if (!ranked.isRecommendable()) {
             log.warn(
-                "[recommendation][pipeline] 필수 카테고리 후보가 없어 추천을 중단 "
-                    + "type={}, topCount={}, bottomCount={}",
-                type,
-                ranked.tops().size(),
-                ranked.bottoms().size()
+                "[recommendation][pipeline] 기본 코디를 구성할 후보가 없어 추천을 중단 type={}, categoryCounts={}",
+                type, ranked.byCategory()
             );
             return new RecommendationResponse(List.of());
         }
@@ -97,8 +90,7 @@ public class RecommendationService {
             generated.usage()
         );
 
-        Map<UUID, Clothes> candidates = Stream.of(ranked.tops(), ranked.bottoms(), ranked.outers(), ranked.shoes())
-            .flatMap(List::stream).map(RankedClothes::clothes)
+        Map<UUID, Clothes> candidates = ranked.all().map(RankedClothes::clothes)
             .collect(java.util.stream.Collectors.toMap(Clothes::getId, Function.identity()));
 
         RecommendationResponse response = new RecommendationResponse(
@@ -144,9 +136,6 @@ public class RecommendationService {
     }
 
     private int totalCandidateCount(RankedClothesCandidates ranked) {
-        return ranked.tops().size()
-            + ranked.bottoms().size()
-            + ranked.outers().size()
-            + ranked.shoes().size();
+        return (int) ranked.all().count();
     }
 }
