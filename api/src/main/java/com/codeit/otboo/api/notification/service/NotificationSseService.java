@@ -21,6 +21,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @Slf4j
 public class NotificationSseService {
 
+    private static final long CONNECTION_TIMEOUT_MILLIS = 30 * 60 * 1000L;
+
     private final BooleanSupplier ready;
     private final SseEmitterRepository emitterRepository;
 
@@ -44,43 +46,92 @@ public class NotificationSseService {
 
     public SseEmitter subscribe(UUID receiverId) {
         if (!ready.getAsBoolean()) {
+            log.warn("[SSE] 구독 거부 receiverId={} 사유=브로드캐스트 수신 준비 안 됨", receiverId);
             throw new NotificationException(ErrorCode.NOTIFICATION_STREAM_UNAVAILABLE);
         }
 
-        SseEmitter emitter = new SseEmitter(30 * 60 * 1000L);
+        SseEmitter emitter = new SseEmitter(CONNECTION_TIMEOUT_MILLIS);
 
-        emitter.onCompletion(() -> emitterRepository.delete(receiverId, emitter));
+        emitter.onCompletion(() -> {
+            emitterRepository.delete(receiverId, emitter);
+            log.debug("[SSE] 연결 종료 receiverId={} 남은 전체 연결={}", receiverId, emitterRepository.count());
+        });
         emitter.onTimeout(() -> {
             emitterRepository.delete(receiverId, emitter);
             emitter.complete();
+            log.info("[SSE] 연결 시간 초과 receiverId={} 제한={}분 (클라이언트가 재연결한다)",
+                    receiverId, CONNECTION_TIMEOUT_MILLIS / 60_000L);
         });
 
-        emitter.onError(error -> emitterRepository.delete(receiverId, emitter));
+        emitter.onError(error -> {
+            emitterRepository.delete(receiverId, emitter);
+            // 브라우저 종료·네트워크 끊김으로도 발생하므로 예외 내용만 남긴다.
+            log.debug("[SSE] 연결 오류 receiverId={} 사유={}", receiverId, error.toString());
+        });
 
         // 초기 메시지를 먼저 보내고 공개하여 알림이 connected보다 앞서지 않도록 한다.
-        if (send(receiverId, emitter, SseEmitter.event().comment("connected").reconnectTime(3000))) {
-            emitterRepository.save(receiverId, emitter);
+        if (!send(receiverId, emitter, "connected", SseEmitter.event().comment("connected").reconnectTime(3000))) {
+            log.warn("[SSE] 연결 시작 실패 receiverId={} 단계=초기 메시지 전송", receiverId);
+            return emitter;
         }
+
+        emitterRepository.save(receiverId, emitter);
+        log.info("[SSE] 연결 시작 receiverId={} 이 사용자 연결={} 전체 연결={}",
+                receiverId, emitterRepository.countByReceiver(receiverId), emitterRepository.count());
 
         return emitter;
     }
 
     /** Kafka 브로드캐스팅 수신부에서 호출할 로컬 연결 전달 진입점. */
     public void publish(NotificationDto notification) {
-        emitterRepository.findEmitters(notification.receiverId()).forEach(emitter ->
-                send(notification.receiverId(), emitter, SseEmitter.event().name("notifications")
-                        .id(notification.id().toString()).data(notification)));
+        var emitters = emitterRepository.findEmitters(notification.receiverId());
+
+        if (emitters.isEmpty()) {
+            // 이 서버에 접속 중이 아니면 실시간 전달만 생략된다. 알림 자체는 목록 API로 조회한다.
+            log.debug("[SSE] 전달 대상 연결 없음 receiverId={} notificationId={}",
+                    notification.receiverId(), notification.id());
+            return;
+        }
+
+        int delivered = 0;
+        for (SseEmitter emitter : emitters) {
+            if (send(notification.receiverId(), emitter, "notification",
+                    SseEmitter.event().name("notifications")
+                            .id(notification.id().toString()).data(notification))) {
+                delivered++;
+            }
+        }
+
+        log.debug("[SSE] 알림 전달 receiverId={} notificationId={} 성공={}/{}",
+                notification.receiverId(), notification.id(), delivered, emitters.size());
     }
 
     // 프록시(ALB 기본 60초)가 유휴로 판단해 끊기 전에 두 번은 보내야 한 번 밀려도 살아남는다.
     // fixedDelay는 "이전 실행이 끝난 뒤"부터 재므로 전송이 느려지면 실제 주기가 늘어난다. fixedRate를 쓴다.
     @Scheduled(initialDelay = 25, fixedRate = 25, timeUnit = TimeUnit.SECONDS)
     public void heartbeat() {
-        emitterRepository.findAll().forEach((receiverId, emitters) -> emitters.forEach(emitter ->
-                send(receiverId, emitter, SseEmitter.event().comment("heartbeat"))));
+        int sent = 0;
+        int failed = 0;
+
+        for (var connections : emitterRepository.findAll().entrySet()) {
+            for (SseEmitter emitter : connections.getValue()) {
+                if (send(connections.getKey(), emitter, "heartbeat", SseEmitter.event().comment("heartbeat"))) {
+                    sent++;
+                } else {
+                    failed++;
+                }
+            }
+        }
+
+        // 정상일 때 25초마다 로그가 쌓이지 않도록, 끊긴 연결이 있을 때만 수준을 올린다.
+        if (failed > 0) {
+            log.info("[SSE] heartbeat 전송 성공={} 실패={} (실패한 연결은 정리함)", sent, failed);
+        } else if (sent > 0) {
+            log.debug("[SSE] heartbeat 전송 성공={}", sent);
+        }
     }
 
-    private boolean send(UUID receiverId, SseEmitter emitter, SseEmitter.SseEventBuilder event) {
+    private boolean send(UUID receiverId, SseEmitter emitter, String kind, SseEmitter.SseEventBuilder event) {
         // heartbeat와 Kafka 수신 스레드의 동일 연결 전송이 겹치지 않도록
         synchronized (emitter) {
             try {
@@ -89,6 +140,10 @@ public class NotificationSseService {
             } catch (IOException | IllegalStateException e) {
                 emitterRepository.delete(receiverId, emitter);
                 emitter.completeWithError(e);
+                // 클라이언트가 먼저 끊어도 발생하므로 예외 종류와 메시지만 남기고, 스택은 debug에서 본다.
+                log.warn("[SSE] 전송 실패로 연결 정리 receiverId={} 종류={} 사유={}: {}",
+                        receiverId, kind, e.getClass().getSimpleName(), e.getMessage());
+                log.debug("[SSE] 전송 실패 상세 receiverId={}", receiverId, e);
                 return false;
             }
         }
@@ -96,9 +151,13 @@ public class NotificationSseService {
 
     @PreDestroy
     public void shutdown() {
+        int closing = emitterRepository.count();
+
         emitterRepository.findAll().forEach((receiverId, emitters) -> emitters.forEach(emitter -> {
             emitterRepository.delete(receiverId, emitter);
             emitter.complete();
         }));
+
+        log.info("[SSE] 서버 종료로 연결 정리 연결수={}", closing);
     }
 }

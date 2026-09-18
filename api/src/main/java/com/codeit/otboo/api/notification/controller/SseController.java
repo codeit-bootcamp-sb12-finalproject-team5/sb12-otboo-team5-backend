@@ -4,6 +4,7 @@ import com.codeit.otboo.api.common.security.CustomUserDetails;
 import com.codeit.otboo.api.notification.service.NotificationSseService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class SseController {
@@ -23,6 +25,11 @@ public class SseController {
             @RequestParam(name = "LastEventId", required = false) UUID lastEventId
     ) {
         // 이벤트 이력을 보관하지 않는다. 재연결 시 누락 알림은 목록 API로 조회한다.
+        if (lastEventId != null) {
+            log.debug("[SSE] 구독 요청에 LastEventId가 있으나 이력 재전송은 지원하지 않는다 receiverId={} lastEventId={}",
+                    principal.getUserId(), lastEventId);
+        }
+
         return ResponseEntity.ok().header("Cache-Control", "no-cache")
                 .header("X-Accel-Buffering", "no")
                 .body(service.subscribe(principal.getUserId()));
