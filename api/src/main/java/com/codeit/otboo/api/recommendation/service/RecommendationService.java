@@ -90,7 +90,10 @@ public class RecommendationService {
             selectedClothes.stream().map(Clothes::getId).toList()
         );
 
-        return recommendNormally(userId, weatherId, type);
+        RankedClothesCandidates ranked = type == RecommendationType.OOTD
+            ? rankingService.rankOotd(userId, weatherId, selectedClothes)
+            : rankingService.rankOutfit(userId, weatherId, selectedClothes);
+        return generateRecommendation(userId, weatherId, type, ranked);
     }
 
     private RecommendationResponse recommendNormally(UUID userId, UUID weatherId, RecommendationType type) {
@@ -103,6 +106,19 @@ public class RecommendationService {
 
         RankedClothesCandidates ranked = type == RecommendationType.OOTD
             ? rankingService.rankOotd(userId, weatherId) : rankingService.rankOutfit(userId, weatherId);
+
+        return generateRecommendation(userId, weatherId, type, ranked);
+    }
+
+    /**
+     * 랭킹 결과를 기존 LLM 추천 생성 흐름에 전달한다.
+     */
+    private RecommendationResponse generateRecommendation(
+        UUID userId,
+        UUID weatherId,
+        RecommendationType type,
+        RankedClothesCandidates ranked
+    ) {
 
         log.info(
             "[recommendation][pipeline] 랭킹 처리가 완료 type={}, categoryCounts={}", type,

@@ -8,17 +8,12 @@ import com.codeit.otboo.api.recommendation.temperature.TemperatureAdjustmentPoli
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.profile.entity.Profile;
-import com.codeit.otboo.domain.profile.exception.ProfileException;
-import com.codeit.otboo.domain.profile.repository.ProfileRepository;
 import com.codeit.otboo.domain.weather.entity.WeatherForecast;
 import com.codeit.otboo.domain.weather.exception.WeatherException;
 import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -34,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class RecommendationFilteringService {
 
     private final List<ClothesCandidateProvider> candidateProviders;
-    private final ProfileRepository profileRepository;
     private final WeatherForecastRepository weatherForecastRepository;
     private final TemperatureAdjustmentPolicy temperatureAdjustmentPolicy;
     private final RuleBasedClothesFilter ruleBasedClothesFilter;
@@ -43,18 +37,22 @@ public class RecommendationFilteringService {
         return filter(RecommendationType.OOTD, userId, weatherId, profile);
     }
 
+    /**
+     * 선택 의상은 제외한 추가 후보에만 기존 규칙 기반 필터를 적용한다.
+     */
+    public List<Clothes> filterOotd(UUID userId, UUID weatherId, Profile profile, List<Clothes> selectedClothes) {
+        return filter(RecommendationType.OOTD, userId, weatherId, profile, selectedClothes);
+    }
+
     public List<Clothes> filterOutfit(UUID userId, UUID weatherId, Profile profile) {
         return filter(RecommendationType.OUTFIT, userId, weatherId, profile);
     }
 
-    private List<Clothes> filter(
-        RecommendationType type,
-        UUID userId,
-        UUID weatherId
-    ) {
-        Profile profile = profileRepository.findByUser_Id(userId)
-            .orElseThrow(ProfileException::profileNotFound);
-        return filter(type, userId, weatherId, profile);
+    /**
+     * 선택 의상은 제외한 추가 후보에만 기존 규칙 기반 필터를 적용한다.
+     */
+    public List<Clothes> filterOutfit(UUID userId, UUID weatherId, Profile profile, List<Clothes> selectedClothes) {
+        return filter(RecommendationType.OUTFIT, userId, weatherId, profile, selectedClothes);
     }
 
     private List<Clothes> filter(
@@ -63,7 +61,25 @@ public class RecommendationFilteringService {
         UUID weatherId,
         Profile profile
     ) {
-        List<Clothes> candidates = providersByType().get(type).findCandidates(userId);
+        return filter(type, userId, weatherId, profile, List.of());
+    }
+
+    /**
+     * 선택된 고정 의상을 후보 풀에서 제거한 뒤 추가 후보만 필터링한다.
+     */
+    private List<Clothes> filter(
+        RecommendationType type,
+        UUID userId,
+        UUID weatherId,
+        Profile profile,
+        List<Clothes> selectedClothes
+    ) {
+        // 후보군 리스트에서 선택된 옷들 제외
+        Set<UUID> selectedClothesIds = selectedClothes.stream().map(Clothes::getId)
+            .collect(Collectors.toUnmodifiableSet());
+        List<Clothes> candidates = providersByType().get(type).findCandidates(userId).stream()
+            .filter(clothes -> !selectedClothesIds.contains(clothes.getId()))
+            .toList();
 
         WeatherForecast weather = weatherForecastRepository.findById(weatherId)
             .orElseThrow(() -> new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE));

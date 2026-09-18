@@ -34,6 +34,18 @@ public class RecommendationRankingService {
         return contentBasedClothesRanker.rank(profile, RecommendationType.OOTD, filteredClothes);
     }
 
+    /** 고정 선택 의상은 제외하고 추가 OOTD 후보만 필터링·랭킹한다. */
+    public RankedClothesCandidates rankOotd(UUID userId, UUID weatherId, List<Clothes> selectedClothes) {
+        Profile profile = findProfile(userId);
+
+        // rule-based filtering
+        List<Clothes> filteredClothes = recommendationFilteringService
+            .filterOotd(userId, weatherId, profile, selectedClothes);
+
+        // content-based ranking
+        return contentBasedClothesRanker.rank(profile, RecommendationType.OOTD, filteredClothes, selectedClothes);
+    }
+
     public RankedClothesCandidates rankOutfit(UUID userId, UUID weatherId) {
         Profile profile = findProfile(userId);
 
@@ -42,6 +54,18 @@ public class RecommendationRankingService {
 
         // content-based ranking
         return contentBasedClothesRanker.rank(profile, RecommendationType.OUTFIT, filteredClothes);
+    }
+
+    /** 고정 선택 의상은 제외하고 추가 Outfit 후보만 필터링·랭킹한다. */
+    public RankedClothesCandidates rankOutfit(UUID userId, UUID weatherId, List<Clothes> selectedClothes) {
+        Profile profile = findProfile(userId);
+
+        // rule-based filtering
+        List<Clothes> filteredClothes = recommendationFilteringService
+            .filterOutfit(userId, weatherId, profile, selectedClothes);
+
+        // content-based ranking
+        return contentBasedClothesRanker.rank(profile, RecommendationType.OUTFIT, filteredClothes, selectedClothes);
     }
 
     private Profile findProfile(UUID userId) {

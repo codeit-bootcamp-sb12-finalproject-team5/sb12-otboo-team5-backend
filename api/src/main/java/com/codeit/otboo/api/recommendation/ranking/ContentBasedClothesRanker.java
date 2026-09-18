@@ -9,11 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingPolicy.*;
 
@@ -29,13 +25,24 @@ public class ContentBasedClothesRanker {
         RecommendationType recommendationType,
         List<Clothes> filteredClothes
     ) {
-        if (filteredClothes.isEmpty()) {
+        return rank(profile, recommendationType, filteredClothes, List.of());
+    }
+
+    /** 고정 의상이 맡은 역할의 추가 후보는 랭킹 대상에서 제외한다. */
+    public RankedClothesCandidates rank(
+        Profile profile,
+        RecommendationType recommendationType,
+        List<Clothes> filteredClothes,
+        List<Clothes> selectedClothes
+    ) {
+        List<Clothes> rankingTargets = excludeSelectedRoles(filteredClothes, selectedClothes);
+        if (rankingTargets.isEmpty()) {
             log.info(
                 "[recommendation][ranking] 필터를 통과한 후보가 없어 랭킹 생략 type={}, userId={}",
                 recommendationType,
                 profile.getUser().getId()
             );
-            return RankedClothesCandidates.empty();
+            return RankedClothesCandidates.of(selectedClothes, Map.of());
         }
 
         float[] preferenceVector = profile.getPreferenceVector();
@@ -45,7 +52,7 @@ public class ContentBasedClothesRanker {
                 + "preferenceVectorValid={}",
             recommendationType,
             profile.getUser().getId(),
-            filteredClothes.size(),
+            rankingTargets.size(),
             isValidVector(preferenceVector)
         );
 
@@ -55,10 +62,10 @@ public class ContentBasedClothesRanker {
                 recommendationType,
                 profile.getUser().getId()
             );
-            return rankWithoutPreferenceVector(recommendationType, filteredClothes);
+            return rankWithoutPreferenceVector(recommendationType, rankingTargets, selectedClothes);
         }
 
-        List<Clothes> validVectorClothes = filteredClothes.stream()
+        List<Clothes> validVectorClothes = rankingTargets.stream()
             .filter(clothes -> hasValidAttributeVector(clothes))
             .toList();
         List<RankedClothes> rankedClothes = validVectorClothes.stream()
@@ -69,12 +76,12 @@ public class ContentBasedClothesRanker {
             "[recommendation][ranking] 후보 점수 계산 완료 type={}, inputCount={}, "
                 + "validVectorCount={}, invalidVectorCount={}",
             recommendationType,
-            filteredClothes.size(),
+            rankingTargets.size(),
             validVectorClothes.size(),
-            filteredClothes.size() - validVectorClothes.size()
+            rankingTargets.size() - validVectorClothes.size()
         );
 
-        RankedClothesCandidates result = selectTopK(rankedClothes);
+        RankedClothesCandidates result = selectTopK(selectedClothes, rankedClothes);
         logRankingResult(recommendationType, result);
         return result;
     }
@@ -82,7 +89,8 @@ public class ContentBasedClothesRanker {
     // 선호벡터 없는 경우
     private RankedClothesCandidates rankWithoutPreferenceVector(
         RecommendationType recommendationType,
-        List<Clothes> filteredClothes
+        List<Clothes> filteredClothes,
+        List<Clothes> selectedClothes
     ) {
         if (recommendationType == RecommendationType.OUTFIT) {
             throw ProfileException.preferenceVectorNotReady();
@@ -100,7 +108,7 @@ public class ContentBasedClothesRanker {
             rankedClothes.size()
         );
 
-        RankedClothesCandidates result = selectTopK(rankedClothes);
+        RankedClothesCandidates result = selectTopK(selectedClothes, rankedClothes);
         logRankingResult(recommendationType, result);
         return result;
     }
@@ -126,7 +134,7 @@ public class ContentBasedClothesRanker {
         return new RankedClothes(clothes, null, normalizedPreference, normalizedPreference);
     }
 
-    private RankedClothesCandidates selectTopK(List<RankedClothes> rankedClothes) {
+    private RankedClothesCandidates selectTopK(List<Clothes> selectedClothes, List<RankedClothes> rankedClothes) {
         Comparator<RankedClothes> scoreOrder = Comparator
             .comparingDouble(RankedClothes::finalScore)
             .reversed()
@@ -136,7 +144,28 @@ public class ContentBasedClothesRanker {
         rankingProperties.limits().forEach((category, limit) ->
             result.put(category, topK(rankedClothes, category, limit, scoreOrder))
         );
-        return new RankedClothesCandidates(result);
+        return RankedClothesCandidates.of(selectedClothes, result);
+    }
+
+    /** 선택 의상이 이미 채운 역할과 충돌하는 카테고리를 추가 랭킹에서 제거한다. */
+    private List<Clothes> excludeSelectedRoles(List<Clothes> candidates, List<Clothes> selectedClothes) {
+        Set<ClothesRole> selectedRoles = selectedClothes.stream()
+            .map(clothes -> ClothesRole.from(clothes.getCategory()))
+            .collect(java.util.stream.Collectors.toCollection(() -> EnumSet.noneOf(ClothesRole.class)));
+
+        return candidates.stream()
+            .filter(candidate -> isRankingTarget(candidate.getCategory(), selectedRoles))
+            .toList();
+    }
+
+    private boolean isRankingTarget(ClothesCategory category, java.util.Set<ClothesRole> selectedRoles) {
+        ClothesRole role = ClothesRole.from(category);
+
+        if (selectedRoles.contains(ClothesRole.ONE_PIECE)) {
+            return role != ClothesRole.TOP && role != ClothesRole.BOTTOM && role != ClothesRole.ONE_PIECE;
+        }
+
+        return !selectedRoles.contains(role);
     }
 
     private List<RankedClothes> topK(
