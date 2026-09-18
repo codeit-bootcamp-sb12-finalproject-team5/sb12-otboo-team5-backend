@@ -1,16 +1,22 @@
 # 로컬 모니터링 (Prometheus + Grafana)
 
-배치 앱의 `/actuator/prometheus`를 Prometheus가 15초마다 수집하고, Grafana가 그 데이터를 그래프로 보여준다.
+각 앱의 `/actuator/prometheus`를 Prometheus가 15초마다 수집하고, Grafana가 그 데이터를 그래프로 보여준다.
 
 ```
-배치 앱 :8082/actuator/prometheus  ←수집─  Prometheus :9090  ←조회─  Grafana :3000
+api-1 :9101 ─┐
+api-2 :9102 ─┤
+worker :9103 ─┼─수집→  Prometheus :9090  ←조회─  Grafana :3000
+batch  :9104 ─┘
 ```
+
+지표는 서비스 포트(8080, 8081)가 아니라 **관리 포트**로 나온다. 배포 시 관리 포트는 외부에
+열지 않고 Prometheus에서 오는 트래픽만 허용한다.
 
 Grafana는 앱을 직접 읽지 않고 반드시 Prometheus를 거칩니다
 
 ## 실행
 
-저장소 루트에서 실행 합니다 배치 앱(`./gradlew :batch:bootRun`)이 8082에서 떠 있어야 합니다
+저장소 루트에서 실행 합니다. 수집 대상 앱이 먼저 떠 있어야 합니다(`lab/README.md` 참고)
 
 ```bash
 docker compose -f monitoring/docker-compose.yml up -d
@@ -18,9 +24,9 @@ docker compose -f monitoring/docker-compose.yml up -d
 
 | 주소 | 용도                                  |
 |---|-------------------------------------|
-| http://localhost:9090/targets | 수집 대상 상태. `otboo-batch`가 `UP`이어야 한다 |
+| http://localhost:9090/targets | 수집 대상 상태. 네 타깃이 모두 `UP`이어야 한다 |
 | http://localhost:3000 | Grafana. 기본 계정 `otboo` / `otboo1!`  |
-| Grafana → Dashboards → OTBOO → OTBOO Batch | 준비된 대시보드                            |
+| Grafana → Dashboards → OTBOO | `OTBOO API`(JVM·요청·DB 풀), `OTBOO Batch`(Job·스텝)  |
 
 
 중지와 초기화:

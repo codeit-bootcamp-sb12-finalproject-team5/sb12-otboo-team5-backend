@@ -70,31 +70,25 @@ public class NotificationSseService {
 
         emitter.onError(error -> {
             emitterRepository.delete(receiverId, emitter);
-            // 브라우저 종료·네트워크 끊김으로도 발생하므로 예외 내용만 남긴다.
             log.debug("[SSE] 연결 오류 receiverId={} 사유={}", receiverId, error.toString());
         });
 
-        // 초기 메시지를 먼저 보내고 공개하여 알림이 connected보다 앞서지 않도록 한다.
         if (!send(receiverId, emitter, "connected", SseEmitter.event().comment("connected").reconnectTime(3000))) {
             log.warn("[SSE] 연결 시작 실패 receiverId={} 단계=초기 메시지 전송", receiverId);
             return emitter;
         }
 
-        // 새 연결이 살아난 뒤에 정리한다. 반대로 하면 초기 전송이 실패했을 때 멀쩡한 연결만 잃는다.
         closeExistingConnections(receiverId);
         emitterRepository.save(receiverId, emitter);
 
         log.info("[SSE] 연결 시작 receiverId={} 이 사용자 연결={} 전체 연결={}",
                 receiverId, emitterRepository.countByReceiver(receiverId), emitterRepository.count());
 
-        // 등록한 뒤에 조회한다. 반대로 하면 조회와 등록 사이에 도착한 알림을 놓친다.
-        // 그래서 실시간 전달과 겹칠 수 있는데, 겹치는 건은 클라이언트가 id로 걸러낸다.
         replayMissed(receiverId, lastEventId, emitter);
 
         return emitter;
     }
 
-    // 끊겨 있는 동안 도착한 알림을 오래된 순서로 다시 보낸다.
     private void replayMissed(UUID receiverId, UUID lastEventId, SseEmitter emitter) {
         if (lastEventId == null) {
             return;
@@ -118,8 +112,6 @@ public class NotificationSseService {
         }
     }
 
-    // 사용자당 연결은 1개만 유지한다. 새로고침으로 버려진 연결은 서버가 바로 알 수 없어,
-    // heartbeat 전송이 실패할 때까지 쌓이기 때문이다.
     private void closeExistingConnections(UUID receiverId) {
         for (SseEmitter previous : emitterRepository.findEmitters(receiverId)) {
             emitterRepository.delete(receiverId, previous);
@@ -176,7 +168,6 @@ public class NotificationSseService {
         }
     }
 
-    // 프런트는 이벤트 이름 notifications를 구독하고, id로 중복을 걸러낸다.
     private SseEmitter.SseEventBuilder notificationEvent(NotificationDto notification) {
         return SseEmitter.event().name("notifications")
                 .id(notification.id().toString())

@@ -1,5 +1,3 @@
-# 로컬 모니터링(Prometheus + Grafana). 필요할 때만 켠다.
-# 앱 인프라(../docker-compose.yml)와 분리해 두었으므로 기존 docker compose up에는 포함되지 않는다.
 # 실행: docker compose -f monitoring/docker-compose.yml up -d
 name: otboo-monitoring
 

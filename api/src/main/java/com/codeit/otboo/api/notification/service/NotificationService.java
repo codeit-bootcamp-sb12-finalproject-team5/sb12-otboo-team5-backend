@@ -50,7 +50,6 @@ public class NotificationService {
         );
     }
 
-    /** SSE가 끊겨 있는 동안 도착한 알림. 이미 읽은 알림은 제외한다. */
     public List<NotificationDto> findMissed(UUID receiverId, UUID lastEventId, int limit) {
         return queryRepository.findUnreadAfter(receiverId, lastEventId, limit).stream()
                 .map(this::toDto)

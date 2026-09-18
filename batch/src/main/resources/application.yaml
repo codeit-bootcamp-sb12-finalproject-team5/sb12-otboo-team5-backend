@@ -12,7 +12,7 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:otboo}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:otboo}
     username: ${POSTGRES_USER:admin}
     password: ${POSTGRES_PASSWORD:secret}
 
@@ -56,9 +56,12 @@ notification:
     enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
 
 server:
-  port: 8082
+  # 외부에 제공하는 API가 없다. -1은 일반 웹 서버를 띄우지 않는다는 뜻이다.
+  port: ${SERVER_PORT:-1}
 
 management:
+  server:
+    port: ${MANAGEMENT_PORT:9104}
   endpoints:
     web:
       exposure:

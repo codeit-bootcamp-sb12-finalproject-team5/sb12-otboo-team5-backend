@@ -5,12 +5,9 @@ spring:
   config:
     import: optional:dotenv:../
 
-  main:
-    web-application-type: none
-
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5432/${POSTGRES_DB}}
+    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB}}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
 
@@ -32,3 +29,18 @@ spring:
 notification:
   kafka:
     enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
+
+server:
+  # Kafka만 소비한다. 외부 요청을 받지 않으므로 일반 웹 서버는 띄우지 않는다.
+  port: ${SERVER_PORT:-1}
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9103}
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
