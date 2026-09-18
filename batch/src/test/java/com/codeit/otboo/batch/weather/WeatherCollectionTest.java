@@ -4,7 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.codeit.otboo.batch.weather.metrics.WeatherCollectionMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import com.codeit.otboo.batch.weather.reader.WeatherGridItemReader;
+import com.codeit.otboo.batch.weather.config.WeatherBatchJobConfig;
+import com.codeit.otboo.support.weather.util.KmaTimeCalculator;
+import org.springframework.batch.core.Step;
+import org.springframework.batch.core.repository.JobRepository;
 import com.codeit.otboo.batch.weather.config.WeatherCollectionWindow;
 import com.codeit.otboo.batch.weather.config.WeatherSyncStepListener;
 import com.codeit.otboo.batch.weather.service.WeatherBatchExecutionService;
@@ -30,6 +36,41 @@ class WeatherCollectionTest {
     private static final String BASE = "2026-09-08T23:50:00+09:00";
 
     @Test
+    void newAutomaticExecutionReplacesPreviousCollectionTime() {
+        var config = spy(new WeatherBatchJobConfig(
+            mock(JobRepository.class), null, null, null, null, null, null, new WeatherCollectionMetrics(new SimpleMeterRegistry())));
+        doReturn(mock(Step.class)).when(config).weatherSyncStep();
+        var incrementer = config.dailyWeatherSyncJob().getJobParametersIncrementer();
+        var previous = new JobParametersBuilder()
+            .addLong("run.id", 7L)
+            .addString("collectionAt", BASE)
+            .toJobParameters();
+        var before = OffsetDateTime.now(KmaTimeCalculator.KST);
+
+        var next = incrementer.getNext(previous);
+
+        var after = OffsetDateTime.now(KmaTimeCalculator.KST);
+        assertThat(OffsetDateTime.parse(next.getString("collectionAt")))
+            .isBetween(before, after);
+        assertThat(next.getLong("run.id")).isEqualTo(8L);
+        assertThat(previous.getString("collectionAt")).isEqualTo(BASE);
+        assertThat(incrementer.getNext(null).getString("collectionAt")).isNotNull();
+    }
+
+    @Test
+    void restartKeepsPreviouslyFixedCollectionTime() {
+        var service = mock(WeatherBatchExecutionService.class);
+        var grids = mock(WeatherGridRepository.class);
+        var listener = new WeatherSyncStepListener(service, grids, mock(WeatherJdbcItemWriter.class));
+        var step = new StepExecution("weather", new JobExecution(1L));
+        step.getExecutionContext().putString("collectionAt", BASE);
+
+        listener.beforeStep(step);
+
+        assertThat(step.getExecutionContext().getString("collectionAt")).isEqualTo(BASE);
+    }
+
+    @Test
     void storedUtcObservationsSkipAllEightCallsAndForecastUsesFixedBase() {
         var grids = mock(WeatherGridRepository.class);
         var observations = mock(WeatherObservationRepository.class);
@@ -43,7 +84,7 @@ class WeatherCollectionTest {
         when(kma.findVillageForecast(forecastAt, 60, 127))
             .thenReturn(Optional.of(new KmaForecastBundleDto(forecastAt, 60, 127, List.of())));
 
-        var reader = new WeatherGridItemReader(grids, observations, kma, BASE);
+        var reader = new WeatherGridItemReader(grids, observations, kma, new WeatherCollectionMetrics(new SimpleMeterRegistry()), BASE);
         var result = reader.read();
 
         assertThat(result.existingObservationCount()).isEqualTo(8);

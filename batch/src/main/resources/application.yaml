@@ -2,7 +2,7 @@ spring:
   application:
     name: batch
   main:
-    web-application-type: none
+    web-application-type: servlet
     keep-alive: true
   config:
     import: optional:dotenv:../
@@ -54,3 +54,15 @@ weather:
 notification:
   kafka:
     enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
+
+server:
+  port: 8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}

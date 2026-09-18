@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # 배치 앱: ./gradlew :batch:bootRun (server.port 8082)
+  - job_name: otboo-batch
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["host.docker.internal:8082"]
+
+  # API 앱은 아직 /actuator/prometheus를 열지 않았다.
+  # api의 management.endpoints.web.exposure.include에 prometheus를 추가한 뒤 아래 주석을 푼다.
+  # - job_name: otboo-api
+  #   metrics_path: /actuator/prometheus
+  #   static_configs:
+  #     - targets: ["host.docker.internal:8080"]

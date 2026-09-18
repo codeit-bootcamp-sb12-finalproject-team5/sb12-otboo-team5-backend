@@ -1,5 +1,6 @@
 package com.codeit.otboo.batch.weather.reader;
 
+import com.codeit.otboo.batch.weather.metrics.WeatherCollectionMetrics;
 import com.codeit.otboo.batch.weather.config.WeatherCollectionWindow;
 import com.codeit.otboo.domain.weather.entity.WeatherGrid;
 import com.codeit.otboo.domain.weather.repository.WeatherGridRepository;
@@ -30,6 +31,7 @@ public class WeatherGridItemReader implements ItemReader<GridCollectionResult> {
     private final WeatherGridRepository gridRepository;
     private final WeatherObservationRepository observationRepository;
     private final KmaClient kmaClient;
+    private final WeatherCollectionMetrics metrics;
 
     private final OffsetDateTime collectionAt;
     private Iterator<WeatherGrid> gridIterator;
@@ -38,11 +40,13 @@ public class WeatherGridItemReader implements ItemReader<GridCollectionResult> {
         WeatherGridRepository gridRepository,
         WeatherObservationRepository observationRepository,
         KmaClient kmaClient,
+        WeatherCollectionMetrics metrics,
         @Value("#{stepExecutionContext['collectionAt']}") String collectionAt
     ) {
         this.gridRepository = gridRepository;
         this.observationRepository = observationRepository;
         this.kmaClient = kmaClient;
+        this.metrics = metrics;
         this.collectionAt = WeatherCollectionWindow.collectionAt(collectionAt);
     }
 
@@ -73,7 +77,8 @@ public class WeatherGridItemReader implements ItemReader<GridCollectionResult> {
 
         for (OffsetDateTime slot : slots) {
             if (existingSlots.contains(slot.toInstant())) continue;
-            kmaClient.findObservation(slot, grid.getNx(), grid.getNy())
+            metrics.timeCommunication("observation",
+                    () -> kmaClient.findObservation(slot, grid.getNx(), grid.getNy()))
                     .filter(observation -> observation.observedAt().isEqual(slot))
                     .ifPresent(fetchedObservations::add);
         }
@@ -91,7 +96,9 @@ public class WeatherGridItemReader implements ItemReader<GridCollectionResult> {
         OffsetDateTime base = KmaTimeCalculator.villageBase(collectionAt);
 
         for (int attempt = 0; attempt < 3; attempt++) {
-            var result = kmaClient.findVillageForecast(base.minusHours(attempt * 3L), grid.getNx(), grid.getNy());
+            OffsetDateTime requestedBase = base.minusHours(attempt * 3L);
+            var result = metrics.timeCommunication("forecast",
+                    () -> kmaClient.findVillageForecast(requestedBase, grid.getNx(), grid.getNy()));
             if (result.isPresent()) return result;
         }
 
