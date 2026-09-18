@@ -68,6 +68,7 @@ public class SecurityConfig {
 
                 // 유저 전용
                 .requestMatchers("/api/recommendations/**").hasRole("USER")
+                .requestMatchers("/api/outfit/**").hasRole("USER")
 
                 // 그 외 전부 인증 필요
                 .anyRequest().authenticated())
