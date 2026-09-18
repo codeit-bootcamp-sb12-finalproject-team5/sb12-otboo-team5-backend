@@ -45,6 +45,38 @@ docker compose up -d        # 저장소 루트에서
 docker compose -f lab/docker-compose.yml down
 ```
 
+## 코드를 고친 뒤
+
+이미지는 빌드된 JAR을 복사만 한다. `--build`만 하면 **예전 JAR이 그대로 들어간다.**
+빌드와 재생성을 한 번에 하는 스크립트를 쓴다.
+
+```bash
+./lab/reload.sh              # 앱 4개 전부
+./lab/reload.sh api-1 api-2  # 지정한 것만
+```
+
+기동이 끝날 때까지 기다렸다가 결과를 알려준다. 컨테이너가 `Up`이어도 Spring이 아직
+뜨는 중이면 요청은 502가 나기 때문이다.
+
+자동 반영은 아니다. **API를 계속 고치는 중이라면 lab을 내리고 평소처럼 `bootRun`으로
+개발하는 편이 빠르다.** lab은 여러 대 구성과 지표를 확인하는 용도다.
+
+## 프론트
+
+프론트는 이 스택에 넣지 않고 호스트에서 그대로 띄운다. 수정 없이 붙는다.
+
+```bash
+cd ../sb12-otboo-team5-frontend && pnpm dev
+```
+
+`vite.config.ts`의 프록시 대상이 `localhost:8080`인데, **gateway가 바로 그 8080을 쓰기
+때문이다.** 프론트는 뒤에 API가 몇 대인지 모른 채 요청을 보내고, 분산은 gateway가 한다.
+저장하면 즉시 반영되는 것(HMR)도 평소와 같다.
+
+컨테이너로 넣지 않은 이유는 두 가지다. 컨테이너 안에서는 `localhost:8080`이 자기 자신을
+가리켜 프록시가 깨지고, `node_modules`의 네이티브 바이너리가 macOS용이라 리눅스
+컨테이너에서 그대로 쓸 수 없다.
+
 ## 확인
 
 ```bash
@@ -76,4 +108,4 @@ GATEWAY_PORT=18000 MGMT1_PORT=19101 MGMT4_PORT=19104 \
 기상청 API를 실제로 호출하고 DB에 쓴다.
 
 **JAR을 다시 만들어야 반영된다.** 코드를 고친 뒤 `--build`만 하면 예전 JAR이 그대로
-들어간다. 반드시 `bootJar`를 먼저 돌린다.
+들어간다. `./lab/reload.sh`가 이 순서를 지켜준다.
