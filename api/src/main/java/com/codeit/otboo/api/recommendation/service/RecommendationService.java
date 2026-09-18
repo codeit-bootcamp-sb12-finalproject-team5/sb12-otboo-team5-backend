@@ -16,6 +16,7 @@ import com.codeit.otboo.domain.weather.entity.WeatherForecast;
 import com.codeit.otboo.domain.weather.exception.WeatherException;
 import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
 import com.codeit.otboo.support.openai.clothes.ClothesAnalysisService;
+import com.codeit.otboo.support.storage.S3StorageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class RecommendationService {
     private final LlmRecommendationService llmRecommendationService;
     private final ProfileRepository profileRepository;
     private final ClothesAnalysisService clothesAnalysisService;
+    private final S3StorageService s3StorageService;
 
     public RecommendationResponse recommendOotd(UUID userId, UUID weatherId) {
         return recommend(userId, weatherId, RecommendationType.OOTD);
@@ -107,7 +109,7 @@ public class RecommendationService {
                 .map(clothes -> new RecommendationResponse.Clothes(
                     clothes.getId(),
                     clothes.getName(),
-                    clothes.getImageUrl(),
+                    s3StorageService.getPresignedUrl(clothes.getImageUrl()),
                     clothes.getCategory().name()))
                     .toList(),
                 outfit.reason(),
