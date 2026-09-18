@@ -1,0 +1,118 @@
+# API 2대 + worker 1대 + batch 1대를 컨테이너로 띄워, 지표가 전부 수집되는지 확인한다.
+# 실행: 저장소 루트에서
+#   ./gradlew :api:bootJar :worker:bootJar :batch:bootJar -x test
+#   docker compose -f lab/docker-compose.yml up -d --build
+name: otboo-lab
+
+# 네 컨테이너가 공유하는 설정. 차이는 JAR과 포트뿐이다.
+x-app: &app
+  env_file:
+    - ../.env
+  networks:
+    - infra
+    - monitoring
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+# 호스트가 아니라 컨테이너 이름으로 붙는다. .env의 localhost 값을 덮어쓴다.
+x-infra-env: &infra-env
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+services:
+  # 배포의 ALB 자리. 프론트(vite proxy)는 8080 한 곳만 보고, 분산은 여기서 한다.
+  gateway:
+    image: nginx:1.27-alpine
+    container_name: otboo-lab-gateway
+    depends_on: [api-1, api-2]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/forwarded.conf:/etc/nginx/conf.d/forwarded.conf:ro
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    networks:
+      - infra
+    restart: unless-stopped
+
+  api-1:
+    <<: *app
+    container_name: otboo-lab-api-1
+    image: otboo-lab/api:local
+    build: &api-build
+      context: ..
+      dockerfile: lab/Dockerfile
+      args:
+        JAR_FILE: api/build/libs/api-0.0.1-SNAPSHOT.jar
+    environment:
+      <<: *infra-env
+      SERVER_PORT: "8080"
+      MANAGEMENT_PORT: "9101"
+    ports:
+      # 평소에는 gateway(8080)로 들어간다. 여기는 한 대만 직접 찔러볼 때 쓰는 우회로다.
+      - "${API1_PORT:-18080}:8080"
+      - "${MGMT1_PORT:-9101}:9101"
+
+  api-2:
+    <<: *app
+    container_name: otboo-lab-api-2
+    image: otboo-lab/api:local
+    # api-1과 같은 이미지다. 캐시가 살아 있어 다시 빌드되지 않는다.
+    build: *api-build
+    environment:
+      <<: *infra-env
+      SERVER_PORT: "8081"
+      MANAGEMENT_PORT: "9102"
+    ports:
+      - "${API2_PORT:-18081}:8081"
+      - "${MGMT2_PORT:-9102}:9102"
+
+  worker:
+    <<: *app
+    container_name: otboo-lab-worker
+    image: otboo-lab/worker:local
+    build:
+      context: ..
+      dockerfile: lab/Dockerfile
+      args:
+        JAR_FILE: worker/build/libs/worker-0.0.1-SNAPSHOT.jar
+    environment:
+      <<: *infra-env
+      MANAGEMENT_PORT: "9103"
+      # Kafka 컨슈머를 실제로 돌려야 알림 지표가 나온다.
+      NOTIFICATION_KAFKA_ENABLED: "true"
+    ports:
+      # 서비스 포트는 없다. 관리 포트만 연다.
+      - "${MGMT3_PORT:-9103}:9103"
+
+  batch:
+    <<: *app
+    container_name: otboo-lab-batch
+    image: otboo-lab/batch:local
+    build:
+      context: ..
+      dockerfile: lab/Dockerfile
+      args:
+        JAR_FILE: batch/build/libs/batch-0.0.1-SNAPSHOT.jar
+    environment:
+      <<: *infra-env
+      MANAGEMENT_PORT: "9104"
+      # 공유 DB를 쓰므로 뜨자마자 날씨 수집 Job이 도는 것을 막는다.
+      # Job까지 확인하려면 true로 바꾼다. 기상청 API를 실제로 호출하고 DB에 쓴다.
+      SPRING_BATCH_JOB_ENABLED: "false"
+    ports:
+      - "${MGMT4_PORT:-9104}:9104"
+
+networks:
+  # 이미 떠 있는 postgres / redis / kafka가 붙어 있는 네트워크
+  infra:
+    external: true
+    name: sb12-otboo-team5-backend_default
+  # Prometheus가 컨테이너 이름으로 스크랩할 수 있게 같은 네트워크에 참여한다
+  monitoring:
+    external: true
+    name: otboo-monitoring_default
