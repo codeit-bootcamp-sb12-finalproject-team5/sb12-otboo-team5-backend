@@ -48,6 +48,29 @@ public class WeatherServiceImpl implements WeatherService {
     }
 
     @Override
+    public List<WeatherDto> findWeatherByGrid(WeatherGridDto grid) {
+        OffsetDateTime targetAt =
+            forecastSlotForToday(OffsetDateTime.now(KmaTimeCalculator.KST));
+
+        List<WeatherViewData> views =
+            weatherViewCacheService.findWeatherView(grid, targetAt);
+
+        return views.stream()
+            .map(view -> new WeatherDto(
+                view.id(),
+                view.forecastedAt(),
+                view.forecastAt(),
+                null,
+                view.skyStatus(),
+                view.precipitation(),
+                view.humidity(),
+                view.temperature(),
+                view.windSpeed()
+            ))
+            .toList();
+    }
+
+    @Override
     public WeatherAPILocation findLocation(LocationReadRequest request) {
         WeatherGridDto grid = findGrid(request.longitude(), request.latitude());
         return toLocationResponse(grid, request.longitude(), request.latitude());
