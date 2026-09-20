@@ -1,6 +1,7 @@
 package com.codeit.otboo.api.recommendation.ranking;
 
 import com.codeit.otboo.domain.recommendation.RecommendationType;
+import com.codeit.otboo.api.recommendation.history.RecommendationHistoryContext;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
 import com.codeit.otboo.domain.profile.entity.Profile;
@@ -19,13 +20,14 @@ import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingP
 public class ContentBasedClothesRanker {
 
     private final RecommendationRankingProperties rankingProperties;
+    private final HistoryPenaltyPolicy historyPenaltyPolicy;
 
     public RankedClothesCandidates rank(
         Profile profile,
         RecommendationType recommendationType,
         List<Clothes> filteredClothes
     ) {
-        return rank(profile, recommendationType, filteredClothes, List.of());
+        return rank(profile, recommendationType, filteredClothes, List.of(), RecommendationHistoryContext.empty());
     }
 
     /** 고정 의상이 맡은 역할의 추가 후보는 랭킹 대상에서 제외한다. */
@@ -34,6 +36,17 @@ public class ContentBasedClothesRanker {
         RecommendationType recommendationType,
         List<Clothes> filteredClothes,
         List<Clothes> selectedClothes
+    ) {
+        return rank(profile, recommendationType, filteredClothes, selectedClothes, RecommendationHistoryContext.empty());
+    }
+
+    /** 기존 점수에 최근 추천 이력 감점만 추가해 카테고리별 후보를 선정한다. */
+    public RankedClothesCandidates rank(
+        Profile profile,
+        RecommendationType recommendationType,
+        List<Clothes> filteredClothes,
+        List<Clothes> selectedClothes,
+        RecommendationHistoryContext historyContext
     ) {
         List<Clothes> rankingTargets = excludeSelectedRoles(filteredClothes, selectedClothes);
         if (rankingTargets.isEmpty()) {
@@ -62,14 +75,15 @@ public class ContentBasedClothesRanker {
                 recommendationType,
                 profile.getUser().getId()
             );
-            return rankWithoutPreferenceVector(recommendationType, rankingTargets, selectedClothes);
+            return rankWithoutPreferenceVector(recommendationType, rankingTargets, selectedClothes, historyContext);
         }
 
         List<Clothes> validVectorClothes = rankingTargets.stream()
             .filter(clothes -> hasValidAttributeVector(clothes))
             .toList();
         List<RankedClothes> rankedClothes = validVectorClothes.stream()
-            .map(clothes -> rankWithPreferenceVector(recommendationType, clothes, preferenceVector))
+            .map(clothes -> rankWithPreferenceVector(
+                recommendationType, clothes, preferenceVector, historyContext, selectedClothes))
             .toList();
 
         log.info(
@@ -90,14 +104,15 @@ public class ContentBasedClothesRanker {
     private RankedClothesCandidates rankWithoutPreferenceVector(
         RecommendationType recommendationType,
         List<Clothes> filteredClothes,
-        List<Clothes> selectedClothes
+        List<Clothes> selectedClothes,
+        RecommendationHistoryContext historyContext
     ) {
         if (recommendationType == RecommendationType.OUTFIT) {
             throw ProfileException.preferenceVectorNotReady();
         }
 
         List<RankedClothes> rankedClothes = filteredClothes.stream()
-            .map(this::rankByExplicitPreference)
+            .map(clothes -> rankByExplicitPreference(clothes, historyContext, selectedClothes))
             .toList();
 
         log.info(
@@ -116,22 +131,43 @@ public class ContentBasedClothesRanker {
     private RankedClothes rankWithPreferenceVector(
         RecommendationType recommendationType,
         Clothes clothes,
-        float[] preferenceVector
+        float[] preferenceVector,
+        RecommendationHistoryContext historyContext,
+        List<Clothes> selectedClothes
     ) {
         double similarity = cosineSimilarity(preferenceVector, clothes.getAttributeVector());
         if (recommendationType == RecommendationType.OUTFIT) {
-            return new RankedClothes(clothes, similarity, null, similarity);
+            return new RankedClothes(clothes, similarity, null,
+                applyHistoryPenalty(clothes, similarity, historyContext, selectedClothes));
         }
 
         double normalizedPreference = normalizedPreference(clothes);
         double finalScore = similarity * SIMILARITY_WEIGHT + normalizedPreference * PREFERENCE_WEIGHT;
 
-        return new RankedClothes(clothes, similarity, normalizedPreference, finalScore);
+        return new RankedClothes(clothes, similarity, normalizedPreference,
+            applyHistoryPenalty(clothes, finalScore, historyContext, selectedClothes));
     }
 
-    private RankedClothes rankByExplicitPreference(Clothes clothes) {
+    private RankedClothes rankByExplicitPreference(
+        Clothes clothes,
+        RecommendationHistoryContext historyContext,
+        List<Clothes> selectedClothes
+    ) {
         double normalizedPreference = normalizedPreference(clothes);
-        return new RankedClothes(clothes, null, normalizedPreference, normalizedPreference);
+        return new RankedClothes(clothes, null, normalizedPreference,
+            applyHistoryPenalty(clothes, normalizedPreference, historyContext, selectedClothes));
+    }
+
+    private double applyHistoryPenalty(
+        Clothes clothes,
+        double baseScore,
+        RecommendationHistoryContext historyContext,
+        List<Clothes> selectedClothes
+    ) {
+        Set<UUID> selectedClothesIds = selectedClothes.stream()
+            .map(Clothes::getId)
+            .collect(java.util.stream.Collectors.toSet());
+        return baseScore - historyPenaltyPolicy.calculatePenalty(clothes.getId(), historyContext, selectedClothesIds);
     }
 
     private RankedClothesCandidates selectTopK(List<Clothes> selectedClothes, List<RankedClothes> rankedClothes) {
