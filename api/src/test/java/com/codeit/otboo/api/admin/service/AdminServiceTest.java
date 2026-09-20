@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.codeit.otboo.api.admin.dto.UserLockUpdateRequest;
 import com.codeit.otboo.api.admin.dto.UserRoleUpdateRequest;
@@ -16,17 +17,23 @@ import com.codeit.otboo.domain.user.entity.UserRole;
 import com.codeit.otboo.domain.user.exception.UserException;
 import com.codeit.otboo.domain.user.repository.RefreshTokenRepository;
 import com.codeit.otboo.domain.user.repository.UserRepository;
+import com.codeit.otboo.domain.notification.entity.NotificationType;
+import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
+import com.codeit.otboo.domain.notification.event.RoleChangedNotificationEvent;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 
 class AdminServiceTest {
 
     private final UserRepository userRepository = mock(UserRepository.class);
     private final RefreshTokenRepository refreshTokenRepository =
             mock(RefreshTokenRepository.class);
+    private final ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
     private final AdminService adminService =
-            new AdminService(userRepository, refreshTokenRepository);
+            new AdminService(userRepository, refreshTokenRepository, eventPublisher);
 
     private User user(UserRole role, boolean locked, int tokenVersion) {
         return User.builder()
@@ -53,6 +60,27 @@ class AdminServiceTest {
         assertThat(result.role()).isEqualTo("ADMIN");
         assertThat(target.getTokenVersion()).isEqualTo(3);
         verify(refreshTokenRepository).deleteByUser(target);
+        ArgumentCaptor<Object> event = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher).publishEvent(event.capture());
+        NotificationCreateMessage<?> message = (NotificationCreateMessage<?>) event.getValue();
+        assertThat(message.type()).isEqualTo(NotificationType.ROLE_CHANGED);
+        assertThat(message.eventId().version()).isEqualTo(7);
+        assertThat(message.deduplicationKey()).isEqualTo("ROLE_CHANGED:" + message.eventId());
+        RoleChangedNotificationEvent payload = (RoleChangedNotificationEvent) message.payload();
+        assertThat(payload.receiverId()).isEqualTo(target.getId());
+        assertThat(payload.role()).isEqualTo(UserRole.ADMIN);
+    }
+
+    @Test
+    void doesNotNotifyWhenRoleIsUnchanged() {
+        User target = user(UserRole.ADMIN, false, 2);
+        when(userRepository.findById(target.getId())).thenReturn(Optional.of(target));
+
+        adminService.updateRole(target.getId(), new UserRoleUpdateRequest(UserRole.ADMIN));
+
+        verifyNoInteractions(eventPublisher);
+        // 기존 세션 무효화 동작은 유지한다.
+        assertThat(target.getTokenVersion()).isEqualTo(3);
     }
 
     /** 계정 잠금 시 tokenVersion 이 증가해 즉시 로그아웃되는지 확인합니다. */
@@ -93,6 +121,7 @@ class AdminServiceTest {
                 userId, new UserRoleUpdateRequest(UserRole.ADMIN)))
                 .isInstanceOfSatisfying(UserException.class, e ->
                         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND));
+        verifyNoInteractions(eventPublisher);
     }
 
     /** 존재하지 않는 사용자의 잠금 변경은 거부하는지 확인합니다. */

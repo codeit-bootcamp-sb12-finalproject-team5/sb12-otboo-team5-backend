@@ -85,7 +85,6 @@ public class WeatherBatchJobConfig {
         return new JobExecutionListener() {
             @Override
             public void afterJob(JobExecution jobExecution) {
-                // 실패한 Job에도 이미 커밋된 청크가 있을 수 있습니다.
                 try {
                     Cache cache = cacheManager.getCache(CacheConfig.WEATHER_CACHE);
                     if (cache != null) {

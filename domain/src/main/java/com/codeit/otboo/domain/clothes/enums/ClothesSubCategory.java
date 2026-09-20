@@ -1,8 +1,9 @@
 package com.codeit.otboo.domain.clothes.enums;
 
+import lombok.Getter;
+
 import java.util.Arrays;
 import java.util.List;
-import lombok.Getter;
 
 @Getter
 public enum ClothesSubCategory implements Displayable {
@@ -110,7 +111,7 @@ public enum ClothesSubCategory implements Displayable {
         ClothesCategory.OUTER
     ),
 
-    TRACK_JACKET(
+    TRAINING_JACKET(
         "트레이닝재킷",
         ClothesCategory.OUTER
     ),
@@ -209,6 +210,11 @@ public enum ClothesSubCategory implements Displayable {
         ClothesCategory.PANTS
     ),
 
+    OTHER_PANTS(
+        "기타",
+        ClothesCategory.PANTS
+    ),
+
     // =========================
     // BOTTOM - SKIRT
     // =========================
@@ -228,7 +234,7 @@ public enum ClothesSubCategory implements Displayable {
         ClothesCategory.SKIRT
     ),
 
-    OTHER_BOTTOM(
+    OTHER_SKIRT(
         "기타",
         ClothesCategory.SKIRT
     ),
@@ -249,6 +255,11 @@ public enum ClothesSubCategory implements Displayable {
 
     MAXI_DRESS(
         "맥시원피스",
+        ClothesCategory.DRESS
+    ),
+
+    OTHER_DRESS(
+        "기타",
         ClothesCategory.DRESS
     ),
 
@@ -308,6 +319,11 @@ public enum ClothesSubCategory implements Displayable {
 
     CLUTCH_BAG(
         "클러치백",
+        ClothesCategory.BAG
+    ),
+
+    OTHER_BAG(
+        "기타",
         ClothesCategory.BAG
     ),
 
@@ -429,14 +445,14 @@ public enum ClothesSubCategory implements Displayable {
     );
 
     private final String displayName;
-    private final ClothesCategory category;
+    private final ClothesCategory parentCategory;
 
     ClothesSubCategory(
         String displayName,
-        ClothesCategory category
+        ClothesCategory parentCategory
     ) {
         this.displayName = displayName;
-        this.category = category;
+        this.parentCategory = parentCategory;
     }
 
     public static List<ClothesSubCategory> findByCategory(
@@ -444,7 +460,7 @@ public enum ClothesSubCategory implements Displayable {
     ) {
         return Arrays.stream(values())
             .filter(subCategory ->
-                subCategory.category == category
+                subCategory.parentCategory == category
             )
             .toList();
     }

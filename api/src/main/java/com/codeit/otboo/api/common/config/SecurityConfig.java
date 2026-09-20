@@ -31,46 +31,50 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // JWT 사용이므로 세션을 만들지 않음
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // JWT 사용이므로 세션을 만들지 않음
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // CSRF 토큰을 쿠키로 관리 (XSRF-TOKEN)
-                // CSRF 토큰을 쿠키로 관리 (XSRF-TOKEN)
-                // Spring Security 6 의 기본 BREACH 방어는 헤더 값과 쿠키 값이 달라지므로,
-                // 쿠키 값을 그대로 사용하도록 기본 핸들러를 명시합니다.
+            // CSRF 토큰을 쿠키로 관리 (XSRF-TOKEN)
+            // CSRF 토큰을 쿠키로 관리 (XSRF-TOKEN)
+            // Spring Security 6 의 기본 BREACH 방어는 헤더 값과 쿠키 값이 달라지므로,
+            // 쿠키 값을 그대로 사용하도록 기본 핸들러를 명시합니다.
 //              .csrf(csrf -> csrf
 //                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
 //                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
 //                        .ignoringRequestMatchers("/api/auth/**", "/api/users"))
-                .csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
+            .csrf(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
 
-                // 401 / 403 응답을 공통 ErrorResponse 형식으로
-                .exceptionHandling(handler -> handler
-                        .authenticationEntryPoint(securityExceptionHandler)
-                        .accessDeniedHandler(securityExceptionHandler))
+            // 401 / 403 응답을 공통 ErrorResponse 형식으로
+            .exceptionHandling(handler -> handler
+                .authenticationEntryPoint(securityExceptionHandler)
+                .accessDeniedHandler(securityExceptionHandler))
 
-                .authorizeHttpRequests(auth -> auth
-                        // 인증 없이 접근 가능
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-                        // STOMP CONNECT 인증은 WebSocket 채널 인터셉터에서 처리할 예정
-                        .requestMatchers("/ws", "/ws/**").permitAll()
-                        .requestMatchers("/error").permitAll()
+            .authorizeHttpRequests(auth -> auth
+                // 인증 없이 접근 가능
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                // STOMP CONNECT 인증은 WebSocket 채널 인터셉터에서 처리할 예정
+                .requestMatchers("/ws", "/ws/**").permitAll()
+                .requestMatchers("/error").permitAll()
 
-                        // 관리자 전용
-                        .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
-                        .requestMatchers("/api/users/*/role").hasRole("ADMIN")
-                        .requestMatchers("/api/users/*/lock").hasRole("ADMIN")
+                // 관리자 전용
+                .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
+                .requestMatchers("/api/users/*/role").hasRole("ADMIN")
+                .requestMatchers("/api/users/*/lock").hasRole("ADMIN")
 
-                        // 그 외 전부 인증 필요
-                        .anyRequest().authenticated())
+                // 유저 전용
+                .requestMatchers("/api/recommendations/**").hasRole("USER")
+                .requestMatchers("/api/outfit/**").hasRole("USER")
 
-                .addFilterBefore(jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                // 그 외 전부 인증 필요
+                .anyRequest().authenticated())
+
+            .addFilterBefore(jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

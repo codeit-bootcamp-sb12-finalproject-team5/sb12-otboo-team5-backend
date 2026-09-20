@@ -25,21 +25,28 @@ public class WeatherSyncStepListener implements StepExecutionListener {
     @Override
     public void beforeStep(StepExecution stepExecution) {
         String collectionAt = stepExecution.getJobParameters().getString("collectionAt");
+
         if (collectionAt == null) {
-            // 기존의 파라미터 없는 기동 실행도 한 번 정한 기준 시각을 공유합니다.
-            collectionAt = stepExecution.getExecutionContext().getString("collectionAt",
-                OffsetDateTime.now(KmaTimeCalculator.KST).toString());
+            collectionAt = stepExecution.getExecutionContext().getString(
+                "collectionAt", OffsetDateTime.now(KmaTimeCalculator.KST).toString()
+            );
         }
+
         stepExecution.getExecutionContext().putString("collectionAt", collectionAt);
+
         long totalGrids = gridRepository.countByEnabledTrue();
+
         stepExecution.getExecutionContext().putInt("totalGrids", Math.toIntExact(totalGrids));
+
         executionService.start(collectionDate(stepExecution), Math.toIntExact(totalGrids));
+
         log.info("[BATCH][LISTENER] Step 시작 totalGrids={}", totalGrids);
     }
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         LocalDate targetDate = collectionDate(stepExecution);
+
         int totalGrids = stepExecution.getExecutionContext().getInt("totalGrids", 0);
         int writtenGridCount = writer.getWrittenGridCount();
         int partialGridCount = writer.getPartialGridCount();

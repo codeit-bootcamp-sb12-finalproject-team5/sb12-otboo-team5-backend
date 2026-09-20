@@ -7,10 +7,12 @@ description = 'support'
 dependencies {
     // Domain
     implementation project(':domain')
+    implementation 'org.springframework.kafka:spring-kafka'
 
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework:spring-web'
     implementation 'org.springframework.boot:spring-boot-starter-json'
+    implementation 'org.springframework.security:spring-security-core'
 
     // api/batch 양쪽에서 CacheConfig, @Cacheable 등을 그대로 사용할 수 있도록 api로 노출
     api 'org.springframework.boot:spring-boot-starter-data-redis'
@@ -28,4 +30,8 @@ dependencies {
 
     // UUID v7
     implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
+
+    // AWS SDK
+    implementation platform('software.amazon.awssdk:bom:2.30.38')
+    implementation 'software.amazon.awssdk:s3'
 }

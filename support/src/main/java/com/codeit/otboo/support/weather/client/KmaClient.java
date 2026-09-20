@@ -64,6 +64,57 @@ public class KmaClient {
                 normalizeToKstHour(forecastedAt), nx, ny);
     }
 
+    // 알림은 시간별 누락을 허용하지 않으므로 응답 전체 페이지와 발표본을 검증한다.
+    public Optional<KmaForecastBundleDto> findDailyNotificationForecast(
+            OffsetDateTime forecastedAt, int nx, int ny) {
+        if (serviceKey.isBlank()) return Optional.empty();
+        var base = normalizeToKstHour(forecastedAt);
+        try {
+            List<KmaForecastPointDto> points = new ArrayList<>();
+            int expectedTotal = -1;
+            for (int page = 1; page <= 50; page++) {
+                final int pageNo = page;
+                String body = restClient.get()
+                        .uri(uri -> uri.path("/getVilageFcst")
+                                .queryParam("serviceKey", serviceKey)
+                                .queryParam("pageNo", pageNo).queryParam("numOfRows", 1100)
+                                .queryParam("dataType", "JSON")
+                                .queryParam("base_date", base.format(DATE_FORMATTER))
+                                .queryParam("base_time", base.format(TIME_FORMATTER))
+                                .queryParam("nx", nx).queryParam("ny", ny).build())
+                        .retrieve().body(String.class);
+                JsonNode root = objectMapper.readTree(body);
+                if (!isSuccessful(root)) return Optional.empty();
+                var response = root.path("response").path("body");
+                int total = response.path("totalCount").asInt(-1);
+                var items = response.path("items").path("item");
+                if (total <= 0 || (expectedTotal != -1 && total != expectedTotal)
+                        || response.path("pageNo").asInt(-1) != pageNo
+                        || !items.isArray() || items.isEmpty()) return Optional.empty();
+                expectedTotal = total;
+                for (var item : items) {
+                    if (!base.format(DATE_FORMATTER).equals(item.path("baseDate").asText())
+                            || !base.format(TIME_FORMATTER).equals(item.path("baseTime").asText())
+                            || item.path("nx").asInt(-1) != nx || item.path("ny").asInt(-1) != ny) {
+                        return Optional.empty();
+                    }
+                    var time = OffsetDateTime.parse(item.path("fcstDate").asText()
+                            + item.path("fcstTime").asText(), DATE_TIME_FORMATTER);
+                    points.add(new KmaForecastPointDto(time, item.path("category").asText(),
+                            item.path("fcstValue").asText()));
+                }
+                if (points.size() > expectedTotal) return Optional.empty();
+                if (points.size() == expectedTotal) {
+                    return Optional.of(new KmaForecastBundleDto(base, nx, ny, List.copyOf(points)));
+                }
+            }
+        } catch (Exception exception) {
+            log.warn("[KMA] 알림 예보 요청 실패 base={}, nx={}, ny={}, exception={}",
+                    base, nx, ny, exception.getClass().getSimpleName());
+        }
+        return Optional.empty();
+    }
+
     private Optional<KmaForecastBundleDto> requestVillageForecast(OffsetDateTime base, int nx, int ny) {
         try {
             log.info("[KMA] 단기예보 요청 baseDate={}, baseTime={}, nx={}, ny={}",

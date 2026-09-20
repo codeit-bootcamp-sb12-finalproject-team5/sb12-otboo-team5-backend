@@ -5,7 +5,7 @@ import com.codeit.otboo.api.weather.dto.response.PrecipitationDto;
 import com.codeit.otboo.api.weather.dto.response.TemperatureDto;
 import com.codeit.otboo.api.weather.dto.response.WeatherViewData;
 import com.codeit.otboo.api.weather.dto.response.WindSpeedDto;
-import com.codeit.otboo.api.weather.exception.WeatherException;
+import com.codeit.otboo.domain.weather.exception.WeatherException;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.weather.entity.WeatherForecast;
@@ -44,6 +44,7 @@ public class WeatherViewCacheService {
     @Cacheable(
             cacheNames = CacheConfig.WEATHER_CACHE,
             key = "#grid.nx + ':' + #grid.ny + ':' + #targetAt",
+            condition = "#grid.hasAdministrativeRegion()",
             sync = true)
     public List<WeatherViewData> findWeatherView(WeatherGridDto grid, OffsetDateTime targetAt) {
         ensureRequiredData(grid, targetAt);
@@ -183,7 +184,9 @@ public class WeatherViewCacheService {
     }
 
     private List<SelectedDay> selectRepresentativeDays(
-            Map<LocalDate, List<WeatherForecast>> byDate, OffsetDateTime targetAt) {
+        Map<LocalDate, List<WeatherForecast>> byDate,
+        OffsetDateTime targetAt
+    ) {
 
         List<SelectedDay> selected = new ArrayList<>();
 
@@ -219,6 +222,8 @@ public class WeatherViewCacheService {
     }
 
     private record SelectedDay(
-        WeatherForecast representative, List<WeatherForecast> all) {
+        WeatherForecast representative,
+        List<WeatherForecast> all
+    ) {
     }
 }

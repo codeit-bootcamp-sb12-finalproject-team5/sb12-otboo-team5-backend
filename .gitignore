@@ -61,3 +61,7 @@ $RECYCLE.BIN/
 ### PostgreSQL ###
 postgresql
 api/.env
+
+### Generated files ###
+**/generated/
+

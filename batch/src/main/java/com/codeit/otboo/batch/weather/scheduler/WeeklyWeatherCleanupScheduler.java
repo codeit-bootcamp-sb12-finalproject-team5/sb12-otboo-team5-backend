@@ -16,8 +16,10 @@ public class WeeklyWeatherCleanupScheduler {
     private final JobLauncher jobLauncher;
     private final Job cleanupJob;
 
-    public WeeklyWeatherCleanupScheduler(JobLauncher jobLauncher,
-            @Qualifier("weeklyWeatherCleanupJob") Job cleanupJob) {
+    public WeeklyWeatherCleanupScheduler(
+        JobLauncher jobLauncher,
+        @Qualifier("weeklyWeatherCleanupJob") Job cleanupJob
+    ) {
         this.jobLauncher = jobLauncher;
         this.cleanupJob = cleanupJob;
     }

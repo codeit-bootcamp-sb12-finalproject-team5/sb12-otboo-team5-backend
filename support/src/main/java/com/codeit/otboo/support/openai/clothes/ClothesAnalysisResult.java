@@ -1,14 +1,6 @@
 package com.codeit.otboo.support.openai.clothes;
 
-import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
-import com.codeit.otboo.domain.clothes.enums.ClothesColor;
-import com.codeit.otboo.domain.clothes.enums.ClothesFit;
-import com.codeit.otboo.domain.clothes.enums.ClothesGender;
-import com.codeit.otboo.domain.clothes.enums.ClothesMaterial;
-import com.codeit.otboo.domain.clothes.enums.ClothesPattern;
-import com.codeit.otboo.domain.clothes.enums.ClothesSeason;
-import com.codeit.otboo.domain.clothes.enums.ClothesStyle;
-import com.codeit.otboo.domain.clothes.enums.ClothesSubCategory;
+import com.codeit.otboo.domain.clothes.enums.*;
 
 public record ClothesAnalysisResult(
     String name,
@@ -22,6 +14,32 @@ public record ClothesAnalysisResult(
     ClothesPattern pattern,
     ClothesStyle style,
     ClothesSeason season,
-    ClothesGender gender
+    ClothesGender gender,
+    String description
 ) {
+    public ClothesAnalysisResult withImageUrl(String imageUrl) {
+        return new ClothesAnalysisResult(
+                name, brand, imageUrl, category, subcategory, color, fit,
+                material, pattern, style, season, gender, description
+        );
+    }
+
+    public ClothesAnalysisResult withoutBracketedNameAndBrand() {
+        return new ClothesAnalysisResult(
+                removeBracketedText(name), removeBracketedText(brand), imageUrl,
+                category, subcategory, color, fit, material, pattern, style,
+                season, gender, description
+        );
+    }
+
+    private static String removeBracketedText(String value) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+        String normalized = value
+                .replaceAll("\\[[^]]*]|\\([^)]*\\)|\\{[^}]*}|【[^】]*】", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        return normalized.isBlank() ? value.trim() : normalized;
+    }
 }

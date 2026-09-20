@@ -1,23 +1,16 @@
 package com.codeit.otboo.api.clothes.dto;
 
 import com.codeit.otboo.domain.clothes.entity.Clothes;
-import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
-import com.codeit.otboo.domain.clothes.enums.ClothesColor;
-import com.codeit.otboo.domain.clothes.enums.ClothesFit;
-import com.codeit.otboo.domain.clothes.enums.ClothesMaterial;
-import com.codeit.otboo.domain.clothes.enums.ClothesPattern;
-import com.codeit.otboo.domain.clothes.enums.ClothesSeason;
-import com.codeit.otboo.domain.clothes.enums.ClothesStyle;
-import com.codeit.otboo.domain.clothes.enums.ClothesSubCategory;
-import com.codeit.otboo.domain.clothes.enums.Displayable;
+import com.codeit.otboo.domain.clothes.enums.*;
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.support.openai.clothes.ClothesAnalysisResult;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public record ClothesResponse(
@@ -27,7 +20,10 @@ public record ClothesResponse(
     String brand,
     String imageUrl,
     ClothesCategory type,
+    ClothesSeason season,
+    ClothesGender gender,
     List<ClothesAttribute> attributes,
+    String description,
     Boolean isOwned,
     Integer preference
 ) {
@@ -39,17 +35,18 @@ public record ClothesResponse(
         addEnumAttribute(attributes, "5", "소재", result.material());
         addEnumAttribute(attributes, "6", "패턴", result.pattern());
         addEnumAttribute(attributes, "7", "스타일", result.style());
-        addEnumAttribute(attributes, "8", "계절감", result.season());
-        addEnumAttribute(attributes, "9", "의상성별", result.gender());
 
         return new ClothesResponse(
             null,
             null,
-            result.brand(),
             result.name(),
+            result.brand(),
             result.imageUrl(),
             result.category(),
+            result.season(),
+            result.gender(),
             attributes,
+            result.description(),
             null,
             null
         );
@@ -73,10 +70,9 @@ public record ClothesResponse(
         }
     }
 
-    public static ClothesResponse of(Clothes clothes, UUID userId) {
+    public static ClothesResponse of(Clothes clothes, UUID userId, String imageUrl) {
         List<ClothesAttribute> attributes = new ArrayList<>();
         String text = clothes.getAttributeText();
-        String extractedBrand = null;
         if (text != null && !text.isBlank()) {
             String[] tokens = text.split("\n");
             for(String token : tokens) {
@@ -91,23 +87,24 @@ public record ClothesResponse(
                         case "소재": addEnumAttribute(attributes, "5", "소재", Displayable.from(ClothesMaterial.class, value)); break;
                         case "패턴": addEnumAttribute(attributes, "6", "패턴", Displayable.from(ClothesPattern.class, value)); break;
                         case "스타일": addEnumAttribute(attributes, "7", "스타일", Displayable.from(ClothesStyle.class, value)); break;
-                        case "계절감": addEnumAttribute(attributes, "8", "계절감", Displayable.from(ClothesSeason.class, value)); break;
-                        case "브랜드": extractedBrand = value; break;
+                        default: break;
                     }
                 } else {
                     throw new ClothesException(ErrorCode.CLOTHES_ATTRIBUTE_PARSE_FAILED);
                 }
             }
         }
-        addEnumAttribute(attributes, "9", "의상성별", clothes.getGender());
         return new ClothesResponse(
             clothes.getId(),
             userId,
             clothes.getName(),
-            extractedBrand,
-            clothes.getImageUrl(),
+            clothes.getBrand(),
+            imageUrl,
             clothes.getCategory(),
+            clothes.getSeason(),
+            clothes.getGender(),
             attributes,
+            clothes.getDescription(),
             clothes.getIsOwned(),
             clothes.getPreference()
         );

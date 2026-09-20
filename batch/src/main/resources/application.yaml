@@ -7,6 +7,9 @@ spring:
   config:
     import: optional:dotenv:../
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:otboo}
@@ -29,7 +32,8 @@ spring:
     jdbc:
       initialize-schema: always
     job:
-      enabled: false
+      enabled: true
+      name: dailyWeatherSyncJob
 
   data:
     redis:
@@ -46,3 +50,7 @@ kma:
 weather:
   cache:
     ttl: PT3H
+
+notification:
+  kafka:
+    enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
