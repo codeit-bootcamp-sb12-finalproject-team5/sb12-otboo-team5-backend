@@ -26,11 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 @Slf4j
@@ -65,15 +61,14 @@ public class RecommendationService {
         return recommend(userId, request, RecommendationType.OUTFIT);
     }
 
-    /**
-     * 선택 의상 유무에 따라 일반 추천과 특정 옷 기반 추천의 진입점을 구분한다.
-     */
     private RecommendationResponse recommend(UUID userId, RecommendationRequest request, RecommendationType type) {
+        // 선택 의상이 있는 경우
         if (request.hasSelectedClothes()) {
             List<Clothes> selectedClothes = validateSelectedClothes(userId, request.selectedClothesIds());
             return recommendWithSelectedClothes(userId, request.weatherId(), type, selectedClothes);
         }
 
+        // 선택 의상 없는 경우
         return recommendNormally(userId, request.weatherId(), type);
     }
 
@@ -84,7 +79,7 @@ public class RecommendationService {
         List<Clothes> selectedClothes
     ) {
         log.info(
-            "[recommendation][pipeline] 특정 옷 기반 추천을 시작 type={}, userId={}, selectedClothesIds={}",
+            "[recommendation][pipeline] 특정 옷 기반 추천 시작 type={}, userId={}, selectedClothesIds={}",
             type,
             userId,
             selectedClothes.stream().map(Clothes::getId).toList()
@@ -153,7 +148,11 @@ public class RecommendationService {
             generated.usage()
         );
 
-        Map<UUID, Clothes> candidates = ranked.all().map(RankedClothes::clothes)
+        // Gemini 응답에는 고정 선택 의상도 포함되므로 응답 변환용 조회 맵에 함께 보관한다.
+        Map<UUID, Clothes> candidates = java.util.stream.Stream.concat(
+                ranked.selectedClothes().stream(),
+                ranked.all().map(RankedClothes::clothes)
+            )
             .collect(java.util.stream.Collectors.toMap(Clothes::getId, Function.identity()));
 
         RecommendationResponse response = new RecommendationResponse(
@@ -185,7 +184,7 @@ public class RecommendationService {
      * 선택 의상의 중복, 존재·삭제·소유 상태 및 허용 조합을 검증한다.
      */
     private List<Clothes> validateSelectedClothes(UUID userId, List<UUID> selectedClothesIds) {
-        if (selectedClothesIds.stream().anyMatch(java.util.Objects::isNull)) {
+        if (selectedClothesIds.stream().anyMatch(Objects::isNull)) {
             throw new ClothesException(ErrorCode.INVALID_INPUT_VALUE);
         }
 

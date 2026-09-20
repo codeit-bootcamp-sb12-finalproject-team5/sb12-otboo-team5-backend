@@ -28,7 +28,7 @@ public class LlmRecommendationService {
     public GeminiRecommendationResult generate(WeatherForecast weather, RankedClothesCandidates rankedCandidates) {
         LlmRecommendationRequest request = requestMapper.map(weather, rankedCandidates);
 
-        if (request.candidates().isEmpty()) {
+        if (request.selectedClothes().isEmpty() && request.candidates().isEmpty()) {
             throw new IllegalArgumentException("Gemini recommendation requires at least one candidate");
         }
 
@@ -65,7 +65,9 @@ public class LlmRecommendationService {
     private String correctionContext(ValidationFailureReason reason) {
         return switch (reason) {
             case UNKNOWN_CLOTHES_ID ->
-                "The previous response contained an ID outside candidates. Use only provided candidate IDs.";
+                "The previous response contained an ID outside selectedClothes and candidates. Use only provided IDs.";
+            case MISSING_SELECTED_CLOTHES ->
+                "Every outfit must include every ID from selectedClothes without exception.";
             case INVALID_BASIC_OUTFIT, INVALID_OPTIONAL_COUNT ->
                 "Use either TOP with exactly one BOTTOM, or exactly one DRESS. "
                     + "Use at most one item from each optional category.";

@@ -17,8 +17,17 @@ public class LlmRecommendationValidator {
             return ValidationResult.invalid(ValidationFailureReason.INVALID_RANK);
 
         Map<UUID, String> categories = new HashMap<>();
+        Map<UUID, String> roles = new HashMap<>();
+        Set<UUID> selectedClothesIds = new HashSet<>();
+        for (LlmRecommendationRequest.LlmClothesCandidate selectedClothes : request.selectedClothes()) {
+            categories.put(selectedClothes.id(), selectedClothes.category());
+            roles.put(selectedClothes.id(), selectedClothes.role());
+            selectedClothesIds.add(selectedClothes.id());
+        }
+
         for (LlmRecommendationRequest.LlmClothesCandidate candidate : request.candidates()) {
             categories.put(candidate.id(), candidate.category());
+            roles.put(candidate.id(), candidate.role());
         }
 
         Set<Set<UUID>> outfitSets = new HashSet<>();
@@ -37,15 +46,18 @@ public class LlmRecommendationValidator {
             if (!categories.keySet().containsAll(ids))
                 return ValidationResult.invalid(ValidationFailureReason.UNKNOWN_CLOTHES_ID);
 
+            if (!ids.containsAll(selectedClothesIds))
+                return ValidationResult.invalid(ValidationFailureReason.MISSING_SELECTED_CLOTHES);
+
             if (ids.stream().anyMatch(id -> !isAllowedCategory(categories.get(id))))
                 return ValidationResult.invalid(ValidationFailureReason.INVALID_CATEGORY);
 
             if (!outfitSets.add(Set.copyOf(ids)))
                 return ValidationResult.invalid(ValidationFailureReason.DUPLICATED_OUTFIT);
 
-            long tops = count(categories, ids, "TOP");
-            long bottoms = count(categories, ids, "BOTTOM");
-            long dresses = count(categories, ids, "DRESS");
+            long tops = count(roles, ids, "TOP");
+            long bottoms = count(roles, ids, "BOTTOM");
+            long dresses = count(roles, ids, "ONE_PIECE");
             boolean hasTwoPiece = tops >= 1 && bottoms == 1 && dresses == 0;
             boolean hasOnePiece = dresses == 1 && tops == 0 && bottoms == 0;
             if (!hasTwoPiece && !hasOnePiece) {
@@ -64,14 +76,14 @@ public class LlmRecommendationValidator {
         return ValidationResult.valid();
     }
 
-    private long count(Map<UUID, String> categories, List<UUID> ids, String category) {
-        return ids.stream().filter(id -> category.equals(categories.get(id))).count();
+    private long count(Map<UUID, String> values, List<UUID> ids, String value) {
+        return ids.stream().filter(id -> value.equals(values.get(id))).count();
     }
 
     private boolean isAllowedCategory(String category) {
-        return "TOP".equals(category) || "BOTTOM".equals(category) || "DRESS".equals(category)
-            || "OUTER".equals(category) || "SHOES".equals(category) || "HAT".equals(category)
-            || "BAG".equals(category) || "ACCESSORY".equals(category);
+        return "TOP".equals(category) || "PANTS".equals(category) || "SKIRT".equals(category)
+            || "DRESS".equals(category) || "OUTER".equals(category) || "SHOES".equals(category)
+            || "HAT".equals(category) || "BAG".equals(category) || "ACCESSORY".equals(category);
     }
 
     record ValidationResult(ValidationFailureReason reason) {
