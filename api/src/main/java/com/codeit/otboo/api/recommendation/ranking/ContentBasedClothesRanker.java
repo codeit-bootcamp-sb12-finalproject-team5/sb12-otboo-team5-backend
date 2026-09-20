@@ -1,6 +1,6 @@
 package com.codeit.otboo.api.recommendation.ranking;
 
-import com.codeit.otboo.api.recommendation.RecommendationType;
+import com.codeit.otboo.domain.recommendation.RecommendationType;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
 import com.codeit.otboo.domain.profile.entity.Profile;

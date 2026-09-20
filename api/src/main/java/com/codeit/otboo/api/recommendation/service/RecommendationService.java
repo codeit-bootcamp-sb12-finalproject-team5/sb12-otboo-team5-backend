@@ -1,6 +1,6 @@
 package com.codeit.otboo.api.recommendation.service;
 
-import com.codeit.otboo.api.recommendation.RecommendationType;
+import com.codeit.otboo.domain.recommendation.RecommendationType;
 import com.codeit.otboo.api.recommendation.dto.RecommendationResponse;
 import com.codeit.otboo.api.recommendation.dto.RecommendationRequest;
 import com.codeit.otboo.api.recommendation.dto.UserPreferenceRequest;

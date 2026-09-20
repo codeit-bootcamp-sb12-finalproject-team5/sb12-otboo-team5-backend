@@ -1,6 +1,6 @@
 package com.codeit.otboo.api.recommendation.filter;
 
-import com.codeit.otboo.api.recommendation.RecommendationType;
+import com.codeit.otboo.domain.recommendation.RecommendationType;
 import com.codeit.otboo.domain.profile.entity.Gender;
 import java.math.BigDecimal;
 
