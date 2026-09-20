@@ -1,11 +1,6 @@
 package com.codeit.otboo.api.outfit;
 
-import com.codeit.otboo.api.outfit.dto.OutfitCreateRequest;
-import com.codeit.otboo.api.outfit.dto.OutfitCreateResponse;
-import com.codeit.otboo.api.outfit.dto.OutfitDetailResponse;
-import com.codeit.otboo.api.outfit.dto.OutfitListResponse;
-import com.codeit.otboo.api.outfit.dto.OutfitUpdateRequest;
-import com.codeit.otboo.api.outfit.dto.OutfitUpdateResponse;
+import com.codeit.otboo.api.outfit.dto.*;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.entity.OutfitClothes;
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
@@ -18,18 +13,13 @@ import com.codeit.otboo.domain.outfit.exception.OutfitException;
 import com.codeit.otboo.domain.outfit.repository.OutfitRepository;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +38,7 @@ public class OutfitService {
             .orElseThrow(() -> new OutfitException(ErrorCode.USER_NOT_FOUND));
         List<Clothes> clothes = getClothesInRequestOrder(request.clothesIds());
 
-        Outfit outfit = outfitRepository.save(new Outfit(user, request.name(), request.description()));
+        Outfit outfit = outfitRepository.save(new Outfit(user, request.name(), request.category(), request.description()));
         outfitClothesRepository.saveAll(clothes.stream()
             .map(clothesItem -> new OutfitClothes(outfit, clothesItem))
             .toList());
@@ -80,7 +70,7 @@ public class OutfitService {
             throw new OutfitException(ErrorCode.ACCESS_DENIED);
         }
 
-        outfit.update(request.name(), request.description());
+        outfit.update(request.name(), request.description(), request.category());
         outfitRepository.saveAndFlush(outfit);
 
         List<Clothes> clothes;

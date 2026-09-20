@@ -1,7 +1,5 @@
 package com.codeit.otboo.domain.outfit.entity;
 
-import java.math.BigDecimal;
-
 import com.codeit.otboo.domain.common.UpdatableEntity;
 
 import jakarta.persistence.Column;
@@ -20,6 +18,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "ootd")

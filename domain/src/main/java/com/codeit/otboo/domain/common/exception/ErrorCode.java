@@ -39,8 +39,12 @@ public enum ErrorCode {
     DUPLICATE_OUTFIT_CLOTHES(409, "Outfit에 동일한 의상이 중복되어 있습니다."),
     RECOMMENDATION_GENERATION_FAILED(502, "추천 생성에 실패했습니다."),
 
-    // ===== 피드 =====
-    // 담당자가 추가
+
+    // ===== 피드 =====,
+    FEED_ALREADY_EXISTS(409, "해당 Outfit은 이미 피드로 등록되어 있습니다."),
+    FEED_NOT_FOUND(404, "피드를 찾을 수 없습니다."),
+    FEED_ALREADY_LIKED(409, "이미 좋아요한 피드입니다."),
+    FEED_LIKE_NOT_FOUND(404, "좋아요 정보를 찾을 수 없습니다."),
 
     // ===== 날씨 =====
     WEATHER_DATA_UNAVAILABLE(503, "날씨 데이터를 가져올 수 없습니다."),

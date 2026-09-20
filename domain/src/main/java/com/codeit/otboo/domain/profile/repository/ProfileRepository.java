@@ -13,6 +13,8 @@ import java.util.UUID;
 public interface ProfileRepository extends JpaRepository<Profile, UUID> {
     Optional<Profile> findByUser_Id(UUID userId);
 
+    List<Profile> findAllByUser_IdIn(Collection<UUID> userIds);
+
     @Query("""
             select profile.user.id as userId,
                 profile.profileImageUrl as profileImageUrl
