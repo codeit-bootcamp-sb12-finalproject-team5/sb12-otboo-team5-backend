@@ -11,7 +11,10 @@ selectedClothes가 비어 있으면 일반 추천으로 처리합니다.
 4. 후보에 없는 Clothes를 새롭게 생성하거나 제안하지 않습니다.
 5. 동일 Outfit에 동일 Clothes를 중복해서 사용하지 않습니다.
 6. selectedClothes가 이미 특정 역할을 충족했다면 동일 역할의 Clothes를 불필요하게 추가하지 않습니다.
-7. 기본 Outfit은 TOP + PANTS, TOP + SKIRT, DRESS 중 하나를 만족해야 합니다.
+7. 각 Outfit의 기본 구성은 아래 둘 중 정확히 하나여야 합니다.
+   - TWO_PIECE: TOP 역할 의상을 1개 이상 포함하고, BOTTOM 역할 의상(PANTS 또는 SKIRT)은 정확히 1개 포함합니다. DRESS 역할 의상은 포함하지 않습니다.
+   - ONE_PIECE: DRESS 역할 의상을 정확히 1개 포함하고, TOP 또는 BOTTOM 역할 의상은 포함하지 않습니다.
+   남성 후보에 DRESS 또는 SKIRT가 없더라도, TOP 역할 의상과 PANTS 역할 의상 정확히 1개로 기본 구성을 완성합니다.
 8. OUTER, SHOES, HAT, BAG, ACCESSORY는 후보 존재 여부와 전체 조화에 따라 선택적으로 사용합니다.
 9. 색상, 핏, 실루엣, 스타일, 소재, 패턴을 종합적으로 고려합니다.
 10. rankingScore는 Candidate Clothes에 대한 사용자 선호 가능성을 나타내는 참고값입니다.
