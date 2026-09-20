@@ -1,5 +1,6 @@
 package com.codeit.otboo.api.recommendation.llm;
 
+import com.codeit.otboo.domain.recommendation.OutfitFingerprintGenerator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -74,6 +75,21 @@ public class LlmRecommendationValidator {
         }
 
         return ValidationResult.valid();
+    }
+
+    public LlmRecommendationResponse removeRecentDuplicateOutfits(
+        LlmRecommendationResponse response,
+        Set<String> recentFingerprints
+    ) {
+        List<LlmRecommendationResponse.GeneratedOutfit> filtered = response.outfits().stream()
+            .filter(outfit -> !recentFingerprints.contains(OutfitFingerprintGenerator.generate(outfit.clothesIds())))
+            .toList();
+        return new LlmRecommendationResponse(java.util.stream.IntStream.range(0, filtered.size())
+            .mapToObj(index -> {
+                LlmRecommendationResponse.GeneratedOutfit outfit = filtered.get(index);
+                return new LlmRecommendationResponse.GeneratedOutfit(
+                    index + 1, outfit.clothesIds(), outfit.reason(), outfit.styleTags());
+            }).toList());
     }
 
     private long count(Map<UUID, String> values, List<UUID> ids, String value) {

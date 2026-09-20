@@ -9,5 +9,6 @@ enum ValidationFailureReason {
     INVALID_CATEGORY,        // 허용되지 않은 카테고리 사용
     DUPLICATED_OUTFIT,       // 다른 추천 코디와 의상 구성이 동일함
     INVALID_RANK,            // 추천 순위가 1부터 연속되지 않거나 범위를 벗어남
-    EMPTY_REASON             // 추천 이유가 비어 있음
+    EMPTY_REASON,            // 추천 이유가 비어 있음
+    RECENT_HISTORY_DUPLICATE // 최근 추천 이력과 동일한 코디
 }

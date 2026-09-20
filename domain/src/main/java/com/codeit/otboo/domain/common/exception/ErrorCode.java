@@ -42,6 +42,7 @@ public enum ErrorCode {
     OUTFIT_NOT_FOUND(404, "Outfit을 찾을 수 없습니다."),
     DUPLICATE_OUTFIT_CLOTHES(409, "Outfit에 동일한 의상이 중복되어 있습니다."),
     RECOMMENDATION_GENERATION_FAILED(502, "추천 생성에 실패했습니다."),
+    RECOMMENDATION_DAILY_LIMIT_EXCEEDED(429, "오늘의 추천 횟수를 모두 사용했습니다."),
 
     // ===== 피드 =====
     // 담당자가 추가

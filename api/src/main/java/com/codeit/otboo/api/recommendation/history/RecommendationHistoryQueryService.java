@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -55,5 +56,16 @@ public class RecommendationHistoryQueryService {
             });
 
         return new RecommendationHistoryContext(recent3, older);
+    }
+
+    public Set<String> recentOutfitFingerprints(UUID userId, RecommendationType recommendationType) {
+        List<RecommendationRequestHistory> requests = requestHistoryRepository
+            .findByUser_IdAndRecommendationTypeOrderByRequestedAtDesc(userId, recommendationType,
+                PageRequest.of(0, RecommendationHistoryPolicy.RECENT_HISTORY_LIMIT))
+            .getContent();
+        if (requests.isEmpty()) return Set.of();
+        return outfitHistoryRepository.findAllByRecommendationRequestHistory_IdIn(requests.stream()
+                .map(RecommendationRequestHistory::getId).toList())
+            .stream().map(RecommendationOutfitHistory::getOutfitFingerprint).collect(Collectors.toUnmodifiableSet());
     }
 }

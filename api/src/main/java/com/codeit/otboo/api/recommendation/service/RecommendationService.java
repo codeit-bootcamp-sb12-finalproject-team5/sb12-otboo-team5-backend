@@ -6,6 +6,9 @@ import com.codeit.otboo.api.recommendation.dto.RecommendationRequest;
 import com.codeit.otboo.api.recommendation.dto.UserPreferenceRequest;
 import com.codeit.otboo.api.recommendation.llm.GeminiRecommendationResult;
 import com.codeit.otboo.api.recommendation.llm.LlmRecommendationService;
+import com.codeit.otboo.api.recommendation.history.RecommendationDailyLimitPolicy;
+import com.codeit.otboo.api.recommendation.history.RecommendationHistoryQueryService;
+import com.codeit.otboo.api.recommendation.history.RecommendationHistorySaveService;
 import com.codeit.otboo.api.recommendation.ranking.RankedClothes;
 import com.codeit.otboo.api.recommendation.ranking.RankedClothesCandidates;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
@@ -52,6 +55,9 @@ public class RecommendationService {
     private final ClothesAnalysisService clothesAnalysisService;
     private final S3StorageService s3StorageService;
     private final ClothesRepository clothesRepository;
+    private final RecommendationDailyLimitPolicy recommendationDailyLimitPolicy;
+    private final RecommendationHistoryQueryService recommendationHistoryQueryService;
+    private final RecommendationHistorySaveService recommendationHistorySaveService;
 
     public RecommendationResponse recommendOotd(UUID userId, RecommendationRequest request) {
         return recommend(userId, request, RecommendationType.OOTD);
@@ -62,6 +68,7 @@ public class RecommendationService {
     }
 
     private RecommendationResponse recommend(UUID userId, RecommendationRequest request, RecommendationType type) {
+        recommendationDailyLimitPolicy.validateAvailable(userId, type);
         // 선택 의상이 있는 경우
         if (request.hasSelectedClothes()) {
             List<Clothes> selectedClothes = validateSelectedClothes(userId, request.selectedClothesIds());
@@ -138,7 +145,8 @@ public class RecommendationService {
             type,
             totalCandidateCount(ranked)
         );
-        GeminiRecommendationResult generated = llmRecommendationService.generate(weather, ranked);
+        GeminiRecommendationResult generated = llmRecommendationService.generate(weather, ranked,
+            recommendationHistoryQueryService.recentOutfitFingerprints(userId, type));
         log.info(
             "[recommendation][llm] 코디 생성이 완료 type={}, outfitCount={}, "
                 + "modelVersion={}, usage={}",
@@ -169,6 +177,15 @@ public class RecommendationService {
                     outfit.reason(),
                     outfit.styleTags())
             ).toList()
+        );
+
+        recommendationHistorySaveService.save(
+            userId,
+            weatherId,
+            type,
+            LlmRecommendationService.PROMPT_VERSION,
+            ranked.selectedClothes(),
+            generated.recommendation()
         );
 
         log.info(
