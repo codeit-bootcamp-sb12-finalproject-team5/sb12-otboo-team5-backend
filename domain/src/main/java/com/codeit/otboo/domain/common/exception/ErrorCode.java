@@ -33,11 +33,16 @@ public enum ErrorCode {
     CLOTHES_ANALYSIS_FAILED(502, "의상 분석에 실패했습니다."),
     INVALID_ATTRIBUTE_VALUE(400, "유효하지 않은 의상 속성입니다."),
     CLOTHES_ATTRIBUTE_PARSE_FAILED(500, "의상 속성작업에 실패했습니다."),
+    SELECTED_CLOTHES_NOT_FOUND(404, "선택한 의상을 찾을 수 없습니다."),
+    SELECTED_CLOTHES_NOT_OWNED(403, "선택한 의상에 대한 권한이 없습니다."),
+    DUPLICATED_SELECTED_CLOTHES(400, "선택한 의상이 중복되어 있습니다."),
+    INVALID_SELECTED_CLOTHES_COMBINATION(400, "선택한 의상 조합이 올바르지 않습니다."),
 
     // ===== 아웃핏 =====
     OUTFIT_NOT_FOUND(404, "Outfit을 찾을 수 없습니다."),
     DUPLICATE_OUTFIT_CLOTHES(409, "Outfit에 동일한 의상이 중복되어 있습니다."),
     RECOMMENDATION_GENERATION_FAILED(502, "추천 생성에 실패했습니다."),
+    RECOMMENDATION_DAILY_LIMIT_EXCEEDED(429, "오늘의 추천 횟수를 모두 사용했습니다."),
 
     // ===== 피드 =====
     // 담당자가 추가

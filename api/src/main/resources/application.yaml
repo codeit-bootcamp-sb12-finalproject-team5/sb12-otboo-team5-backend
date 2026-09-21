@@ -108,3 +108,16 @@ cloud:
 notification:
   kafka:
     enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
+
+recommendation:
+  ranking:
+    top-k:
+      top: 4
+      pants: 3
+      skirt: 3
+      outer: 4
+      dress: 4
+      shoes: 4
+      hat: 2
+      bag: 2
+      accessory: 2
