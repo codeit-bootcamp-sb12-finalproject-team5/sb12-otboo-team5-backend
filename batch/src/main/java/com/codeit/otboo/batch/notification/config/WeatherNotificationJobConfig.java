@@ -46,6 +46,8 @@ import org.springframework.transaction.interceptor.DefaultTransactionAttribute;
 @Import(NotificationKafkaConfig.class)
 public class WeatherNotificationJobConfig {
 
+    private static final int SKIP_LIMIT = 10;
+
     @Bean
     public Job dailyWeatherNotificationJob(JobRepository repository,
             @Qualifier("weatherNotificationStep") Step step) {
@@ -70,13 +72,26 @@ public class WeatherNotificationJobConfig {
         return new StepBuilder("weatherNotificationStep", repository)
                 .<WeatherNotificationGrid, NotificationCreateMessage<WeatherNotificationCreateEvent>>chunk(1, transactions)
                 .transactionAttribute(new DefaultTransactionAttribute(TransactionDefinition.PROPAGATION_NOT_SUPPORTED))
-                .reader(reader).processor(processor).writer(writer)
+                .reader(reader)
+                .processor(processor)
+                .writer(writer)
+                .faultTolerant()
+                .skip(Exception.class)
+                .skipLimit(SKIP_LIMIT)
                 .listener(new StepExecutionListener() {
                     @Override
                     public org.springframework.batch.core.ExitStatus afterStep(StepExecution execution) {
-                        log.info("[WEATHER-NOTIFICATION] status={}, read={}, skipped={}, kafkaPublished={}, failures={}",
+                        log.info("[WEATHER-NOTIFICATION] status={}, read={}, filtered={}, skipped={}, "
+                                        + "kafkaPublished={}, failures={}",
                                 execution.getStatus(), execution.getReadCount(), execution.getFilterCount(),
-                                execution.getWriteCount(), execution.getFailureExceptions().size());
+                                execution.getSkipCount(), execution.getWriteCount(),
+                                execution.getFailureExceptions().size());
+
+                        if (execution.getWriteCount() == 0 && execution.getSkipCount() > 0) {
+                            log.error("[WEATHER-NOTIFICATION] 발행 0건, 건너뛴 지역 {}건 — 실패로 처리한다",
+                                    execution.getSkipCount());
+                            return org.springframework.batch.core.ExitStatus.FAILED;
+                        }
                         return null;
                     }
                 }).build();

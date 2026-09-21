@@ -73,17 +73,21 @@ public class WeatherRepository {
 
         for (var group : grouped.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
             gridRepository.findByIdForUpdate(group.getKey()).orElseThrow();
+
             List<OffsetDateTime> observedTimes = group.getValue().stream()
                     .map(WeatherObservation::getObservedAt)
                     .toList();
+
             Map<Instant, WeatherObservation> existingByTime = observationRepository
                     .findByGrid_IdAndObservedAtIn(group.getKey(), observedTimes).stream()
                     .collect(Collectors.toMap(
                             observation -> observation.getObservedAt().toInstant(), observation -> observation));
+
             List<WeatherObservation> newObservations = new ArrayList<>();
 
             for (WeatherObservation incoming : group.getValue()) {
                 WeatherObservation existing = existingByTime.get(incoming.getObservedAt().toInstant());
+
                 if (existing == null) {
                     newObservations.add(incoming);
                     existingByTime.put(incoming.getObservedAt().toInstant(), incoming);
@@ -91,6 +95,7 @@ public class WeatherRepository {
                     existing.updateFrom(incoming);
                 }
             }
+
             observationRepository.saveAll(newObservations);
         }
     }
@@ -105,17 +110,21 @@ public class WeatherRepository {
 
         for (var group : grouped.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
             gridRepository.findByIdForUpdate(group.getKey()).orElseThrow();
+
             List<OffsetDateTime> forecastTimes = group.getValue().stream()
                     .map(WeatherForecast::getForecastAt)
                     .toList();
+
             Map<Instant, WeatherForecast> existingByTime = forecastRepository
                     .findByGrid_IdAndForecastAtIn(group.getKey(), forecastTimes).stream()
                     .collect(Collectors.toMap(
                             forecast -> forecast.getForecastAt().toInstant(), forecast -> forecast));
+
             List<WeatherForecast> newForecasts = new ArrayList<>();
 
             for (WeatherForecast incoming : group.getValue()) {
                 WeatherForecast existing = existingByTime.get(incoming.getForecastAt().toInstant());
+
                 if (existing == null) {
                     newForecasts.add(incoming);
                     existingByTime.put(incoming.getForecastAt().toInstant(), incoming);
@@ -123,6 +132,7 @@ public class WeatherRepository {
                     existing.updateIfNewer(incoming);
                 }
             }
+
             forecastRepository.saveAll(newForecasts);
         }
     }
