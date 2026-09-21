@@ -4,7 +4,9 @@ import com.codeit.otboo.api.common.security.CustomUserDetails;
 import com.codeit.otboo.api.profile.dto.request.ProfileUpdateRequest;
 import com.codeit.otboo.api.profile.dto.response.ProfileDto;
 import com.codeit.otboo.api.profile.service.ProfileService;
+import com.codeit.otboo.api.weather.dto.response.WeatherDto;
 import com.codeit.otboo.domain.profile.exception.ProfileException;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -47,6 +49,17 @@ public class ProfileController {
       throw ProfileException.accessDenied();
     }
     return ResponseEntity.ok(profileService.updateProfile(userId, request, image));
+  }
+
+  @GetMapping("/weather")
+  public ResponseEntity<List<WeatherDto>> getWeather(
+      @PathVariable UUID userId,
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    if (!userId.equals(userDetails.getUserId())) {
+      throw ProfileException.accessDenied();
+    }
+    return ResponseEntity.ok(profileService.getWeather(userId));
   }
 
 }
