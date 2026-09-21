@@ -34,6 +34,15 @@ public class SseEmitterRepository {
         return Map.copyOf(result);
     }
 
+    public int count() {
+        return store.values().stream().mapToInt(Set::size).sum();
+    }
+
+    public int countByReceiver(UUID receiverId) {
+        Set<SseEmitter> emitters = store.get(receiverId);
+        return emitters == null ? 0 : emitters.size();
+    }
+
     public void delete(UUID receiverId, SseEmitter emitter) {
         store.computeIfPresent(receiverId, (id, emitters) -> {
             emitters.remove(emitter);

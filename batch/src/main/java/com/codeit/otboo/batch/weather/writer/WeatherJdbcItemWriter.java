@@ -1,5 +1,6 @@
 package com.codeit.otboo.batch.weather.writer;
 
+import com.codeit.otboo.batch.weather.metrics.WeatherCollectionMetrics;
 import com.codeit.otboo.batch.weather.processor.NormalizedGridResult;
 import com.codeit.otboo.domain.weather.entity.WeatherForecast;
 import com.codeit.otboo.domain.weather.entity.WeatherObservation;
@@ -70,6 +71,7 @@ public class WeatherJdbcItemWriter implements ItemWriter<NormalizedGridResult> {
             """;
 
     private final JdbcTemplate jdbcTemplate;
+    private final WeatherCollectionMetrics metrics;
 
     private final AtomicInteger writtenGridCount = new AtomicInteger();
     private final AtomicInteger partialGridCount = new AtomicInteger();
@@ -88,14 +90,18 @@ public class WeatherJdbcItemWriter implements ItemWriter<NormalizedGridResult> {
             forecasts.addAll(item.forecasts());
         }
 
-        batchUpsertObservations(observations);
-        batchUpsertForecasts(forecasts);
+        List<int[]> observationResults = new ArrayList<>();
+        List<int[]> forecastResults = new ArrayList<>();
+        batchUpsertObservations(observations, observationResults);
+        batchUpsertForecasts(forecasts, forecastResults);
 
         int gridCount = chunk.size();
         int partialCount = (int) chunk.getItems().stream().filter(NormalizedGridResult::partial).count();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
+                observationResults.forEach(result -> metrics.recordSaved("observation", result));
+                forecastResults.forEach(result -> metrics.recordSaved("forecast", result));
                 writtenGridCount.addAndGet(gridCount);
                 partialGridCount.addAndGet(partialCount);
                 log.info("[BATCH][WRITER] chunk 커밋 완료 격자={}, 관측행={}, 예보행={}",
@@ -104,9 +110,9 @@ public class WeatherJdbcItemWriter implements ItemWriter<NormalizedGridResult> {
         });
     }
 
-    private void batchUpsertObservations(List<WeatherObservation> observations) {
+    private void batchUpsertObservations(List<WeatherObservation> observations, List<int[]> results) {
         forEachBatch(observations, slice ->
-                jdbcTemplate.batchUpdate(UPSERT_OBSERVATION_SQL, new BatchPreparedStatementSetter() {
+                results.add(jdbcTemplate.batchUpdate(UPSERT_OBSERVATION_SQL, new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
                         WeatherObservation observation = slice.get(i);
@@ -115,7 +121,7 @@ public class WeatherJdbcItemWriter implements ItemWriter<NormalizedGridResult> {
                         ps.setObject(3, observation.getObservedAt());
                         ps.setBigDecimal(4, observation.getTemperature());
                         ps.setBigDecimal(5, observation.getHumidity());
-                        ps.setString(6, observation.getPrecipitationType());
+                        ps.setString(6, name(observation.getPrecipitationType()));
                         ps.setBigDecimal(7, observation.getPrecipitationAmount());
                         ps.setBigDecimal(8, observation.getWindSpeed());
                         ps.setBigDecimal(9, observation.getWindDirection());
@@ -125,12 +131,12 @@ public class WeatherJdbcItemWriter implements ItemWriter<NormalizedGridResult> {
                     public int getBatchSize() {
                         return slice.size();
                     }
-                }));
+                })));
     }
 
-    private void batchUpsertForecasts(List<WeatherForecast> forecasts) {
+    private void batchUpsertForecasts(List<WeatherForecast> forecasts, List<int[]> results) {
         forEachBatch(forecasts, slice ->
-                jdbcTemplate.batchUpdate(UPSERT_FORECAST_SQL, new BatchPreparedStatementSetter() {
+                results.add(jdbcTemplate.batchUpdate(UPSERT_FORECAST_SQL, new BatchPreparedStatementSetter() {
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
                         WeatherForecast forecast = slice.get(i);
@@ -140,10 +146,10 @@ public class WeatherJdbcItemWriter implements ItemWriter<NormalizedGridResult> {
                         ps.setObject(4, forecast.getForecastAt());
                         ps.setBigDecimal(5, forecast.getTemperature());
                         ps.setBigDecimal(6, forecast.getHumidity());
-                        ps.setString(7, forecast.getPrecipitationType());
+                        ps.setString(7, name(forecast.getPrecipitationType()));
                         ps.setBigDecimal(8, forecast.getPrecipitationAmount());
                         ps.setBigDecimal(9, forecast.getPrecipitationProbability());
-                        ps.setString(10, forecast.getSkyStatus());
+                        ps.setString(10, name(forecast.getSkyStatus()));
                         ps.setBigDecimal(11, forecast.getWindSpeed());
                         ps.setBigDecimal(12, forecast.getWindDirection());
                         ps.setBigDecimal(13, forecast.getMinTemperature());
@@ -154,7 +160,11 @@ public class WeatherJdbcItemWriter implements ItemWriter<NormalizedGridResult> {
                     public int getBatchSize() {
                         return slice.size();
                     }
-                }));
+                })));
+    }
+
+    private static String name(Enum<?> value) {
+        return value == null ? null : value.name();
     }
 
     private <T> void forEachBatch(List<T> items, Consumer<List<T>> action) {

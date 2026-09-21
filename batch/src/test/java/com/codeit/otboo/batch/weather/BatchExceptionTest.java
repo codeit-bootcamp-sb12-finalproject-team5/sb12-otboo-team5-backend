@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 import com.codeit.otboo.batch.common.exception.BatchException;
+import com.codeit.otboo.batch.weather.metrics.WeatherCollectionMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import com.codeit.otboo.batch.weather.config.WeatherCollectionWindow;
 import com.codeit.otboo.batch.weather.processor.WeatherDataCountException;
 import com.codeit.otboo.batch.weather.writer.WeatherJdbcItemWriter;
@@ -39,7 +41,7 @@ class BatchExceptionTest {
 
     @Test
     void missingTransactionFailsWithCommonErrorCode() {
-        var writer = new WeatherJdbcItemWriter(mock(JdbcTemplate.class));
+        var writer = new WeatherJdbcItemWriter(mock(JdbcTemplate.class), new WeatherCollectionMetrics(new SimpleMeterRegistry()));
         assertThatThrownBy(() -> writer.write(new Chunk<>()))
             .isInstanceOfSatisfying(BatchException.class, exception ->
                 assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.BATCH_TRANSACTION_REQUIRED));

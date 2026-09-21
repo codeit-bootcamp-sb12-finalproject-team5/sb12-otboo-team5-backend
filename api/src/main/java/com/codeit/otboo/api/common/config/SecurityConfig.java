@@ -3,6 +3,7 @@ package com.codeit.otboo.api.common.config;
 import com.codeit.otboo.api.common.security.JwtAuthenticationFilter;
 import com.codeit.otboo.api.common.security.SecurityExceptionHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -53,6 +54,10 @@ public class SecurityConfig {
                 .accessDeniedHandler(securityExceptionHandler))
 
             .authorizeHttpRequests(auth -> auth
+                // 모니터링 수집용. Prometheus는 토큰을 갱신할 수 없으므로 JWT를 요구하지 않는다.
+                // 노출한 엔드포인트(health, prometheus)만 열리며, 배포 시에는 이 포트를 외부에 공개하지 않는다.
+                .requestMatchers(EndpointRequest.to("health", "prometheus")).permitAll()
+
                 // 인증 없이 접근 가능
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users").permitAll()

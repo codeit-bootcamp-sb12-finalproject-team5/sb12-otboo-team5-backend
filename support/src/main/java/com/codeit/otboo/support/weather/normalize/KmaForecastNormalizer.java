@@ -3,6 +3,8 @@ package com.codeit.otboo.support.weather.normalize;
 import com.codeit.otboo.domain.weather.entity.WeatherForecast;
 import com.codeit.otboo.domain.weather.entity.WeatherGrid;
 import com.codeit.otboo.domain.weather.entity.WeatherObservation;
+import com.codeit.otboo.domain.weather.entity.PrecipitationType;
+import com.codeit.otboo.domain.weather.entity.SkyStatus;
 import com.codeit.otboo.support.weather.dto.response.KmaForecastBundleDto;
 import com.codeit.otboo.support.weather.dto.response.KmaForecastPointDto;
 import com.codeit.otboo.support.weather.dto.response.KmaObservationDto;
@@ -113,20 +115,21 @@ public final class KmaForecastNormalizer {
         catch (Exception ignored) { return BigDecimal.ZERO; }
     }
 
-    public static String precipitationType(int code) {
+    public static PrecipitationType precipitationType(int code) {
         return switch (code) {
-            case 1, 4, 5 -> "RAIN";
-            case 2, 6 -> "SLEET";
-            case 3, 7 -> "SNOW";
-            default -> "NONE";
+            case 1, 5 -> PrecipitationType.RAIN;        // 비, 빗방울
+            case 2, 6 -> PrecipitationType.RAIN_SNOW;   // 비/눈(진눈깨비), 빗방울눈날림
+            case 3, 7 -> PrecipitationType.SNOW;        // 눈, 눈날림
+            case 4 -> PrecipitationType.SHOWER;         // 소나기
+            default -> PrecipitationType.NONE;
         };
     }
 
-    public static String skyStatus(int code) {
+    public static SkyStatus skyStatus(int code) {
         return switch (code) {
-            case 1 -> "CLEAR";
-            case 3 -> "MOSTLY_CLOUDY";
-            default -> "CLOUDY";
+            case 1 -> SkyStatus.CLEAR;
+            case 3 -> SkyStatus.MOSTLY_CLOUDY;
+            default -> SkyStatus.CLOUDY;
         };
     }
 }

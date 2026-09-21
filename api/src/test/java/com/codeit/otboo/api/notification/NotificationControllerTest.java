@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class NotificationControllerTest {
     private final NotificationService service = mock(NotificationService.class);
-    private final NotificationSseService sse = new NotificationSseService( new SseEmitterRepository(),
+    private final NotificationSseService sse = new NotificationSseService(new SseEmitterRepository(), service,
             new DefaultListableBeanFactory().getBeanProvider(KafkaListenerEndpointRegistry.class), false);
     private final UUID user = UUID.randomUUID();
     private MockMvc mvc;
@@ -88,27 +88,57 @@ class NotificationControllerTest {
 
     @Test
     void sseStartsStreamAndAcceptsLastEventId() throws Exception {
-        mvc.perform(get("/api/sse").param("LastEventId", UUID.randomUUID().toString()))
+        mvc.perform(get("/api/sse").param("lastEventId", UUID.randomUUID().toString()))
                 .andExpect(status().isOk()).andExpect(request().asyncStarted())
                 .andExpect(content().contentTypeCompatibleWith("text/event-stream"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(":connected")));
-        mvc.perform(get("/api/sse").param("LastEventId", "invalid"))
-                .andExpect(status().isBadRequest());
+    }
+
+    // 커서가 깨졌다고 연결까지 막으면 알림이 통째로 끊긴다.
+    @Test
+    void brokenLastEventIdStillOpensTheStream() throws Exception {
+        mvc.perform(get("/api/sse").param("lastEventId", "invalid"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(":connected")));
+        verify(service, never()).findMissed(any(), any(), anyInt());
     }
 
     @Test
-    void broadcastsToBothUserConnectionsUsingFrontendEventContract() throws Exception {
-        var first = mvc.perform(get("/api/sse")).andReturn();
-        var second = mvc.perform(get("/api/sse")).andReturn();
+    void reconnectResendsNotificationsMissedWhileDisconnected() throws Exception {
+        var lastSeen = UUID.randomUUID();
+        var missedFirst = UUID.randomUUID();
+        var missedSecond = UUID.randomUUID();
+        when(service.findMissed(eq(user), eq(lastSeen), anyInt())).thenReturn(List.of(
+                new NotificationDto(missedFirst, OffsetDateTime.now(), user,
+                        "먼저 온 알림", "내용1", NotificationLevel.INFO),
+                new NotificationDto(missedSecond, OffsetDateTime.now(), user,
+                        "나중에 온 알림", "내용2", NotificationLevel.INFO)));
+
+        var result = mvc.perform(get("/api/sse").param("lastEventId", lastSeen.toString())).andReturn();
+
+        String body = result.getResponse().getContentAsString();
+        assertThat(body).contains("id:" + missedFirst, "id:" + missedSecond, "event:notifications");
+        assertThat(body.indexOf("id:" + missedFirst)).isLessThan(body.indexOf("id:" + missedSecond));
+        assertThat(body.indexOf(":connected")).isLessThan(body.indexOf("id:" + missedFirst));
+    }
+
+    // 사용자당 연결은 1개만 유지하므로, 나중에 연결한 쪽만 알림을 받는다.
+    @Test
+    void broadcastsToTheNewestUserConnectionUsingFrontendEventContract() throws Exception {
+        var replaced = mvc.perform(get("/api/sse")).andReturn();
+        var current = mvc.perform(get("/api/sse")).andReturn();
         var id = UUID.randomUUID();
         sse.publish(new NotificationDto(id, OffsetDateTime.now(), user,
                 "role changed", "ADMIN", NotificationLevel.INFO));
-        for (var result : List.of(first, second)) {
-            String body = result.getResponse().getContentAsString();
-            assertThat(body).contains("event:notifications", "id:" + id,
-                    "\"receiverId\":\"" + user);
-            assertThat(body.indexOf(":connected")).isLessThan(body.indexOf("event:notifications"));
-        }
+
+        String body = current.getResponse().getContentAsString();
+        assertThat(body).contains("event:notifications", "id:" + id,
+                "\"receiverId\":\"" + user);
+        assertThat(body.indexOf(":connected")).isLessThan(body.indexOf("event:notifications"));
+
+        assertThat(replaced.getResponse().getContentAsString())
+                .contains(":connected")
+                .doesNotContain("event:notifications");
     }
 
     @Test
@@ -123,9 +153,9 @@ class NotificationControllerTest {
     void rejectsSubscriptionBeforeKafkaConsumerIsAssigned() {
         org.springframework.beans.factory.ObjectProvider<org.springframework.kafka.config.KafkaListenerEndpointRegistry>
                 registries = mock(org.springframework.beans.factory.ObjectProvider.class);
-        var gated = new NotificationSseService( new SseEmitterRepository(), registries, true);
+        var gated = new NotificationSseService(new SseEmitterRepository(), service, registries, true);
         try {
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> gated.subscribe(user))
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> gated.subscribe(user, null))
                     .isInstanceOfSatisfying(
                             com.codeit.otboo.domain.notification.exception.NotificationException.class,
                             error -> assertThat(error.getErrorCode()).isEqualTo(

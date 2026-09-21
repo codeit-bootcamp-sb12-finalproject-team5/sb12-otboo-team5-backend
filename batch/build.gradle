@@ -5,6 +5,11 @@ plugins {
 description = 'batch'
 
 dependencies {
+    // Monitoring HTTP endpoint
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
     // Domain
     implementation project(':domain')
     implementation project(':support')
