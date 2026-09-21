@@ -34,34 +34,21 @@ public class RecommendationFilteringService {
     private final RuleBasedClothesFilter ruleBasedClothesFilter;
 
     public List<Clothes> filterOotd(UUID userId, UUID weatherId, Profile profile) {
-        return filter(RecommendationType.OOTD, userId, weatherId, profile);
+        return filter(RecommendationType.OOTD, userId, weatherId, profile, List.of());
     }
 
-    /**
-     * 선택 의상은 제외한 추가 후보에만 기존 규칙 기반 필터를 적용한다.
-     */
+    // 고정 의상 있는 경우
     public List<Clothes> filterOotd(UUID userId, UUID weatherId, Profile profile, List<Clothes> selectedClothes) {
         return filter(RecommendationType.OOTD, userId, weatherId, profile, selectedClothes);
     }
 
     public List<Clothes> filterOutfit(UUID userId, UUID weatherId, Profile profile) {
-        return filter(RecommendationType.OUTFIT, userId, weatherId, profile);
+        return filter(RecommendationType.OUTFIT, userId, weatherId, profile, List.of());
     }
 
-    /**
-     * 선택 의상은 제외한 추가 후보에만 기존 규칙 기반 필터를 적용한다.
-     */
+    // 고정 의상 있는 경우
     public List<Clothes> filterOutfit(UUID userId, UUID weatherId, Profile profile, List<Clothes> selectedClothes) {
         return filter(RecommendationType.OUTFIT, userId, weatherId, profile, selectedClothes);
-    }
-
-    private List<Clothes> filter(
-        RecommendationType type,
-        UUID userId,
-        UUID weatherId,
-        Profile profile
-    ) {
-        return filter(type, userId, weatherId, profile, List.of());
     }
 
     /**
@@ -74,13 +61,6 @@ public class RecommendationFilteringService {
         Profile profile,
         List<Clothes> selectedClothes
     ) {
-        // 후보군 리스트에서 선택된 옷들 제외
-        Set<UUID> selectedClothesIds = selectedClothes.stream().map(Clothes::getId)
-            .collect(Collectors.toUnmodifiableSet());
-        List<Clothes> candidates = providersByType().get(type).findCandidates(userId).stream()
-            .filter(clothes -> !selectedClothesIds.contains(clothes.getId()))
-            .toList();
-
         WeatherForecast weather = weatherForecastRepository.findById(weatherId)
             .orElseThrow(() -> new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE));
 
@@ -91,6 +71,13 @@ public class RecommendationFilteringService {
 
         BigDecimal effectiveTemperature = temperatureAdjustmentPolicy.calculateEffectiveTemperature(
             currentTemperature, profile.getTemperatureSensitivity());
+
+        // 후보군 리스트에서 선택된 옷들 제외
+        Set<UUID> selectedClothesIds = selectedClothes.stream().map(Clothes::getId)
+            .collect(Collectors.toUnmodifiableSet());
+        List<Clothes> candidates = providersByType().get(type).findCandidates(userId).stream()
+            .filter(clothes -> !selectedClothesIds.contains(clothes.getId()))
+            .toList();
 
         log.info(
             "[recommendation][filter] 필터링 시작 전. type={}, userId={}, weatherId={}, candidateCount={}, "

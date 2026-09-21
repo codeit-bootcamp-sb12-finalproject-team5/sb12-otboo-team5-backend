@@ -4,10 +4,12 @@ import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.recommendation.RecommendationType;
 import com.codeit.otboo.domain.recommendation.exception.RecommendationException;
 import com.codeit.otboo.domain.recommendation.repository.RecommendationRequestHistoryRepository;
+
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +25,7 @@ public class RecommendationDailyLimitPolicy {
     public void validateAvailable(UUID userId, RecommendationType type) {
         Usage usage = usage(userId, type);
         if (usage.remaining() <= 0) {
-            throw (RecommendationException) new RecommendationException(ErrorCode.RECOMMENDATION_DAILY_LIMIT_EXCEEDED, null)
+            throw new RecommendationException(ErrorCode.RECOMMENDATION_DAILY_LIMIT_EXCEEDED, null)
                 .addDetail("limit", usage.limit())
                 .addDetail("remaining", usage.remaining());
         }
@@ -33,8 +35,10 @@ public class RecommendationDailyLimitPolicy {
         ZonedDateTime start = ZonedDateTime.now(SERVICE_ZONE).toLocalDate().atStartOfDay(SERVICE_ZONE);
         OffsetDateTime startAt = start.toOffsetDateTime();
         OffsetDateTime endAt = start.plusDays(1).toOffsetDateTime();
+
         int limit = limit(type);
         int used = Math.toIntExact(requestHistoryRepository.countByUserAndTypeAndRequestedAtBetween(userId, type, startAt, endAt));
+
         return new Usage(limit, used, Math.max(0, limit - used));
     }
 

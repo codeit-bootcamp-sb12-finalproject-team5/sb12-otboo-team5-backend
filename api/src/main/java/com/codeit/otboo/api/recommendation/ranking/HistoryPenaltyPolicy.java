@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 public class HistoryPenaltyPolicy {
     public double calculatePenalty(UUID clothesId, RecommendationHistoryContext context, Set<UUID> selectedClothesIds) {
         if (selectedClothesIds.contains(clothesId)) return 0;
+
         return context.recent3ExposureCount().getOrDefault(clothesId, 0) * RecommendationHistoryPolicy.STRONG_HISTORY_PENALTY
             + context.olderExposureCount().getOrDefault(clothesId, 0) * RecommendationHistoryPolicy.WEAK_HISTORY_PENALTY;
     }

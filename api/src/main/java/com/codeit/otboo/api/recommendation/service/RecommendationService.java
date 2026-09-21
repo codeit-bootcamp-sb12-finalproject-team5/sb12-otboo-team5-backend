@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -68,7 +69,9 @@ public class RecommendationService {
     }
 
     private RecommendationResponse recommend(UUID userId, RecommendationRequest request, RecommendationType type) {
+        // 추천 횟수 확인
         recommendationDailyLimitPolicy.validateAvailable(userId, type);
+
         // 선택 의상이 있는 경우
         if (request.hasSelectedClothes()) {
             List<Clothes> selectedClothes = validateSelectedClothes(userId, request.selectedClothesIds());
@@ -95,6 +98,7 @@ public class RecommendationService {
         RankedClothesCandidates ranked = type == RecommendationType.OOTD
             ? rankingService.rankOotd(userId, weatherId, selectedClothes)
             : rankingService.rankOutfit(userId, weatherId, selectedClothes);
+
         return generateRecommendation(userId, weatherId, type, ranked);
     }
 
@@ -145,8 +149,10 @@ public class RecommendationService {
             type,
             totalCandidateCount(ranked)
         );
+
         GeminiRecommendationResult generated = llmRecommendationService.generate(weather, ranked,
             recommendationHistoryQueryService.recentOutfitFingerprints(userId, type));
+
         log.info(
             "[recommendation][llm] 코디 생성이 완료 type={}, outfitCount={}, "
                 + "modelVersion={}, usage={}",
@@ -157,7 +163,7 @@ public class RecommendationService {
         );
 
         // Gemini 응답에는 고정 선택 의상도 포함되므로 응답 변환용 조회 맵에 함께 보관한다.
-        Map<UUID, Clothes> candidates = java.util.stream.Stream.concat(
+        Map<UUID, Clothes> candidates = Stream.concat(
                 ranked.selectedClothes().stream(),
                 ranked.all().map(RankedClothes::clothes)
             )
@@ -194,6 +200,7 @@ public class RecommendationService {
             userId,
             response.outfits().size()
         );
+
         return response;
     }
 

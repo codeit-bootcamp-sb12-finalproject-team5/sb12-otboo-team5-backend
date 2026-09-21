@@ -22,23 +22,6 @@ public class ContentBasedClothesRanker {
     private final RecommendationRankingProperties rankingProperties;
     private final HistoryPenaltyPolicy historyPenaltyPolicy;
 
-    public RankedClothesCandidates rank(
-        Profile profile,
-        RecommendationType recommendationType,
-        List<Clothes> filteredClothes
-    ) {
-        return rank(profile, recommendationType, filteredClothes, List.of(), RecommendationHistoryContext.empty());
-    }
-
-    /** 고정 의상이 맡은 역할의 추가 후보는 랭킹 대상에서 제외한다. */
-    public RankedClothesCandidates rank(
-        Profile profile,
-        RecommendationType recommendationType,
-        List<Clothes> filteredClothes,
-        List<Clothes> selectedClothes
-    ) {
-        return rank(profile, recommendationType, filteredClothes, selectedClothes, RecommendationHistoryContext.empty());
-    }
 
     /** 기존 점수에 최근 추천 이력 감점만 추가해 카테고리별 후보를 선정한다. */
     public RankedClothesCandidates rank(
@@ -59,6 +42,14 @@ public class ContentBasedClothesRanker {
         }
 
         float[] preferenceVector = profile.getPreferenceVector();
+        if (!isValidVector(preferenceVector)) {
+            log.warn(
+                "[recommendation][ranking] 사용자 선호 벡터 유효하지 않음 type={}, userId={}",
+                recommendationType,
+                profile.getUser().getId()
+            );
+            return rankWithoutPreferenceVector(recommendationType, rankingTargets, selectedClothes, historyContext);
+        }
 
         log.info(
             "[recommendation][ranking] 랭킹 시작 type={}, userId={}, inputCount={}, "
@@ -68,15 +59,6 @@ public class ContentBasedClothesRanker {
             rankingTargets.size(),
             isValidVector(preferenceVector)
         );
-
-        if (!isValidVector(preferenceVector)) {
-            log.warn(
-                "[recommendation][ranking] 사용자 선호 벡터 유효하지 않음 type={}, userId={}",
-                recommendationType,
-                profile.getUser().getId()
-            );
-            return rankWithoutPreferenceVector(recommendationType, rankingTargets, selectedClothes, historyContext);
-        }
 
         List<Clothes> validVectorClothes = rankingTargets.stream()
             .filter(clothes -> hasValidAttributeVector(clothes))
@@ -167,6 +149,7 @@ public class ContentBasedClothesRanker {
         Set<UUID> selectedClothesIds = selectedClothes.stream()
             .map(Clothes::getId)
             .collect(java.util.stream.Collectors.toSet());
+
         return baseScore - historyPenaltyPolicy.calculatePenalty(clothes.getId(), historyContext, selectedClothesIds);
     }
 
@@ -180,6 +163,7 @@ public class ContentBasedClothesRanker {
         rankingProperties.limits().forEach((category, limit) ->
             result.put(category, topK(rankedClothes, category, limit, scoreOrder))
         );
+
         return RankedClothesCandidates.of(selectedClothes, result);
     }
 

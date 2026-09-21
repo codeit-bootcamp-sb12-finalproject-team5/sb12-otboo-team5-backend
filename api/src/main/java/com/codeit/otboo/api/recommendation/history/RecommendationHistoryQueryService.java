@@ -27,6 +27,7 @@ public class RecommendationHistoryQueryService {
     private final RecommendationOutfitHistoryRepository outfitHistoryRepository;
     private final RecommendationOutfitClothesRepository outfitClothesRepository;
 
+    // 최근 추천 이력 10개 조회
     public RecommendationHistoryContext recentExposureContext(UUID userId, RecommendationType recommendationType) {
         List<RecommendationRequestHistory> requests = requestHistoryRepository
             .findByUser_IdAndRecommendationTypeOrderByRequestedAtDesc(userId, recommendationType,

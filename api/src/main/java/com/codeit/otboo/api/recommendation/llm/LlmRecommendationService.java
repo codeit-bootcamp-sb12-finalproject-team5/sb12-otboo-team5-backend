@@ -100,7 +100,7 @@ public class LlmRecommendationService {
                 "Every outfit must include every ID from selectedClothes without exception.";
             case INVALID_BASIC_OUTFIT, INVALID_OPTIONAL_COUNT ->
                 "Use either TOP with exactly one BOTTOM, or exactly one DRESS. "
-                + "Use at most one item from each optional category.";
+                    + "Use at most one item from each optional category.";
             case RECENT_HISTORY_DUPLICATE ->
                 "The previous response reused an already recommended outfit. Generate different valid outfits.";
             default ->

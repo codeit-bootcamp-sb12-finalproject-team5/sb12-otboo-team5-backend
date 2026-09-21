@@ -37,7 +37,7 @@ public class RecommendationRankingService {
             recommendationHistoryQueryService.recentExposureContext(userId, RecommendationType.OOTD));
     }
 
-    /** 고정 선택 의상은 제외하고 추가 OOTD 후보만 필터링·랭킹한다. */
+    // 고정 의상 있는 경우
     public RankedClothesCandidates rankOotd(UUID userId, UUID weatherId, List<Clothes> selectedClothes) {
         Profile profile = findProfile(userId);
 
@@ -61,7 +61,7 @@ public class RecommendationRankingService {
             recommendationHistoryQueryService.recentExposureContext(userId, RecommendationType.OUTFIT));
     }
 
-    /** 고정 선택 의상은 제외하고 추가 Outfit 후보만 필터링·랭킹한다. */
+    // 고정 의상 있는 경우
     public RankedClothesCandidates rankOutfit(UUID userId, UUID weatherId, List<Clothes> selectedClothes) {
         Profile profile = findProfile(userId);
 
