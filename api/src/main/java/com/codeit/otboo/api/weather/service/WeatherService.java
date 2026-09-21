@@ -10,6 +10,8 @@ import java.util.List;
 public interface WeatherService {
     List<WeatherDto> findWeather(WeatherReadRequest request);
 
+    List<WeatherDto> findWeatherByGrid(WeatherGridDto grid);
+
     WeatherAPILocation findLocation(LocationReadRequest request);
 
     WeatherGridDto findGrid(double longitude, double latitude);
