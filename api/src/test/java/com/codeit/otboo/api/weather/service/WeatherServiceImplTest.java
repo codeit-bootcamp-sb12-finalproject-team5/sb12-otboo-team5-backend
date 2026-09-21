@@ -1,5 +1,7 @@
 package com.codeit.otboo.api.weather.service;
 
+import com.codeit.otboo.domain.weather.entity.PrecipitationType;
+import com.codeit.otboo.domain.weather.entity.SkyStatus;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
@@ -132,8 +134,8 @@ class WeatherServiceImplTest {
             && values.get(0).getMinTemperature().compareTo(new BigDecimal("18")) == 0
             && values.get(0).getMaxTemperature().compareTo(new BigDecimal("29")) == 0
             && values.get(0).getPrecipitationAmount().compareTo(new BigDecimal("0.5")) == 0
-            && values.get(0).getPrecipitationType().equals("SLEET")
-            && values.get(0).getSkyStatus().equals("MOSTLY_CLOUDY")));
+            && values.get(0).getPrecipitationType() == PrecipitationType.RAIN_SNOW
+            && values.get(0).getSkyStatus() == SkyStatus.MOSTLY_CLOUDY));
         verify(repository).upsertObservations(argThat(values -> values.size() == 1
             && values.get(0).getObservedAt().equals(target.minusDays(1))));
         var order = inOrder(repository);

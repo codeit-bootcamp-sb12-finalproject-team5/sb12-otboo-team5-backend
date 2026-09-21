@@ -121,7 +121,7 @@ public class WeatherJdbcItemWriter implements ItemWriter<NormalizedGridResult> {
                         ps.setObject(3, observation.getObservedAt());
                         ps.setBigDecimal(4, observation.getTemperature());
                         ps.setBigDecimal(5, observation.getHumidity());
-                        ps.setString(6, observation.getPrecipitationType());
+                        ps.setString(6, name(observation.getPrecipitationType()));
                         ps.setBigDecimal(7, observation.getPrecipitationAmount());
                         ps.setBigDecimal(8, observation.getWindSpeed());
                         ps.setBigDecimal(9, observation.getWindDirection());
@@ -146,10 +146,10 @@ public class WeatherJdbcItemWriter implements ItemWriter<NormalizedGridResult> {
                         ps.setObject(4, forecast.getForecastAt());
                         ps.setBigDecimal(5, forecast.getTemperature());
                         ps.setBigDecimal(6, forecast.getHumidity());
-                        ps.setString(7, forecast.getPrecipitationType());
+                        ps.setString(7, name(forecast.getPrecipitationType()));
                         ps.setBigDecimal(8, forecast.getPrecipitationAmount());
                         ps.setBigDecimal(9, forecast.getPrecipitationProbability());
-                        ps.setString(10, forecast.getSkyStatus());
+                        ps.setString(10, name(forecast.getSkyStatus()));
                         ps.setBigDecimal(11, forecast.getWindSpeed());
                         ps.setBigDecimal(12, forecast.getWindDirection());
                         ps.setBigDecimal(13, forecast.getMinTemperature());
@@ -161,6 +161,10 @@ public class WeatherJdbcItemWriter implements ItemWriter<NormalizedGridResult> {
                         return slice.size();
                     }
                 })));
+    }
+
+    private static String name(Enum<?> value) {
+        return value == null ? null : value.name();
     }
 
     private <T> void forEachBatch(List<T> items, Consumer<List<T>> action) {

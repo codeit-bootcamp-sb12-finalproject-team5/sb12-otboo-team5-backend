@@ -1,5 +1,7 @@
 package com.codeit.otboo.api.weather.service;
 
+import com.codeit.otboo.domain.weather.entity.PrecipitationType;
+import com.codeit.otboo.domain.weather.entity.SkyStatus;
 import com.codeit.otboo.api.weather.dto.response.HumidityDto;
 import com.codeit.otboo.api.weather.dto.response.PrecipitationDto;
 import com.codeit.otboo.api.weather.dto.response.TemperatureDto;
@@ -166,10 +168,10 @@ public class WeatherViewCacheService {
                     .max(BigDecimal::compareTo)
                     .orElse(BigDecimal.ZERO);
 
-            String precipitationType = day.all().stream()
+            PrecipitationType precipitationType = day.all().stream()
                     .map(WeatherForecast::getPrecipitationType)
-                    .filter(type -> type != null && !type.isBlank() && !"NONE".equals(type))
-                    .findFirst().orElse("NONE");
+                    .filter(type -> type != null && type != PrecipitationType.NONE)
+                    .findFirst().orElse(PrecipitationType.NONE);
 
             BigDecimal wind = value(current.getWindSpeed());
 
@@ -178,8 +180,8 @@ public class WeatherViewCacheService {
                     current.getId(),
                     current.getForecastedAt().withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDateTime(),
                     current.getForecastAt().withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDateTime(),
-                    blankDefault(current.getSkyStatus(), "CLOUDY"),
-                    new PrecipitationDto(precipitationType, rainAmount, probability),
+                    nameOrDefault(current.getSkyStatus(), SkyStatus.CLOUDY),
+                    new PrecipitationDto(precipitationType.name(), rainAmount, probability),
                     new HumidityDto(value(current.getHumidity()), humidityDiff),
                     new TemperatureDto(value(current.getTemperature()), temperatureDiff, min, max),
                     new WindSpeedDto(wind,
@@ -231,8 +233,8 @@ public class WeatherViewCacheService {
         return value == null ? BigDecimal.ZERO : value;
     }
 
-    private String blankDefault(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
+    private String nameOrDefault(Enum<?> value, Enum<?> fallback) {
+        return (value == null ? fallback : value).name();
     }
 
     private record SelectedDay(

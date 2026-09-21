@@ -1,5 +1,7 @@
 package com.codeit.otboo.api.recommendation.llm;
 
+import com.codeit.otboo.domain.weather.entity.PrecipitationType;
+import com.codeit.otboo.domain.weather.entity.SkyStatus;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -12,8 +14,8 @@ public record LlmRecommendationRequest(
         BigDecimal currentTemperature,
         BigDecimal minTemperature,
         BigDecimal maxTemperature,
-        String skyStatus,
-        String precipitationType
+        SkyStatus skyStatus,
+        PrecipitationType precipitationType
     ) {
     }
 

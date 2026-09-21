@@ -6,6 +6,8 @@ import java.time.OffsetDateTime;
 import com.codeit.otboo.domain.common.UpdatableEntity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -40,8 +42,9 @@ public class WeatherObservation extends UpdatableEntity {
 	@Column(name = "humidity", precision = 6, scale = 2)
 	private BigDecimal humidity;
 
+	@Enumerated(EnumType.STRING)
 	@Column(name = "precipitation_type", length = 20)
-	private String precipitationType;
+	private PrecipitationType precipitationType;
 
 	@Column(name = "precipitation_amount", precision = 8, scale = 2)
 	private BigDecimal precipitationAmount;
