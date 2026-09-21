@@ -72,8 +72,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/*/lock").hasRole("ADMIN")
 
                 // 유저 전용
-                .requestMatchers("/api/recommendations/**").hasRole("USER")
-                .requestMatchers("/api/outfit/**").hasRole("USER")
+                //todo: 테스트 끝내고 아래 권한 수정 필요
+                .requestMatchers("/api/recommendations/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/outfit/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/feeds/**").hasAnyRole("USER", "ADMIN")
 
                 // 그 외 전부 인증 필요
                 .anyRequest().authenticated())

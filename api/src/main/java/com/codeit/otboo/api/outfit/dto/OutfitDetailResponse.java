@@ -1,6 +1,8 @@
 package com.codeit.otboo.api.outfit.dto;
 
+import com.codeit.otboo.api.feed.dto.FeedResponse;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
+import com.codeit.otboo.domain.outfit.entity.Ootd;
 import com.codeit.otboo.domain.outfit.entity.Outfit;
 import java.util.List;
 import java.util.UUID;
@@ -9,14 +11,20 @@ public record OutfitDetailResponse(
     UUID id,
     String name,
     String description,
-    List<ClothesImage> clothes
+    String category,
+    List<ClothesImage> clothes,
+    FeedResponse.OotdWeatherResponse weather
 ) {
-    public static OutfitDetailResponse of(Outfit outfit, List<Clothes> clothes) {
+    public static OutfitDetailResponse of(Outfit outfit, List<Clothes> clothes, Ootd ootd) {
+        FeedResponse.OotdWeatherResponse weather = ootd == null ? null
+                : FeedResponse.OotdWeatherResponse.of(ootd);
         return new OutfitDetailResponse(
             outfit.getId(),
             outfit.getName(),
             outfit.getDescription(),
-            clothes.stream().map(ClothesImage::of).toList()
+            outfit.getCategory(),
+            clothes.stream().map(ClothesImage::of).toList(),
+            weather
         );
     }
 

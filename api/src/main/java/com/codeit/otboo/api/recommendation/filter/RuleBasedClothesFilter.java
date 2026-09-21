@@ -1,9 +1,11 @@
 package com.codeit.otboo.api.recommendation.filter;
 
 import com.codeit.otboo.domain.clothes.entity.Clothes;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,7 +17,9 @@ public class RuleBasedClothesFilter {
 
     private final List<ClothesFilteringRule> filteringRules;
 
-    /** 등록된 모든 Rule을 통과한 Clothes만 다음 Ranking 단계로 전달합니다. */
+    /**
+     * 등록된 모든 Rule을 통과한 Clothes만 다음 Ranking 단계로 전달합니다.
+     */
     public List<Clothes> filter(List<Clothes> candidates, ClothesFilteringContext context) {
         Map<String, Integer> failureCountByRule = new LinkedHashMap<>();
         filteringRules.forEach(rule -> failureCountByRule.put(rule.getClass().getSimpleName(), 0));

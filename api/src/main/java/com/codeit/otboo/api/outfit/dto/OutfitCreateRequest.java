@@ -1,5 +1,6 @@
 package com.codeit.otboo.api.outfit.dto;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -13,7 +14,12 @@ public record OutfitCreateRequest(
     @Size(max = 100, message = "Outfit 이름은 100자 이하여야 합니다.")
     String name,
     String description,
+    @NotBlank(message = "Outfit 카테고리 입력은 필수입니다.")
+    @Size(max = 100, message = "Outfit 카테고리는 100자 이하여야 합니다.")
+    String category,
     @NotEmpty(message = "최소 한 개 이상의 의상을 선택해야 합니다.")
-    List<@NotNull(message = "의상 ID는 null일 수 없습니다.") UUID> clothesIds
+    List<@NotNull(message = "의상 ID는 null일 수 없습니다.") UUID> clothesIds,
+    @Nullable
+    UUID weatherId
 ) {
 }
