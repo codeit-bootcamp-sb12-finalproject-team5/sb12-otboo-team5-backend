@@ -1,5 +1,13 @@
 package com.codeit.otboo.api.weather.repository;
 
+import com.codeit.otboo.domain.weather.dto.WeatherInfoResponse;
+import com.codeit.otboo.domain.weather.entity.PrecipitationType;
+import com.codeit.otboo.domain.weather.entity.SkyStatus;
+import com.codeit.otboo.support.weather.util.KmaTimeCalculator;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import com.codeit.otboo.domain.weather.entity.WeatherForecast;
 import com.codeit.otboo.domain.weather.entity.WeatherGrid;
 import com.codeit.otboo.domain.weather.entity.WeatherObservation;
@@ -131,4 +139,71 @@ public class WeatherRepository {
         return observationRepository.findByGrid_IdAndObservedAt(gridId, observedAt);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<WeatherInfoResponse> findById(UUID weatherId) {
+        return forecastRepository.findById(weatherId)
+                .filter(forecast -> forecast.getTemperature() != null)
+                .map(this::toWeatherInfo);
+    }
+
+    private WeatherInfoResponse toWeatherInfo(WeatherForecast forecast) {
+        BigDecimal current = forecast.getTemperature();
+        BigDecimal min = forecast.getMinTemperature();
+        BigDecimal max = forecast.getMaxTemperature();
+
+        if (min == null || max == null) {
+            List<BigDecimal> temperatures = sameDayTemperatures(forecast);
+            if (min == null) {
+                min = temperatures.stream().min(BigDecimal::compareTo).orElse(current);
+            }
+            if (max == null) {
+                max = temperatures.stream().max(BigDecimal::compareTo).orElse(current);
+            }
+        }
+
+        return new WeatherInfoResponse(
+                forecast.getSkyStatus() == null ? SkyStatus.CLOUDY : forecast.getSkyStatus(),
+                forecast.getPrecipitationType() == null
+                        ? PrecipitationType.NONE : forecast.getPrecipitationType(),
+                zeroIfNull(forecast.getPrecipitationAmount()),
+                zeroIfNull(forecast.getPrecipitationProbability()),
+                current,
+                comparedToDayBefore(forecast),
+                min,
+                max
+        );
+    }
+
+    private List<BigDecimal> sameDayTemperatures(WeatherForecast forecast) {
+        OffsetDateTime dayStart = forecast.getForecastAt()
+                .withOffsetSameInstant(KmaTimeCalculator.KST)
+                .truncatedTo(ChronoUnit.DAYS);
+
+        return forecastRepository.findRange(forecast.getGrid().getId(), dayStart, dayStart.plusDays(1))
+                .stream()
+                .map(WeatherForecast::getTemperature)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private BigDecimal comparedToDayBefore(WeatherForecast forecast) {
+        UUID gridId = forecast.getGrid().getId();
+        OffsetDateTime dayBefore = forecast.getForecastAt().minusDays(1);
+
+        LocalDate forecastDate = forecast.getForecastAt()
+                .withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDate();
+        LocalDate today = OffsetDateTime.now(KmaTimeCalculator.KST).toLocalDate();
+
+        BigDecimal previous = forecastDate.isEqual(today)
+                ? observationRepository.findByGrid_IdAndObservedAt(gridId, dayBefore)
+                        .map(WeatherObservation::getTemperature).orElse(null)
+                : forecastRepository.findByGrid_IdAndForecastAtIn(gridId, List.of(dayBefore))
+                        .stream().findFirst().map(WeatherForecast::getTemperature).orElse(null);
+
+        return previous == null ? null : forecast.getTemperature().subtract(previous);
+    }
+
+    private BigDecimal zeroIfNull(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
 }

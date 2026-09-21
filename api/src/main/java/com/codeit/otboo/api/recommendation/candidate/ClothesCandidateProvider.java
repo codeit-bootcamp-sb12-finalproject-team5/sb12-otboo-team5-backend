@@ -1,6 +1,6 @@
 package com.codeit.otboo.api.recommendation.candidate;
 
-import com.codeit.otboo.api.recommendation.RecommendationType;
+import com.codeit.otboo.domain.recommendation.RecommendationType;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import java.util.List;
 import java.util.UUID;

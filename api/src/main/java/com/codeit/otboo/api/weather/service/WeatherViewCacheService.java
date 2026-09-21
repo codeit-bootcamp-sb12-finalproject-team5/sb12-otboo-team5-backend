@@ -180,8 +180,8 @@ public class WeatherViewCacheService {
                     current.getId(),
                     current.getForecastedAt().withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDateTime(),
                     current.getForecastAt().withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDateTime(),
-                    nameOrDefault(current.getSkyStatus(), SkyStatus.CLOUDY),
-                    new PrecipitationDto(precipitationType.name(), rainAmount, probability),
+                    orDefault(current.getSkyStatus(), SkyStatus.CLOUDY),
+                    new PrecipitationDto(precipitationType, rainAmount, probability),
                     new HumidityDto(value(current.getHumidity()), humidityDiff),
                     new TemperatureDto(value(current.getTemperature()), temperatureDiff, min, max),
                     new WindSpeedDto(wind,
@@ -233,8 +233,8 @@ public class WeatherViewCacheService {
         return value == null ? BigDecimal.ZERO : value;
     }
 
-    private String nameOrDefault(Enum<?> value, Enum<?> fallback) {
-        return (value == null ? fallback : value).name();
+    private SkyStatus orDefault(SkyStatus value, SkyStatus fallback) {
+        return value == null ? fallback : value;
     }
 
     private record SelectedDay(

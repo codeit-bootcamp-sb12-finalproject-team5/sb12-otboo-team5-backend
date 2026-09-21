@@ -2,14 +2,13 @@ package com.codeit.otboo.api.recommendation.llm;
 
 import com.codeit.otboo.api.recommendation.ranking.RankedClothes;
 import com.codeit.otboo.api.recommendation.ranking.RankedClothesCandidates;
+import com.codeit.otboo.api.recommendation.ranking.ClothesRole;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
-import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
 import com.codeit.otboo.domain.weather.entity.WeatherForecast;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.springframework.stereotype.Component;
 
@@ -18,13 +17,10 @@ import org.springframework.stereotype.Component;
 public class LlmRecommendationRequestMapper {
 
     public LlmRecommendationRequest map(WeatherForecast weather, RankedClothesCandidates rankedCandidates) {
-        List<LlmRecommendationRequest.LlmClothesCandidate> candidates = Stream.of(
-                rankedCandidates.tops(),
-                rankedCandidates.bottoms(),
-                rankedCandidates.outers(),
-                rankedCandidates.shoes()
-            )
-            .flatMap(List::stream)
+        List<LlmRecommendationRequest.LlmClothesCandidate> selectedClothes = rankedCandidates.selectedClothes().stream()
+            .map(this::mapSelectedClothes)
+            .toList();
+        List<LlmRecommendationRequest.LlmClothesCandidate> candidates = rankedCandidates.all()
             .map(this::mapCandidate)
             .toList();
 
@@ -36,30 +32,36 @@ public class LlmRecommendationRequestMapper {
                 weather.getSkyStatus(),
                 weather.getPrecipitationType()
             ),
+            selectedClothes,
             candidates
         );
     }
 
+    /** 고정 선택 의상은 rankingScore 없이 후보와 동일한 정보 구조로 변환한다. */
+    private LlmRecommendationRequest.LlmClothesCandidate mapSelectedClothes(Clothes clothes) {
+        return mapClothes(clothes, null);
+    }
+
     private LlmRecommendationRequest.LlmClothesCandidate mapCandidate(RankedClothes ranked) {
-        Clothes clothes = ranked.clothes();
+        return mapClothes(ranked.clothes(), ranked.finalScore());
+    }
+
+    /** 원래 카테고리와 논리 역할을 함께 Gemini 입력으로 구성한다. */
+    private LlmRecommendationRequest.LlmClothesCandidate mapClothes(Clothes clothes, Double rankingScore) {
         Map<String, String> attributes = parseAttributes(clothes.getAttributeText());
 
         return new LlmRecommendationRequest.LlmClothesCandidate(
             clothes.getId(),
-            logicalCategory(clothes.getCategory()),
             clothes.getCategory().name(),
+            ClothesRole.from(clothes.getCategory()).name(),
             clothes.getName(),
             attributes.get("색상"),
             attributes.get("핏"),
             values(attributes.get("스타일")),
             values(attributes.get("소재")),
             attributes.get("패턴"),
-            clothes.getSeason() == null ? null : clothes.getSeason().name(), ranked.finalScore()
+            clothes.getSeason() == null ? null : clothes.getSeason().name(), rankingScore
         );
-    }
-
-    private String logicalCategory(ClothesCategory category) {
-        return category == ClothesCategory.PANTS || category == ClothesCategory.SKIRT ? "BOTTOM" : category.name();
     }
 
     private Map<String, String> parseAttributes(String attributeText) {

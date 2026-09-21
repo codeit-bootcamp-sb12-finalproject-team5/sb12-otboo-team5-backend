@@ -2,6 +2,7 @@ package com.codeit.otboo.api.profile.service;
 
 import com.codeit.otboo.api.profile.dto.request.ProfileUpdateRequest;
 import com.codeit.otboo.api.profile.dto.response.ProfileDto;
+import com.codeit.otboo.api.weather.dto.response.WeatherDto;
 import com.codeit.otboo.api.weather.dto.response.WeatherGridDto;
 import com.codeit.otboo.api.weather.service.WeatherService;
 import com.codeit.otboo.domain.profile.entity.LocationSource;
@@ -12,6 +13,7 @@ import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.weather.entity.WeatherGrid;
 import com.codeit.otboo.domain.weather.repository.WeatherGridRepository;
 import com.codeit.otboo.support.storage.S3StorageService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -95,6 +97,15 @@ public class ProfileService {
     }
     String profileImageUrl = s3StorageService.getPresignedUrl(profile.getProfileImageUrl());
     return ProfileDto.from(profile, profileImageUrl);
+  }
+
+  public List<WeatherDto> getWeather(UUID userId) {
+    Profile profile = profileRepository.findByUser_Id(userId)
+        .orElseThrow(ProfileException::profileNotFound);
+
+    WeatherGridDto grid = WeatherGridDto.from(profile.getWeatherGrid());
+
+    return weatherService.findWeatherByGrid(grid);
   }
 
 }

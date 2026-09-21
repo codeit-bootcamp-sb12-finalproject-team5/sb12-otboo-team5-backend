@@ -18,6 +18,7 @@ public class SeasonFilteringRule implements ClothesFilteringRule {
         if (season == null) {
             return false;
         }
+
         return allowedSeasons(context.effectiveTemperature()).contains(season);
     }
 
@@ -25,19 +26,24 @@ public class SeasonFilteringRule implements ClothesFilteringRule {
         if (effectiveTemperature.compareTo(BigDecimal.valueOf(4)) <= 0) {
             return EnumSet.of(ClothesSeason.WINTER, ClothesSeason.ALL_SEASON);
         }
+
         if (effectiveTemperature.compareTo(BigDecimal.valueOf(12)) < 0) {
             return EnumSet.of(ClothesSeason.FALL, ClothesSeason.WINTER, ClothesSeason.ALL_SEASON);
         }
+
         if (effectiveTemperature.compareTo(BigDecimal.valueOf(17)) < 0) {
             return EnumSet.of(ClothesSeason.FALL, ClothesSeason.SPRING, ClothesSeason.MID_SEASON,
                 ClothesSeason.ALL_SEASON);
         }
+
         if (effectiveTemperature.compareTo(BigDecimal.valueOf(23)) < 0) {
             return EnumSet.of(ClothesSeason.FALL, ClothesSeason.SPRING, ClothesSeason.ALL_SEASON);
         }
+
         if (effectiveTemperature.compareTo(BigDecimal.valueOf(28)) < 0) {
             return EnumSet.of(ClothesSeason.SPRING, ClothesSeason.SUMMER, ClothesSeason.ALL_SEASON);
         }
+
         return EnumSet.of(ClothesSeason.SUMMER, ClothesSeason.ALL_SEASON);
     }
 }
