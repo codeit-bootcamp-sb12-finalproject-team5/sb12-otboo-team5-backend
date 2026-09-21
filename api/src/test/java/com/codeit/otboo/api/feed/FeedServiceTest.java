@@ -86,7 +86,7 @@ class FeedServiceTest {
         when(profileRepository.findByUser_Id(userId)).thenReturn(Optional.empty());
         when(ootdRepository.findById(outfitId)).thenReturn(Optional.of(ootd));
 
-        var response = feedService.create(userId, new FeedRequest(userId, null, outfitId, "오늘의 착장"));
+        var response = feedService.create(userId, new FeedRequest(userId, outfitId, "오늘의 착장"));
 
         ArgumentCaptor<Feed> feedCaptor = ArgumentCaptor.forClass(Feed.class);
         org.mockito.Mockito.verify(feedRepository).save(feedCaptor.capture());
@@ -177,9 +177,8 @@ class FeedServiceTest {
         FeedCommentSearchRequest request = new FeedCommentSearchRequest(feedId, null, null, 10);
 
         when(feedRepository.findByIdAndDeletedAtIsNull(feedId)).thenReturn(Optional.of(feed));
-        when(feedCommentRepository.findAllByFeedIdAndCursor(
-            org.mockito.ArgumentMatchers.eq(feedId), org.mockito.ArgumentMatchers.isNull(),
-            org.mockito.ArgumentMatchers.isNull(), any()
+        when(feedCommentRepository.findAllByFeedId(
+            org.mockito.ArgumentMatchers.eq(feedId), any()
         )).thenReturn(List.of(comment));
         when(profileRepository.findAllByUser_IdIn(List.of(userId))).thenReturn(List.of());
         when(feedCommentRepository.countByFeed_Id(feedId)).thenReturn(1L);

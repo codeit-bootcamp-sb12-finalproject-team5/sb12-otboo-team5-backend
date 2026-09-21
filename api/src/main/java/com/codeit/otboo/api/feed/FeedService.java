@@ -237,8 +237,17 @@ public class FeedService {
         }
 
         OffsetDateTime cursor = parseCommentCursor(request.cursor());
-        List<FeedComment> comments = feedCommentRepository.findAllByFeedIdAndCursor(
-            pathFeedId, cursor, request.idAfter(), PageRequest.of(0, request.limit() + 1));
+        PageRequest pageRequest = PageRequest.of(0, request.limit() + 1);
+        List<FeedComment> comments;
+        if (cursor == null) {
+            comments = feedCommentRepository.findAllByFeedId(pathFeedId, pageRequest);
+        } else if (request.idAfter() == null) {
+            comments = feedCommentRepository.findAllByFeedIdAfterCursor(
+                pathFeedId, cursor, pageRequest);
+        } else {
+            comments = feedCommentRepository.findAllByFeedIdAfterCursorAndId(
+                pathFeedId, cursor, request.idAfter(), pageRequest);
+        }
         boolean hasNext = comments.size() > request.limit();
         if (hasNext) {
             comments = comments.subList(0, request.limit());

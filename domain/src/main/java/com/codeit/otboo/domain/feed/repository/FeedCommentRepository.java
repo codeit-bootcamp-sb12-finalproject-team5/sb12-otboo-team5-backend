@@ -16,14 +16,35 @@ public interface FeedCommentRepository extends JpaRepository<FeedComment, UUID> 
         select comment from FeedComment comment
         join fetch comment.user
         where comment.feed.id = :feedId
-          and (
-            :cursor is null
-            or comment.createdAt < :cursor
-            or (:idAfter is not null and comment.createdAt = :cursor and comment.id < :idAfter)
-          )
         order by comment.createdAt desc, comment.id desc
         """)
-    List<FeedComment> findAllByFeedIdAndCursor(
+    List<FeedComment> findAllByFeedId(
+        @Param("feedId") UUID feedId,
+        Pageable pageable
+    );
+
+    @Query("""
+        select comment from FeedComment comment
+        join fetch comment.user
+        where comment.feed.id = :feedId
+          and comment.createdAt < :cursor
+        order by comment.createdAt desc, comment.id desc
+        """)
+    List<FeedComment> findAllByFeedIdAfterCursor(
+        @Param("feedId") UUID feedId,
+        @Param("cursor") OffsetDateTime cursor,
+        Pageable pageable
+    );
+
+    @Query("""
+        select comment from FeedComment comment
+        join fetch comment.user
+        where comment.feed.id = :feedId
+          and (comment.createdAt < :cursor
+            or (comment.createdAt = :cursor and comment.id < :idAfter))
+        order by comment.createdAt desc, comment.id desc
+        """)
+    List<FeedComment> findAllByFeedIdAfterCursorAndId(
         @Param("feedId") UUID feedId,
         @Param("cursor") OffsetDateTime cursor,
         @Param("idAfter") UUID idAfter,

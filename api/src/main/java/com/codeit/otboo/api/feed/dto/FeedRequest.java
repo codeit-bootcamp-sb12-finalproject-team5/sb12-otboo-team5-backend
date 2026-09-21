@@ -8,8 +8,6 @@ import java.util.UUID;
 public record FeedRequest(
         @NotNull
         UUID authorId,
-        @Nullable
-        UUID weatherId,
         @NotNull
         UUID outfitId,
         @Nullable
