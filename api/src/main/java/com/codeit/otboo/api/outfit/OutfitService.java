@@ -1,6 +1,8 @@
 package com.codeit.otboo.api.outfit;
 
 import com.codeit.otboo.api.outfit.dto.*;
+import com.codeit.otboo.api.recommendation.temperature.TemperatureAdjustmentPolicy;
+import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.entity.OutfitClothes;
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
@@ -15,8 +17,9 @@ import com.codeit.otboo.domain.outfit.repository.OotdRepository;
 import com.codeit.otboo.domain.outfit.repository.OutfitRepository;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
-import com.codeit.otboo.domain.weather.entity.WeatherForecast;
+import com.codeit.otboo.domain.weather.dto.WeatherInfoResponse;
 import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
+import com.codeit.otboo.support.storage.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -34,7 +37,10 @@ public class OutfitService {
     private final ClothesRepository clothesRepository;
     private final UserRepository userRepository;
     private final WeatherForecastRepository weatherForecastRepository;
+    private final WeatherRepository weatherRepository;
     private final OotdRepository ootdRepository;
+    private final TemperatureAdjustmentPolicy temperatureAdjustmentPolicy;
+    private final S3StorageService s3StorageService;
 
     @Transactional
     public OutfitCreateResponse create(UUID userId, OutfitCreateRequest request) {
@@ -50,18 +56,18 @@ public class OutfitService {
             .toList());
 
         if (request.category().equals("OOTD") && request.weatherId() != null) {
-            WeatherForecast weatherForecast = weatherForecastRepository.findById(request.weatherId())
+            WeatherInfoResponse weatherForecast = weatherRepository.findById(request.weatherId())
                     .orElseThrow(() -> new OutfitException(ErrorCode.OOTD_WEATHER_FORECAST_NOT_FOUND));
             ootdRepository.save(Ootd.builder()
                     .outfit(outfit)
-                    .skyStatus(weatherForecast.getSkyStatus())
-                    .precipitationType(weatherForecast.getPrecipitationType())
-                    .precipitationAmount(weatherForecast.getPrecipitationAmount())
-                    .precipitationProbability(weatherForecast.getPrecipitationProbability())
-                    .temperatureCurrent(weatherForecast.getTemperature())
-                    .temperatureComparedToDayBefore(null)
-                    .temperatureMin(weatherForecast.getMinTemperature())
-                    .temperatureMax(weatherForecast.getMaxTemperature())
+                    .skyStatus(weatherForecast.skyStatus())
+                    .precipitationType(weatherForecast.precipitationType())
+                    .precipitationAmount(weatherForecast.precipitationAmount())
+                    .precipitationProbability(weatherForecast.precipitationProbability())
+                    .temperatureCurrent(weatherForecast.temperatureCurrent())
+                    .temperatureComparedToDayBefore(weatherForecast.temperatureComparedToDayBefore())
+                    .temperatureMin(weatherForecast.temperatureMin())
+                    .temperatureMax(weatherForecast.temperatureMax())
                     .build());
         } else {
             throw new OutfitException(ErrorCode.OOTD_INVALID_INPUT_VALUE);
@@ -88,7 +94,7 @@ public class OutfitService {
             ootd = ootdRepository.findById(outfit.getId())
                     .orElseThrow(() -> new OutfitException(ErrorCode.OOTD_NOT_FOUND));
         }
-        return OutfitDetailResponse.of(outfit, clothes, ootd);
+        return OutfitDetailResponse.of(outfit, clothes, ootd, s3StorageService::getPresignedUrl);
     }
 
     @Transactional
@@ -159,7 +165,11 @@ public class OutfitService {
                             .orElseThrow(() -> new OutfitException(ErrorCode.OOTD_NOT_FOUND));
                 }
                 return OutfitListResponse.of(
-                        outfit, clothesByOutfitId.getOrDefault(outfit.getId(), List.of()), ootd);
+                        outfit,
+                        clothesByOutfitId.getOrDefault(outfit.getId(), List.of()),
+                        ootd,
+                        s3StorageService::getPresignedUrl
+                );
             })
             .toList();
 
