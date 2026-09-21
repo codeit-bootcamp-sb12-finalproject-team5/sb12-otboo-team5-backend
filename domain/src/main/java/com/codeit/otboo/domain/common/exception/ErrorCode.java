@@ -40,6 +40,7 @@ public enum ErrorCode {
     RECOMMENDATION_GENERATION_FAILED(502, "추천 생성에 실패했습니다."),
     OOTD_WEATHER_FORECAST_NOT_FOUND(404, "OOTD의 날씨정보를 찾을 수 없습니다."),
     OOTD_INVALID_INPUT_VALUE(400, "OOTD 생성을 위한 category, weatherId값이 올바르지 않습니다"),
+    OOTD_NOT_FOUND(404, "OOTD 아웃핏의 정보를 찾을 수 없습니다."),
 
     // ===== 피드 =====,
     FEED_ALREADY_EXISTS(409, "해당 Outfit은 이미 피드로 등록되어 있습니다."),

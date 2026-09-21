@@ -2,9 +2,9 @@ package com.codeit.otboo.domain.feed.repository;
 
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.domain.feed.entity.Feed;
-import com.codeit.otboo.domain.feed.enums.PrecipitationType;
-import com.codeit.otboo.domain.feed.enums.SkyStatus;
 import com.codeit.otboo.domain.feed.enums.SortDirection;
+import com.codeit.otboo.domain.weather.entity.PrecipitationType;
+import com.codeit.otboo.domain.weather.entity.SkyStatus;
 
 import java.util.UUID;
 

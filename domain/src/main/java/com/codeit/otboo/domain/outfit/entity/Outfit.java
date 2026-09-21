@@ -52,7 +52,7 @@ public class Outfit extends SoftDeletableEntity {
 			this.name = name;
 		}
 
-		if (category != null) {
+		if (category != null && !category.equals("OOTD") && !this.category.equals("OOTD")) {
 			this.category = category;
 		}
 

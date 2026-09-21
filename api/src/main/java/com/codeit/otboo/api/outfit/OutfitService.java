@@ -8,6 +8,7 @@ import com.codeit.otboo.domain.clothes.repository.ClothesRepository;
 import com.codeit.otboo.domain.clothes.repository.OutfitClothesRepository;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
+import com.codeit.otboo.domain.outfit.entity.Ootd;
 import com.codeit.otboo.domain.outfit.entity.Outfit;
 import com.codeit.otboo.domain.outfit.exception.OutfitException;
 import com.codeit.otboo.domain.outfit.repository.OotdRepository;
@@ -51,17 +52,17 @@ public class OutfitService {
         if (request.category().equals("OOTD") && request.weatherId() != null) {
             WeatherForecast weatherForecast = weatherForecastRepository.findById(request.weatherId())
                     .orElseThrow(() -> new OutfitException(ErrorCode.OOTD_WEATHER_FORECAST_NOT_FOUND));
-//            ootdRepository.save(Ootd.builder()
-//                    .outfit(outfit)
-//                    .skyStatus(weatherForecast.getSkyStatus())
-//                    .precipitationType(weatherForecast.getPrecipitationType())
-//                    .precipitationAmount(weatherForecast.getPrecipitationAmount())
-//                    .precipitationProbability(weatherForecast.getPrecipitationProbability())
-//                    .temperatureCurrent(weatherForecast.getTemperature())
-//                    .temperatureComparedToDayBefore(null)
-//                    .temperatureMin(weatherForecast.getMinTemperature())
-//                    .temperatureMax(weatherForecast.getMaxTemperature())
-//                    .build());
+            ootdRepository.save(Ootd.builder()
+                    .outfit(outfit)
+                    .skyStatus(weatherForecast.getSkyStatus())
+                    .precipitationType(weatherForecast.getPrecipitationType())
+                    .precipitationAmount(weatherForecast.getPrecipitationAmount())
+                    .precipitationProbability(weatherForecast.getPrecipitationProbability())
+                    .temperatureCurrent(weatherForecast.getTemperature())
+                    .temperatureComparedToDayBefore(null)
+                    .temperatureMin(weatherForecast.getMinTemperature())
+                    .temperatureMax(weatherForecast.getMaxTemperature())
+                    .build());
         } else {
             throw new OutfitException(ErrorCode.OOTD_INVALID_INPUT_VALUE);
         }
@@ -81,7 +82,13 @@ public class OutfitService {
         List<Clothes> clothes = outfitClothesRepository.findAllByOutfit_Id(outfitId).stream()
             .map(OutfitClothes::getClothes)
             .toList();
-        return OutfitDetailResponse.of(outfit, clothes);
+
+        Ootd ootd = null;
+        if (outfit.getCategory().equals("OOTD")) {
+            ootd = ootdRepository.findById(outfit.getId())
+                    .orElseThrow(() -> new OutfitException(ErrorCode.OOTD_NOT_FOUND));
+        }
+        return OutfitDetailResponse.of(outfit, clothes, ootd);
     }
 
     @Transactional
@@ -145,8 +152,15 @@ public class OutfitService {
             ));
 
         List<OutfitListResponse> data = outfits.stream()
-            .map(outfit -> OutfitListResponse.of(
-                outfit, clothesByOutfitId.getOrDefault(outfit.getId(), List.of())))
+            .map(outfit -> {
+                Ootd ootd = null;
+                if (outfit.getCategory().equals("OOTD")) {
+                    ootd = ootdRepository.findById(outfit.getId())
+                            .orElseThrow(() -> new OutfitException(ErrorCode.OOTD_NOT_FOUND));
+                }
+                return OutfitListResponse.of(
+                        outfit, clothesByOutfitId.getOrDefault(outfit.getId(), List.of()), ootd);
+            })
             .toList();
 
         UUID nextOutfitId = hasNext ? outfits.get(outfits.size() - 1).getId() : null;

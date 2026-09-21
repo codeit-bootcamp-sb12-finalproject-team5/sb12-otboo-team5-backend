@@ -2,9 +2,9 @@ package com.codeit.otboo.api.feed.dto;
 
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.feed.entity.Feed;
-import com.codeit.otboo.domain.feed.enums.PrecipitationType;
-import com.codeit.otboo.domain.feed.enums.SkyStatus;
 import com.codeit.otboo.domain.outfit.entity.Ootd;
+import com.codeit.otboo.domain.weather.entity.PrecipitationType;
+import com.codeit.otboo.domain.weather.entity.SkyStatus;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -17,7 +17,7 @@ public record FeedResponse(
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         AuthorResponse author,
-        FeedWeatherResponse weather,
+        OotdWeatherResponse weather,
         List<ClothesSimpleResponse> ootds,
         String content,
         Long likeCount,
@@ -35,7 +35,7 @@ public record FeedResponse(
         return new FeedResponse(
             feed.getId(), feed.getCreatedAt(), feed.getUpdatedAt(),
             new AuthorResponse(feed.getUser().getId(), feed.getUser().getName(), profileImageUrl),
-            FeedWeatherResponse.of(ootd),
+            OotdWeatherResponse.of(ootd),
             clothes.stream()
                 .map(clothesItem -> ClothesSimpleResponse.of(
                     clothesItem, clothesImageUrlResolver.apply(clothesItem)))
@@ -44,23 +44,23 @@ public record FeedResponse(
         );
     }
 
-    public record FeedWeatherResponse(
+    public record OotdWeatherResponse(
             SkyStatus skyStatus,
-            FeedWeatherPrecipitationResponse precipitation,
-            FeedWeatherTemperatureResponse temperature
+            OotdWeatherPrecipitationResponse precipitation,
+            OotdWeatherTemperatureResponse temperature
     ) {
-        public static FeedWeatherResponse of(Ootd ootd) {
+        public static OotdWeatherResponse of(Ootd ootd) {
             if (ootd == null) {
                 return null;
             }
-            return new FeedWeatherResponse(
+            return new OotdWeatherResponse(
                 ootd.getSkyStatus(),
-                new FeedWeatherPrecipitationResponse(
+                new OotdWeatherPrecipitationResponse(
                     ootd.getPrecipitationType(),
                     ootd.getPrecipitationAmount(),
                     ootd.getPrecipitationProbability()
                 ),
-                new FeedWeatherTemperatureResponse(
+                new OotdWeatherTemperatureResponse(
                     ootd.getTemperatureCurrent(),
                     ootd.getTemperatureComparedToDayBefore(),
                     ootd.getTemperatureMin(),
@@ -69,12 +69,12 @@ public record FeedResponse(
             );
         }
 
-        public record FeedWeatherPrecipitationResponse(
+        public record OotdWeatherPrecipitationResponse(
                 PrecipitationType type,
                 BigDecimal amount,
                 BigDecimal probability
         ) {}
-        public record FeedWeatherTemperatureResponse(
+        public record OotdWeatherTemperatureResponse(
                 BigDecimal current,
                 BigDecimal comparedToDayBefore,
                 BigDecimal min,

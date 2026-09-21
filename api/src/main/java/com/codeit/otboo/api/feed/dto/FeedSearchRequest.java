@@ -1,8 +1,8 @@
 package com.codeit.otboo.api.feed.dto;
 
-import com.codeit.otboo.domain.feed.enums.PrecipitationType;
-import com.codeit.otboo.domain.feed.enums.SkyStatus;
 import com.codeit.otboo.domain.feed.enums.SortDirection;
+import com.codeit.otboo.domain.weather.entity.PrecipitationType;
+import com.codeit.otboo.domain.weather.entity.SkyStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

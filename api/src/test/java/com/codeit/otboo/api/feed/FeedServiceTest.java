@@ -1,44 +1,41 @@
 package com.codeit.otboo.api.feed;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.codeit.otboo.api.feed.dto.FeedRequest;
-import com.codeit.otboo.api.feed.dto.FeedCommentRequest;
-import com.codeit.otboo.api.feed.dto.FeedCommentSearchRequest;
-import com.codeit.otboo.api.feed.dto.FeedSearchRequest;
-import com.codeit.otboo.api.feed.dto.FeedUpdateRequest;
+import com.codeit.otboo.api.feed.dto.*;
 import com.codeit.otboo.domain.clothes.repository.OutfitClothesRepository;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.domain.feed.entity.Feed;
 import com.codeit.otboo.domain.feed.entity.FeedComment;
 import com.codeit.otboo.domain.feed.entity.FeedLike;
 import com.codeit.otboo.domain.feed.enums.SortDirection;
-import com.codeit.otboo.domain.feed.enums.SkyStatus;
-import com.codeit.otboo.domain.feed.enums.PrecipitationType;
-import com.codeit.otboo.domain.feed.repository.FeedLikeRepository;
 import com.codeit.otboo.domain.feed.repository.FeedCommentRepository;
+import com.codeit.otboo.domain.feed.repository.FeedLikeRepository;
 import com.codeit.otboo.domain.feed.repository.FeedRepository;
-import com.codeit.otboo.domain.outfit.entity.Outfit;
 import com.codeit.otboo.domain.outfit.entity.Ootd;
+import com.codeit.otboo.domain.outfit.entity.Outfit;
 import com.codeit.otboo.domain.outfit.repository.OotdRepository;
 import com.codeit.otboo.domain.outfit.repository.OutfitRepository;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
+import com.codeit.otboo.domain.weather.entity.PrecipitationType;
+import com.codeit.otboo.domain.weather.entity.SkyStatus;
 import com.codeit.otboo.support.storage.S3StorageService;
-import java.util.List;
-import java.math.BigDecimal;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class FeedServiceTest {
