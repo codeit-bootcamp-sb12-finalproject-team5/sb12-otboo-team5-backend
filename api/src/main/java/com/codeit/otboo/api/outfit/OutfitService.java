@@ -10,9 +10,12 @@ import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.outfit.entity.Outfit;
 import com.codeit.otboo.domain.outfit.exception.OutfitException;
+import com.codeit.otboo.domain.outfit.repository.OotdRepository;
 import com.codeit.otboo.domain.outfit.repository.OutfitRepository;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
+import com.codeit.otboo.domain.weather.entity.WeatherForecast;
+import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,8 @@ public class OutfitService {
     private final OutfitClothesRepository outfitClothesRepository;
     private final ClothesRepository clothesRepository;
     private final UserRepository userRepository;
+    private final WeatherForecastRepository weatherForecastRepository;
+    private final OotdRepository ootdRepository;
 
     @Transactional
     public OutfitCreateResponse create(UUID userId, OutfitCreateRequest request) {
@@ -42,6 +47,24 @@ public class OutfitService {
         outfitClothesRepository.saveAll(clothes.stream()
             .map(clothesItem -> new OutfitClothes(outfit, clothesItem))
             .toList());
+
+        if (request.category().equals("OOTD") && request.weatherId() != null) {
+            WeatherForecast weatherForecast = weatherForecastRepository.findById(request.weatherId())
+                    .orElseThrow(() -> new OutfitException(ErrorCode.OOTD_WEATHER_FORECAST_NOT_FOUND));
+//            ootdRepository.save(Ootd.builder()
+//                    .outfit(outfit)
+//                    .skyStatus(weatherForecast.getSkyStatus())
+//                    .precipitationType(weatherForecast.getPrecipitationType())
+//                    .precipitationAmount(weatherForecast.getPrecipitationAmount())
+//                    .precipitationProbability(weatherForecast.getPrecipitationProbability())
+//                    .temperatureCurrent(weatherForecast.getTemperature())
+//                    .temperatureComparedToDayBefore(null)
+//                    .temperatureMin(weatherForecast.getMinTemperature())
+//                    .temperatureMax(weatherForecast.getMaxTemperature())
+//                    .build());
+        } else {
+            throw new OutfitException(ErrorCode.OOTD_INVALID_INPUT_VALUE);
+        }
 
         return OutfitCreateResponse.of(outfit, clothes);
     }
