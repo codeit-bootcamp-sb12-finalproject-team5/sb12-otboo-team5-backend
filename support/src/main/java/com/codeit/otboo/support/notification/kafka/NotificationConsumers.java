@@ -24,34 +24,52 @@ public final class NotificationConsumers {
     private NotificationConsumers() {}
 
     public static <T> ConcurrentKafkaListenerContainerFactory<String, T> factory(
-            KafkaProperties properties, JavaType type, String group, String reset) {
-        return factory(properties, type, group, reset, consumerFactory -> {});
+        KafkaProperties properties,
+        JavaType type,
+        String group,
+        String reset
+    ) {
+        return factory(
+            properties,
+            type,
+            group,
+            reset,
+            consumerFactory -> {}
+        );
     }
 
-    /**
-     * 컨슈머 팩토리를 손볼 기회를 주는 형태. 지표 수집(MicrometerConsumerListener)을 붙일 때 쓴다.
-     * 이 모듈에는 micrometer가 없고 앱 모듈에만 있으므로, 붙이는 일은 호출하는 쪽이 한다.
-     */
     public static <T> ConcurrentKafkaListenerContainerFactory<String, T> factory(
-            KafkaProperties properties, JavaType type, String group, String reset,
-            Consumer<DefaultKafkaConsumerFactory<String, T>> customizer) {
+        KafkaProperties properties,
+        JavaType type,
+        String group,
+        String reset,
+        Consumer<DefaultKafkaConsumerFactory<String, T>> customizer
+    ) {
         var config = new HashMap<String, Object>(properties.buildConsumerProperties());
+
         config.put(ConsumerConfig.GROUP_ID_CONFIG, group);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, reset);
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
         config.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, false);
+
         var deserializer = new JsonDeserializer<T>(type, NotificationKafkaJson.mapper(), false);
         var factory = new ConcurrentKafkaListenerContainerFactory<String, T>();
-        var consumerFactory = new DefaultKafkaConsumerFactory<String, T>(config,
-                new StringDeserializer(), new ErrorHandlingDeserializer<>(deserializer));
+        var consumerFactory = new DefaultKafkaConsumerFactory<String, T>(
+            config,
+            new StringDeserializer(),
+            new ErrorHandlingDeserializer<>(deserializer)
+        );
+
         customizer.accept(consumerFactory);
         factory.setConsumerFactory(consumerFactory);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
+
         var errors = new DefaultErrorHandler((record, exception) ->
                 log.error("NOTIFICATION_FAILED topic={} partition={} offset={} group={}",
                         record.topic(), record.partition(), record.offset(), group, exception),
                 new FixedBackOff(1000L, 2L));
+
         errors.addNotRetryableExceptions(IllegalArgumentException.class);
         errors.setBackOffFunction((record, exception) -> {
             // Kafka가 감싼 예외에서도 원래 알림 오류 코드를 확인한다.

@@ -55,5 +55,22 @@ for service in "${services[@]}"; do
     echo "시간 초과 — docker logs $container 확인"
 done
 
+# nginx는 업스트림 호스트명을 기동 시 한 번만 해석하고 그 IP를 계속 쓴다. 컨테이너를 다시 만들면
+# IP가 바뀌므로, 리로드해서 다시 해석하게 하지 않으면 없는 주소로 붙어 모든 요청이 502가 된다.
+if [[ " ${services[*]} " == *" api-1 "* || " ${services[*]} " == *" api-2 "* ]]; then
+    gateway=$("${COMPOSE[@]}" ps -q gateway)
+    if [ -n "$gateway" ] && [ "$(docker inspect -f '{{.State.Running}}' "$gateway")" = "true" ]; then
+        echo "==> 게이트웨이 업스트림 재해석"
+        if docker exec "$gateway" nginx -t >/dev/null 2>&1; then
+            docker exec "$gateway" nginx -s reload
+            echo "  완료"
+        else
+            # 설정이 깨진 채로 reload하면 nginx가 옛 설정을 그대로 유지해 원인을 찾기 어렵다.
+            echo "  nginx 설정 오류 — reload를 건너뛴다:"
+            docker exec "$gateway" nginx -t 2>&1 | sed 's/^/    /'
+        fi
+    fi
+fi
+
 echo
 echo "수집 상태: http://localhost:9090/targets"

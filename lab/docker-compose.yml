@@ -1,10 +1,5 @@
-# API 2대 + worker 1대 + batch 1대를 컨테이너로 띄워, 지표가 전부 수집되는지 확인한다.
-# 실행: 저장소 루트에서
-#   ./gradlew :api:bootJar :worker:bootJar :batch:bootJar -x test
-#   docker compose -f lab/docker-compose.yml up -d --build
 name: otboo-lab
 
-# 네 컨테이너가 공유하는 설정. 차이는 JAR과 포트뿐이다.
 x-app: &app
   env_file:
     - ../.env
@@ -16,7 +11,6 @@ x-app: &app
     driver: json-file
     options: { max-size: "10m", max-file: "3" }
 
-# 호스트가 아니라 컨테이너 이름으로 붙는다. .env의 localhost 값을 덮어쓴다.
 x-infra-env: &infra-env
   POSTGRES_HOST: postgres
   POSTGRES_PORT: "5432"
@@ -25,14 +19,13 @@ x-infra-env: &infra-env
   KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
 services:
-  # 배포의 ALB 자리. 프론트(vite proxy)는 8080 한 곳만 보고, 분산은 여기서 한다.
   gateway:
     image: nginx:1.27-alpine
     container_name: otboo-lab-gateway
     depends_on: [api-1, api-2]
+    command: ["nginx", "-c", "/etc/nginx/otboo/nginx.conf", "-g", "daemon off;"]
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/forwarded.conf:/etc/nginx/conf.d/forwarded.conf:ro
+      - ./nginx:/etc/nginx/otboo:ro
     ports:
       - "${GATEWAY_PORT:-8080}:8080"
     networks:
@@ -53,7 +46,6 @@ services:
       SERVER_PORT: "8080"
       MANAGEMENT_PORT: "9101"
     ports:
-      # 평소에는 gateway(8080)로 들어간다. 여기는 한 대만 직접 찔러볼 때 쓰는 우회로다.
       - "${API1_PORT:-18080}:8080"
       - "${MGMT1_PORT:-9101}:9101"
 
@@ -61,7 +53,6 @@ services:
     <<: *app
     container_name: otboo-lab-api-2
     image: otboo-lab/api:local
-    # api-1과 같은 이미지다. 캐시가 살아 있어 다시 빌드되지 않는다.
     build: *api-build
     environment:
       <<: *infra-env
@@ -83,10 +74,8 @@ services:
     environment:
       <<: *infra-env
       MANAGEMENT_PORT: "9103"
-      # Kafka 컨슈머를 실제로 돌려야 알림 지표가 나온다.
       NOTIFICATION_KAFKA_ENABLED: "true"
     ports:
-      # 서비스 포트는 없다. 관리 포트만 연다.
       - "${MGMT3_PORT:-9103}:9103"
 
   batch:
@@ -101,8 +90,6 @@ services:
     environment:
       <<: *infra-env
       MANAGEMENT_PORT: "9104"
-      # 공유 DB를 쓰므로 뜨자마자 날씨 수집 Job이 도는 것을 막는다.
-      # Job까지 확인하려면 true로 바꾼다. 기상청 API를 실제로 호출하고 DB에 쓴다.
       SPRING_BATCH_JOB_ENABLED: "false"
     ports:
       - "${MGMT4_PORT:-9104}:9104"

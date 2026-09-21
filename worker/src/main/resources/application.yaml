@@ -31,7 +31,6 @@ notification:
     enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
 
 server:
-  # Kafka만 소비한다. 외부 요청을 받지 않으므로 일반 웹 서버는 띄우지 않는다.
   port: ${SERVER_PORT:-1}
 
 management:

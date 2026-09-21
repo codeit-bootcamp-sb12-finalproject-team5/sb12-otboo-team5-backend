@@ -72,13 +72,13 @@ class WeatherServiceImplTest {
     void databaseHitReturnsDailyForecastsAndPreviousDayDifferencesWithoutExternalCalls() {
         WeatherForecast today = forecast(target, "25", "60");
         WeatherForecast tomorrow = forecast(target.plusDays(1), "28", "70");
-        when(repository.findForecasts(eq(grid.getId()), any(), any())).thenReturn(List.of(today, tomorrow));
+        when(repository.findForecasts(eq(grid.getId()), any(), any())).thenReturn(List.of(today, tomorrow, forecast(target.plusDays(3), "25", "60")));
         when(repository.findObservation(grid.getId(), target.minusDays(1)))
             .thenReturn(Optional.of(observation("22", "65")));
 
         var result = service.findWeather(request);
 
-        assertThat(result).hasSize(2);
+        assertThat(result).hasSize(3);
         assertThat(result.get(0).id()).isEqualTo(today.getId());
         assertThat(result.get(0).forecastAt()).isEqualTo(target.toLocalDateTime());
         assertThat(result.get(0).temperature().comparedToDayBefore()).isEqualByComparingTo("3");
@@ -146,6 +146,25 @@ class WeatherServiceImplTest {
     }
 
     @Test
+    void missingFourthDateRefreshesForecastAndReadsSavedResponse() {
+        var today = forecast(target, "25", "60");
+        var fourth = forecast(target.plusDays(3).withHour(0), "28", "70");
+        when(repository.findForecasts(eq(grid.getId()), any(), any()))
+            .thenReturn(List.of(today), List.of(today, fourth));
+        when(kma.findLatestVillageForecast(60, 127)).thenReturn(Optional.of(
+            new KmaForecastBundleDto(target.minusHours(1), 60, 127, List.of(
+                new KmaForecastPointDto(target.plusDays(3).withHour(0), "TMP", "28")))));
+
+        var result = service.findWeather(request);
+
+        verify(kma).findLatestVillageForecast(60, 127);
+        verify(repository).upsertForecasts(argThat(values -> values.stream()
+            .anyMatch(value -> value.getForecastAt().isEqual(fourth.getForecastAt()))));
+        assertThat(result).hasSize(2);
+        assertThat(result.get(1).forecastAt()).isEqualTo(fourth.getForecastAt().toLocalDateTime());
+    }
+
+    @Test
     void unavailablePreviousObservationLeavesComparisonNull() {
         when(repository.findForecasts(eq(grid.getId()), any(), any()))
             .thenReturn(List.of(forecast(target, "25", "60")));
@@ -153,7 +172,7 @@ class WeatherServiceImplTest {
         assertThat(result.get(0).temperature().comparedToDayBefore()).isNull();
         assertThat(result.get(0).humidity().comparedToDayBefore()).isNull();
         verify(kma).findObservation(target.minusDays(1), 60, 127);
-        verify(kma, never()).findLatestVillageForecast(anyInt(), anyInt());
+        verify(kma).findLatestVillageForecast(60, 127);
     }
 
     @ParameterizedTest
@@ -165,7 +184,7 @@ class WeatherServiceImplTest {
         observations.put(target.minusDays(1), observation("22", "65"));
         when(repository.findForecasts(eq(grid.getId()), any(), any()))
                 .thenReturn(List.of(forecast(target, "25", "60"),
-                        forecast(nextTarget, "28", "70")));
+                        forecast(nextTarget, "28", "70"), forecast(target.plusDays(3), "25", "60")));
         when(repository.findObservation(eq(grid.getId()), any()))
                 .thenAnswer(invocation -> Optional.ofNullable(observations.get(invocation.getArgument(1))));
         doAnswer(invocation -> {

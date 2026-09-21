@@ -14,7 +14,6 @@ import com.codeit.otboo.api.weather.dto.response.WeatherGridDto;
 import com.codeit.otboo.domain.weather.entity.WeatherObservation;
 import com.codeit.otboo.support.weather.client.KmaClient;
 import com.codeit.otboo.support.common.config.CacheConfig;
-import com.codeit.otboo.support.weather.dto.response.KmaForecastBundleDto;
 import com.codeit.otboo.support.weather.normalize.KmaForecastNormalizer;
 import com.codeit.otboo.support.weather.util.KmaTimeCalculator;
 import java.math.BigDecimal;
@@ -59,16 +58,31 @@ public class WeatherViewCacheService {
             targetAt.truncatedTo(ChronoUnit.DAYS).plusDays(6)
         );
 
-        if (forecasts.stream().noneMatch(forecast -> forecast.getForecastAt().isEqual(targetAt))) {
-            KmaForecastBundleDto bundle = kmaClient.findLatestVillageForecast(grid.nx(), grid.ny())
-                .orElseThrow(() -> new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE));
+        boolean missingTarget = forecasts.stream()
+            .noneMatch(forecast -> forecast.getForecastAt().isEqual(targetAt));
 
-            List<WeatherForecast> incoming = KmaForecastNormalizer.normalizeForecasts(WeatherGrid.builder().id(grid.id()).build(), bundle);
+        LocalDate fourthDate = targetAt.withOffsetSameInstant(KmaTimeCalculator.KST)
+            .toLocalDate().plusDays(3);
 
-            if (incoming.stream().noneMatch(forecast -> forecast.getForecastAt().isEqual(targetAt))) {
+        boolean missingFourthDate = forecasts.stream().noneMatch(forecast -> forecast.getForecastAt()
+            .withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDate().equals(fourthDate));
+
+        if (missingTarget || missingFourthDate) {
+            var bundle = kmaClient.findLatestVillageForecast(grid.nx(), grid.ny());
+
+            if (bundle.isPresent()) {
+                List<WeatherForecast> incoming = KmaForecastNormalizer.normalizeForecasts(
+                    WeatherGrid.builder().id(grid.id()).build(), bundle.get());
+
+                if (missingTarget && incoming.stream()
+                        .noneMatch(forecast -> forecast.getForecastAt().isEqual(targetAt))) {
+                    throw new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE);
+                }
+
+                weatherRepository.upsertForecasts(incoming);
+            } else if (missingTarget) {
                 throw new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE);
             }
-            weatherRepository.upsertForecasts(incoming);
         }
 
         OffsetDateTime previousAt = targetAt.minusDays(1);
