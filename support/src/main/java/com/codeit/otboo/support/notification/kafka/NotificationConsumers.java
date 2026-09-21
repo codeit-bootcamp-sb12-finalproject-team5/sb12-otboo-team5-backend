@@ -3,6 +3,7 @@ package com.codeit.otboo.support.notification.kafka;
 import com.codeit.otboo.domain.notification.exception.NotificationException;
 import com.fasterxml.jackson.databind.JavaType;
 import java.util.HashMap;
+import java.util.function.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
@@ -23,22 +24,52 @@ public final class NotificationConsumers {
     private NotificationConsumers() {}
 
     public static <T> ConcurrentKafkaListenerContainerFactory<String, T> factory(
-            KafkaProperties properties, JavaType type, String group, String reset) {
+        KafkaProperties properties,
+        JavaType type,
+        String group,
+        String reset
+    ) {
+        return factory(
+            properties,
+            type,
+            group,
+            reset,
+            consumerFactory -> {}
+        );
+    }
+
+    public static <T> ConcurrentKafkaListenerContainerFactory<String, T> factory(
+        KafkaProperties properties,
+        JavaType type,
+        String group,
+        String reset,
+        Consumer<DefaultKafkaConsumerFactory<String, T>> customizer
+    ) {
         var config = new HashMap<String, Object>(properties.buildConsumerProperties());
+
         config.put(ConsumerConfig.GROUP_ID_CONFIG, group);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, reset);
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
         config.put(ConsumerConfig.ALLOW_AUTO_CREATE_TOPICS_CONFIG, false);
+
         var deserializer = new JsonDeserializer<T>(type, NotificationKafkaJson.mapper(), false);
         var factory = new ConcurrentKafkaListenerContainerFactory<String, T>();
-        factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(config,
-                new StringDeserializer(), new ErrorHandlingDeserializer<>(deserializer)));
+        var consumerFactory = new DefaultKafkaConsumerFactory<String, T>(
+            config,
+            new StringDeserializer(),
+            new ErrorHandlingDeserializer<>(deserializer)
+        );
+
+        customizer.accept(consumerFactory);
+        factory.setConsumerFactory(consumerFactory);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
+
         var errors = new DefaultErrorHandler((record, exception) ->
                 log.error("NOTIFICATION_FAILED topic={} partition={} offset={} group={}",
                         record.topic(), record.partition(), record.offset(), group, exception),
                 new FixedBackOff(1000L, 2L));
+
         errors.addNotRetryableExceptions(IllegalArgumentException.class);
         errors.setBackOffFunction((record, exception) -> {
             // Kafka가 감싼 예외에서도 원래 알림 오류 코드를 확인한다.

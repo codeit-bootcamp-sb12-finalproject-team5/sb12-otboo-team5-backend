@@ -40,7 +40,7 @@ public class WeatherSyncStepListener implements StepExecutionListener {
 
         executionService.start(collectionDate(stepExecution), Math.toIntExact(totalGrids));
 
-        log.info("[BATCH][LISTENER] Step 시작 totalGrids={}", totalGrids);
+        log.info("[BATCH][LISTENER] Step 시작 collectionAt={}, totalGrids={}", collectionAt, totalGrids);
     }
 
     @Override
