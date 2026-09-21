@@ -48,4 +48,14 @@ public class Feed extends SoftDeletableEntity {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
+	public void update(String content, Boolean isVisible) {
+		if (content != null) {
+			this.content = content;
+		}
+		if (isVisible != null) {
+			this.isVisible = isVisible;
+		}
+		touch();
+	}
+
 }

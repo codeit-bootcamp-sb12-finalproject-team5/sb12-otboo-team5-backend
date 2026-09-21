@@ -10,6 +10,7 @@ public record OutfitCreateResponse(
     UUID id,
     String name,
     String description,
+    String category,
     List<ClothesSummary> clothes,
     OffsetDateTime createdAt
 ) {
@@ -18,6 +19,7 @@ public record OutfitCreateResponse(
             outfit.getId(),
             outfit.getName(),
             outfit.getDescription(),
+            outfit.getCategory(),
             clothes.stream().map(ClothesSummary::of).toList(),
             outfit.getCreatedAt()
         );
