@@ -64,10 +64,12 @@ public class RecommendationFilteringService {
         WeatherInfoResponse weather = weatherRepository.findById(weatherId)
             .orElseThrow(() -> new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE));
 
-        BigDecimal currentTemperature = weather.temperatureCurrent();
+        BigDecimal averageTemperature = weather.temperatureMin()
+            .add(weather.temperatureMax())
+            .divide(BigDecimal.valueOf(2));
 
         BigDecimal effectiveTemperature = temperatureAdjustmentPolicy.calculateEffectiveTemperature(
-            currentTemperature, profile.getTemperatureSensitivity());
+            averageTemperature, profile.getTemperatureSensitivity());
 
         // 후보군 리스트에서 선택된 옷들 제외
         Set<UUID> selectedClothesIds = selectedClothes.stream().map(Clothes::getId)
@@ -78,13 +80,13 @@ public class RecommendationFilteringService {
 
         log.info(
             "[recommendation][filter] 필터링 시작 전. type={}, userId={}, weatherId={}, candidateCount={}, "
-                + "candidateCountByCategory={}, currentTemperature={}, effectiveTemperature={}, gender={}",
+                + "candidateCountByCategory={}, averageTemperature={}, effectiveTemperature={}, gender={}",
             type,
             userId,
             weatherId,
             candidates.size(),
             countByCategory(candidates),
-            currentTemperature,
+            averageTemperature,
             effectiveTemperature,
             profile.getGender()
         );
