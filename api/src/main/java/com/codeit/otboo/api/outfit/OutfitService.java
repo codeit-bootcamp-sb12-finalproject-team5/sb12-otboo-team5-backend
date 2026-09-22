@@ -127,7 +127,7 @@ public class OutfitService {
                 .map(OutfitClothes::getClothes)
                 .toList();
 
-        outfit.update(request.name(), request.description(), request.category());
+        outfit.update(request.name(), request.category(), request.description());
         outfitRepository.saveAndFlush(outfit);
 
         List<Clothes> clothes;
