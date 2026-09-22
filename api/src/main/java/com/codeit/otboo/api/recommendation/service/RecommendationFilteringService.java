@@ -5,12 +5,12 @@ import com.codeit.otboo.api.recommendation.candidate.ClothesCandidateProvider;
 import com.codeit.otboo.api.recommendation.filter.ClothesFilteringContext;
 import com.codeit.otboo.api.recommendation.filter.RuleBasedClothesFilter;
 import com.codeit.otboo.api.recommendation.temperature.TemperatureAdjustmentPolicy;
+import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.profile.entity.Profile;
-import com.codeit.otboo.domain.weather.entity.WeatherForecast;
+import com.codeit.otboo.domain.weather.dto.WeatherInfoResponse;
 import com.codeit.otboo.domain.weather.exception.WeatherException;
-import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RecommendationFilteringService {
 
     private final List<ClothesCandidateProvider> candidateProviders;
-    private final WeatherForecastRepository weatherForecastRepository;
+    private final WeatherRepository weatherRepository;
     private final TemperatureAdjustmentPolicy temperatureAdjustmentPolicy;
     private final RuleBasedClothesFilter ruleBasedClothesFilter;
 
@@ -61,16 +61,15 @@ public class RecommendationFilteringService {
         Profile profile,
         List<Clothes> selectedClothes
     ) {
-        WeatherForecast weather = weatherForecastRepository.findById(weatherId)
+        WeatherInfoResponse weather = weatherRepository.findById(weatherId)
             .orElseThrow(() -> new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE));
 
-        BigDecimal currentTemperature = weather.getTemperature();
-        if (currentTemperature == null) {
-            throw new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE);
-        }
+        BigDecimal averageTemperature = weather.temperatureMin()
+            .add(weather.temperatureMax())
+            .divide(BigDecimal.valueOf(2));
 
         BigDecimal effectiveTemperature = temperatureAdjustmentPolicy.calculateEffectiveTemperature(
-            currentTemperature, profile.getTemperatureSensitivity());
+            averageTemperature, profile.getTemperatureSensitivity());
 
         // 후보군 리스트에서 선택된 옷들 제외
         Set<UUID> selectedClothesIds = selectedClothes.stream().map(Clothes::getId)
@@ -81,13 +80,13 @@ public class RecommendationFilteringService {
 
         log.info(
             "[recommendation][filter] 필터링 시작 전. type={}, userId={}, weatherId={}, candidateCount={}, "
-                + "candidateCountByCategory={}, currentTemperature={}, effectiveTemperature={}, gender={}",
+                + "candidateCountByCategory={}, averageTemperature={}, effectiveTemperature={}, gender={}",
             type,
             userId,
             weatherId,
             candidates.size(),
             countByCategory(candidates),
-            currentTemperature,
+            averageTemperature,
             effectiveTemperature,
             profile.getGender()
         );

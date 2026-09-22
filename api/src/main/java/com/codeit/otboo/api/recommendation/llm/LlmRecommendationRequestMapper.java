@@ -4,7 +4,7 @@ import com.codeit.otboo.api.recommendation.ranking.RankedClothes;
 import com.codeit.otboo.api.recommendation.ranking.RankedClothesCandidates;
 import com.codeit.otboo.api.recommendation.ranking.ClothesRole;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
-import com.codeit.otboo.domain.weather.entity.WeatherForecast;
+import com.codeit.otboo.domain.weather.dto.WeatherInfoResponse;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class LlmRecommendationRequestMapper {
 
-    public LlmRecommendationRequest map(WeatherForecast weather, RankedClothesCandidates rankedCandidates) {
+    public LlmRecommendationRequest map(WeatherInfoResponse weather, RankedClothesCandidates rankedCandidates) {
         List<LlmRecommendationRequest.LlmClothesCandidate> selectedClothes = rankedCandidates.selectedClothes().stream()
             .map(this::mapSelectedClothes)
             .toList();
@@ -26,11 +26,11 @@ public class LlmRecommendationRequestMapper {
 
         return new LlmRecommendationRequest(
             new LlmRecommendationRequest.WeatherContext(
-                weather.getTemperature(),
-                weather.getMinTemperature(),
-                weather.getMaxTemperature(),
-                weather.getSkyStatus(),
-                weather.getPrecipitationType()
+                weather.temperatureCurrent(),
+                weather.temperatureMin(),
+                weather.temperatureMax(),
+                weather.skyStatus(),
+                weather.precipitationType()
             ),
             selectedClothes,
             candidates
