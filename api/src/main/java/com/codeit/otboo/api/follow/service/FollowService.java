@@ -2,6 +2,7 @@ package com.codeit.otboo.api.follow.service;
 
 import com.codeit.otboo.api.follow.dto.request.FollowCreateRequest;
 import com.codeit.otboo.api.follow.dto.response.FollowDto;
+import com.codeit.otboo.api.follow.dto.response.FollowSummaryDto;
 import com.codeit.otboo.api.follow.dto.response.FollowUserDto;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.domain.follow.entity.Follow;
@@ -229,6 +230,42 @@ public class FollowService {
         totalCount,
         sortBy,
         sortDirection
+    );
+  }
+
+  public FollowSummaryDto findFollowSummary(
+      UUID userId,
+      UUID currentUserId
+  ) {
+    long followerCount =
+        followRepository.countFollowersByFolloweeId(userId);
+
+    long followingCount =
+        followRepository.countFolloweesByFollowerId(userId);
+
+    User currentUser = userRepository.findById(currentUserId)
+        .orElseThrow(UserException::notFound);
+
+    User targetUser = userRepository.findById(userId)
+        .orElseThrow(UserException::notFound);
+
+    boolean followedByMe =
+        followRepository.existsByFollowerAndFollowee(currentUser, targetUser);
+
+    UUID followedByMeId = followRepository.findByFollowerAndFollowee(currentUser, targetUser)
+        .map(Follow::getId)
+        .orElse(null);
+
+    boolean followingMe =
+        followRepository.existsByFollowerAndFollowee(targetUser, currentUser);
+
+    return new FollowSummaryDto(
+        userId,
+        followerCount,
+        followingCount,
+        followedByMe,
+        followedByMeId,
+        followingMe
     );
   }
 

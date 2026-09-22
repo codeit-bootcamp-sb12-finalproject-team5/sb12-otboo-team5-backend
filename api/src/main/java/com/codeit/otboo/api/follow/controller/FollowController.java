@@ -3,6 +3,7 @@ package com.codeit.otboo.api.follow.controller;
 import com.codeit.otboo.api.common.security.CustomUserDetails;
 import com.codeit.otboo.api.follow.dto.request.FollowCreateRequest;
 import com.codeit.otboo.api.follow.dto.response.FollowDto;
+import com.codeit.otboo.api.follow.dto.response.FollowSummaryDto;
 import com.codeit.otboo.api.follow.dto.response.FollowUserDto;
 import com.codeit.otboo.api.follow.service.FollowService;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
@@ -80,6 +81,19 @@ public class FollowController {
             idAfter,
             limit,
             Sort.Direction.DESC
+        )
+    );
+  }
+
+  @GetMapping("/summary")
+  public ResponseEntity<FollowSummaryDto> getFollowSummary(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @RequestParam UUID userId
+  ) {
+    return ResponseEntity.ok(
+        followService.findFollowSummary(
+            userId,
+            userDetails.getUserId()
         )
     );
   }
