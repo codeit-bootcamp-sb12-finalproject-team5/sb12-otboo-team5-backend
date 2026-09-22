@@ -10,6 +10,10 @@ import com.codeit.otboo.domain.feed.enums.SortDirection;
 import com.codeit.otboo.domain.feed.repository.FeedCommentRepository;
 import com.codeit.otboo.domain.feed.repository.FeedLikeRepository;
 import com.codeit.otboo.domain.feed.repository.FeedRepository;
+import com.codeit.otboo.domain.notification.entity.NotificationType;
+import com.codeit.otboo.domain.notification.event.FeedCommentNotificationPayload;
+import com.codeit.otboo.domain.notification.event.FeedLikeNotificationPayload;
+import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
 import com.codeit.otboo.domain.outfit.entity.Ootd;
 import com.codeit.otboo.domain.outfit.entity.Outfit;
 import com.codeit.otboo.domain.outfit.repository.OotdRepository;
@@ -26,6 +30,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -34,6 +39,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,6 +64,8 @@ class FeedServiceTest {
     private OutfitClothesRepository outfitClothesRepository;
     @Mock
     private ProfileRepository profileRepository;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
     @InjectMocks
     private FeedService feedService;
 
@@ -98,6 +106,110 @@ class FeedServiceTest {
         assertThat(response.likedByMe()).isFalse();
         assertThat(response.weather().skyStatus()).isEqualTo(SkyStatus.CLEAR);
         assertThat(response.weather().temperature().current()).isEqualByComparingTo("20.50");
+    }
+
+    @Test
+    void publishesLikeNotificationWhenLikingSomeoneElsesFeed() {
+        UUID userId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID feedId = UUID.randomUUID();
+        UUID likeId = UUID.randomUUID();
+        User user = User.builder().id(userId).name("liker").build();
+        Feed feed = Feed.builder().id(feedId)
+            .user(User.builder().id(ownerId).name("feed owner").build())
+            .build();
+
+        when(feedRepository.findByIdAndDeletedAtIsNull(feedId)).thenReturn(Optional.of(feed));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(feedLikeRepository.saveAndFlush(any(FeedLike.class))).thenAnswer(invocation ->
+            FeedLike.builder().id(likeId).feed(feed).user(user).build());
+        when(feedRepository.incrementLikeCount(feedId)).thenReturn(1);
+
+        feedService.createLike(userId, feedId);
+
+        ArgumentCaptor<NotificationCreateMessage<FeedLikeNotificationPayload>> captor =
+            ArgumentCaptor.forClass(NotificationCreateMessage.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().type()).isEqualTo(NotificationType.FEED_LIKED);
+        assertThat(captor.getValue().payload().likeId()).isEqualTo(likeId);
+        assertThat(captor.getValue().deduplicationKey()).isEqualTo("FEED_LIKED:" + likeId);
+    }
+
+    @Test
+    void doesNotPublishLikeNotificationWhenLikingOwnFeed() {
+        UUID userId = UUID.randomUUID();
+        UUID feedId = UUID.randomUUID();
+        User user = User.builder().id(userId).name("author").build();
+        Feed feed = Feed.builder().id(feedId).user(user).build();
+
+        when(feedRepository.findByIdAndDeletedAtIsNull(feedId)).thenReturn(Optional.of(feed));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(feedLikeRepository.saveAndFlush(any(FeedLike.class))).thenAnswer(invocation ->
+            FeedLike.builder().id(UUID.randomUUID()).feed(feed).user(user).build());
+        when(feedRepository.incrementLikeCount(feedId)).thenReturn(1);
+
+        feedService.createLike(userId, feedId);
+
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void publishesCommentNotificationWhenCommentingOnSomeoneElsesFeed() {
+        UUID userId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID feedId = UUID.randomUUID();
+        UUID commentId = UUID.randomUUID();
+        User user = User.builder().id(userId).name("commenter").build();
+        Feed feed = Feed.builder().id(feedId)
+            .user(User.builder().id(ownerId).name("feed owner").build())
+            .build();
+        FeedCommentRequest request = new FeedCommentRequest(feedId, userId, "좋은 착장이에요");
+
+        when(feedRepository.findByIdAndDeletedAtIsNull(feedId)).thenReturn(Optional.of(feed));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(feedCommentRepository.save(any(FeedComment.class))).thenAnswer(invocation ->
+            savedWithId(invocation.getArgument(0), commentId));
+        when(feedRepository.incrementCommentCount(feedId)).thenReturn(1);
+        when(profileRepository.findByUser_Id(userId)).thenReturn(Optional.empty());
+
+        feedService.createComment(userId, feedId, request);
+
+        ArgumentCaptor<NotificationCreateMessage<FeedCommentNotificationPayload>> captor =
+            ArgumentCaptor.forClass(NotificationCreateMessage.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().type()).isEqualTo(NotificationType.FEED_COMMENTED);
+        assertThat(captor.getValue().payload().commentId()).isEqualTo(commentId);
+        assertThat(captor.getValue().deduplicationKey()).isEqualTo("FEED_COMMENTED:" + commentId);
+    }
+
+    @Test
+    void doesNotPublishCommentNotificationWhenCommentingOnOwnFeed() {
+        UUID userId = UUID.randomUUID();
+        UUID feedId = UUID.randomUUID();
+        User user = User.builder().id(userId).name("author").build();
+        Feed feed = Feed.builder().id(feedId).user(user).build();
+        FeedCommentRequest request = new FeedCommentRequest(feedId, userId, "내 피드에 스스로 남긴 댓글");
+
+        when(feedRepository.findByIdAndDeletedAtIsNull(feedId)).thenReturn(Optional.of(feed));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(feedCommentRepository.save(any(FeedComment.class))).thenAnswer(invocation ->
+            savedWithId(invocation.getArgument(0), UUID.randomUUID()));
+        when(feedRepository.incrementCommentCount(feedId)).thenReturn(1);
+        when(profileRepository.findByUser_Id(userId)).thenReturn(Optional.empty());
+
+        feedService.createComment(userId, feedId, request);
+
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    /** 저장 시 @PrePersist가 붙이는 식별자를 흉내 낸다. */
+    private static FeedComment savedWithId(FeedComment comment, UUID id) {
+        return FeedComment.builder()
+            .id(id)
+            .feed(comment.getFeed())
+            .user(comment.getUser())
+            .content(comment.getContent())
+            .build();
     }
 
     @Test
@@ -148,7 +260,9 @@ class FeedServiceTest {
         UUID userId = UUID.randomUUID();
         UUID feedId = UUID.randomUUID();
         User user = User.builder().id(userId).name("author").build();
-        Feed feed = Feed.builder().id(feedId).build();
+        Feed feed = Feed.builder().id(feedId)
+            .user(User.builder().id(UUID.randomUUID()).name("feed owner").build())
+            .build();
         FeedCommentRequest request = new FeedCommentRequest(feedId, userId, "좋은 착장이에요");
 
         when(feedRepository.findByIdAndDeletedAtIsNull(feedId)).thenReturn(Optional.of(feed));
