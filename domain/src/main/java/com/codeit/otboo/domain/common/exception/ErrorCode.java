@@ -28,6 +28,11 @@ public enum ErrorCode {
     PROFILE_NOT_FOUND(404, "프로필을 찾을 수 없습니다."),
     PROFILE_PREFERENCE_NOT_READY(422, "사용자 선호 정보가 부족하여 Outfit 추천을 수행할 수 없습니다."),
 
+    // =====팔로우 =====
+    FOLLOW_NOT_FOUND(404, "팔로우를 찾을 수 없습니다."),
+    DUPLICATE_FOLLOW(409, "이미 팔로우한 사용자입니다."),
+    SELF_FOLLOW_NOT_ALLOWED(400, "자기 자신을 팔로우할 수 없습니다."),
+
     // ===== 의상 =====
     CLOTHES_NOT_FOUND(404, "의상을 찾을 수 없습니다"),
     CLOTHES_ANALYSIS_FAILED(502, "의상 분석에 실패했습니다."),
