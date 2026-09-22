@@ -6,6 +6,7 @@ import com.codeit.otboo.domain.outfit.entity.Ootd;
 import com.codeit.otboo.domain.outfit.entity.Outfit;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 public record OutfitDetailResponse(
     UUID id,
@@ -16,6 +17,15 @@ public record OutfitDetailResponse(
     FeedResponse.OotdWeatherResponse weather
 ) {
     public static OutfitDetailResponse of(Outfit outfit, List<Clothes> clothes, Ootd ootd) {
+        return of(outfit, clothes, ootd, Function.identity());
+    }
+
+    public static OutfitDetailResponse of(
+        Outfit outfit,
+        List<Clothes> clothes,
+        Ootd ootd,
+        Function<String, String> imageUrlResolver
+    ) {
         FeedResponse.OotdWeatherResponse weather = ootd == null ? null
                 : FeedResponse.OotdWeatherResponse.of(ootd);
         return new OutfitDetailResponse(
@@ -23,16 +33,18 @@ public record OutfitDetailResponse(
             outfit.getName(),
             outfit.getDescription(),
             outfit.getCategory(),
-            clothes.stream().map(ClothesImage::of).toList(),
+            clothes.stream().map(clothesItem -> ClothesImage.of(
+                clothesItem, imageUrlResolver.apply(clothesItem.getImageUrl())
+            )).toList(),
             weather
         );
     }
 
     public record ClothesImage(UUID id, String imageUrl) {
-        private static ClothesImage of(Clothes clothes) {
+        private static ClothesImage of(Clothes clothes, String imageUrl) {
             return new ClothesImage(
                 clothes.getId(),
-                clothes.getImageUrl()
+                imageUrl
             );
         }
     }
