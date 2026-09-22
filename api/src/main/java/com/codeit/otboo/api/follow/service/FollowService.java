@@ -1,6 +1,7 @@
 package com.codeit.otboo.api.follow.service;
 
 import com.codeit.otboo.api.follow.dto.request.FollowCreateRequest;
+import com.codeit.otboo.api.notification.event.NotificationEvents;
 import com.codeit.otboo.api.follow.dto.response.FollowDto;
 import com.codeit.otboo.api.follow.dto.response.FollowSummaryDto;
 import com.codeit.otboo.api.follow.dto.response.FollowUserDto;
@@ -18,8 +19,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +31,9 @@ public class FollowService {
   private final FollowRepository followRepository;
   private final ProfileRepository profileRepository;
   private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
+  @Transactional
   public FollowDto createFollow(FollowCreateRequest request) {
 
     User follower = userRepository.findById(request.followerId())
@@ -44,6 +49,8 @@ public class FollowService {
     Follow follow = Follow.create(follower, followee);
 
     Follow savedFollow = followRepository.save(follow);
+
+    eventPublisher.publishEvent(NotificationEvents.followCreated(savedFollow.getId()));
 
     List<UUID> userIds = List.of(
         savedFollow.getFollower().getId(),

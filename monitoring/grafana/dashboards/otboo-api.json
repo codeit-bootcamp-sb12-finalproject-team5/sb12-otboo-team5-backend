@@ -1002,6 +1002,134 @@
       "panels": []
     },
     {
+      "id": 25,
+      "title": "HTTP 요청 횟수 (선택 기간)",
+      "type": "stat",
+      "description": "선택한 기간과 인스턴스의 완료된 HTTP 요청 횟수입니다. 관리용 /actuator 경로는 제외합니다. increase의 수집 간격 보간에 따른 추정치이며 정수로 표시합니다. 진행 중인 SSE 요청은 완료 전까지 포함되지 않을 수 있습니다.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 33
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(http_server_requests_seconds_count{job=\"otboo-api\", instance=~\"$instance\", uri!~\"/actuator.*\"}[$__range]))",
+          "legendFormat": "전체",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
+          "noValue": "데이터 없음",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 26,
+      "title": "엔드포인트별 요청 횟수 (선택 기간)",
+      "type": "bargauge",
+      "description": "선택한 기간과 인스턴스의 완료된 HTTP 요청 횟수입니다. 관리용 /actuator 경로는 제외합니다. increase의 수집 간격 보간에 따른 추정치이며 정수로 표시합니다. 진행 중인 SSE 요청은 완료 전까지 포함되지 않을 수 있습니다.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 33
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sort_desc(sum by (method, uri) (increase(http_server_requests_seconds_count{job=\"otboo-api\", instance=~\"$instance\", uri!~\"/actuator.*\"}[$__range])))",
+          "legendFormat": "{{method}} {{uri}}",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
+          "noValue": "데이터 없음",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true
+      }
+    },
+    {
       "type": "timeseries",
       "title": "HTTP 처리량",
       "description": "상태 코드별 초당 요청 수. 대수와 무관하게 서비스 전체가 얼마나 받는지가 관심사다. 5xx가 보이면 바로 확인한다.",
@@ -1014,7 +1142,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 33
+        "y": 41
       },
       "targets": [
         {
@@ -1086,7 +1214,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 33
+        "y": 41
       },
       "targets": [
         {
@@ -1158,7 +1286,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 41
+        "y": 49
       },
       "targets": [
         {
@@ -1230,7 +1358,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 41
+        "y": 49
       },
       "targets": [
         {
@@ -1299,7 +1427,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 49
+        "y": 57
       },
       "panels": []
     },
@@ -1316,7 +1444,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 50
+        "y": 58
       },
       "targets": [
         {
@@ -1410,7 +1538,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 50
+        "y": 58
       },
       "targets": [
         {

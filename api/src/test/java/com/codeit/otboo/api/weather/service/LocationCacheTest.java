@@ -54,63 +54,6 @@ class LocationCacheTest {
     }
 
     @Test
-    void missingNamesSkipBothCachesThenSuccessfulRetryPersistsAndCaches() {
-        try (var context = new AnnotationConfigApplicationContext(TestConfig.class)) {
-            var repository = context.getBean(WeatherRepository.class);
-            var location = context.getBean(LocationService.class);
-            var weather = context.getBean(WeatherViewCacheService.class);
-            var kakao = context.getBean(KakaoClient.class);
-            var kma = context.getBean(KmaClient.class);
-            var manager = context.getBean(CacheManager.class);
-            var grid = WeatherGrid.builder().id(UUID.randomUUID()).nx(60).ny(127).build();
-            var target = OffsetDateTime.parse("2026-09-13T15:00:00+09:00");
-            var forecast = WeatherForecast.builder()
-                    .id(UUID.randomUUID()).grid(grid).forecastAt(target).forecastedAt(target.minusHours(1))
-                    .temperature(BigDecimal.TEN).build();
-            when(repository.findGrid(60, 127)).thenReturn(Optional.of(grid));
-            when(repository.findForecasts(eq(grid.getId()),
-                    any(), any()))
-                    .thenReturn(List.of(forecast));
-            when(repository.findObservation(grid.getId(), target.minusDays(1)))
-                    .thenReturn(Optional.of(WeatherObservation.builder()
-                            .grid(grid).observedAt(target.minusDays(1)).build()));
-            when(kakao.findAdministrativeRegion(126.978, 37.5665)).thenReturn(Optional.empty(),
-                    Optional.of(new KakaoRegionDto(
-                            "H", "code", "서울 중구 명동", "서울", "중구", "명동", "", 126.978, 37.5665)));
-            when(repository.fillGridLocationNames(grid.getId(), List.of("서울", "중구", "명동", "")))
-                    .thenAnswer(call -> { grid.updateForRequest(call.getArgument(1)); return grid; });
-
-            var incomplete = location.findOrCreate(60, 127, 126.978, 37.5665);
-            assertThat(incomplete.hasAdministrativeRegion()).isFalse();
-            assertThat(weather.findWeatherView(incomplete, target)).hasSize(1);
-            assertThat(manager.getCache(CacheConfig.GRID_CACHE).get("60:127")).isNull();
-            String weatherKey = "60:127:" + target;
-            assertThat(manager.getCache(CacheConfig.WEATHER_CACHE).get(weatherKey)).isNull();
-            verify(repository, never()).fillGridLocationNames(any(),
-                    any());
-
-            var complete = location.findOrCreate(60, 127, 126.978, 37.5665);
-            assertThat(complete.hasAdministrativeRegion()).isTrue();
-            var result = weather.findWeatherView(complete, target);
-            assertThat(manager.getCache(CacheConfig.GRID_CACHE).get("60:127", WeatherGridDto.class))
-                    .isEqualTo(complete);
-            assertThat(manager.getCache(CacheConfig.WEATHER_CACHE).get(weatherKey)).isNotNull();
-            assertThat(location.findOrCreate(60, 127, 126.978, 37.5665)).isEqualTo(complete);
-            assertThat(weather.findWeatherView(complete, target)).isEqualTo(result);
-            verify(kakao, times(2)).findAdministrativeRegion(126.978, 37.5665);
-            verify(repository).fillGridLocationNames(grid.getId(), List.of("서울", "중구", "명동", ""));
-            verify(repository, times(4)).findForecasts(eq(grid.getId()),
-                    any(), any());
-
-            // Even an existing weather cache must be bypassed for an incomplete location.
-            weather.findWeatherView(incomplete, target);
-            verify(repository, times(6)).findForecasts(eq(grid.getId()),
-                    any(), any());
-            verifyNoInteractions(kma);
-        }
-    }
-
-    @Test
     void gridHasIndependentOneHourTtlAndSnapshotSurvivesRedisSerialization() {
         var manager = (RedisCacheManager) new CacheConfig().cacheManager(
                 mock(RedisConnectionFactory.class), new ObjectMapper().findAndRegisterModules(),

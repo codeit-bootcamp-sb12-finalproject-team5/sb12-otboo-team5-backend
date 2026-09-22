@@ -1,6 +1,7 @@
 package com.codeit.otboo.api.feed;
 
 import com.codeit.otboo.api.feed.dto.*;
+import com.codeit.otboo.api.notification.event.NotificationEvents;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.entity.OutfitClothes;
 import com.codeit.otboo.domain.clothes.repository.OutfitClothesRepository;
@@ -24,6 +25,7 @@ import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
 import com.codeit.otboo.support.storage.S3StorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -50,6 +52,7 @@ public class FeedService {
     private final FeedLikeRepository feedLikeRepository;
     private final FeedCommentRepository feedCommentRepository;
     private final S3StorageService s3StorageService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public FeedResponse create(UUID authenticatedUserId, FeedRequest request) {
@@ -84,6 +87,8 @@ public class FeedService {
         Ootd ootd = "OOTD".equalsIgnoreCase(outfit.getCategory())
             ? ootdRepository.findById(outfit.getId()).orElse(null)
             : null;
+
+        eventPublisher.publishEvent(NotificationEvents.feedCreated(feed.getId()));
 
         return FeedResponse.of(
             feed,
@@ -176,14 +181,19 @@ public class FeedService {
     public void createLike(UUID userId, UUID feedId) {
         Feed feed = feedRepository.findByIdAndDeletedAtIsNull(feedId)
                 .orElseThrow(() -> new FeedException(ErrorCode.FEED_NOT_FOUND));
+        FeedLike like;
         try {
-            feedLikeRepository.saveAndFlush(
+            like = feedLikeRepository.saveAndFlush(
                 FeedLike.builder().feed(feed).user(getCurrentUserEntity(userId)).build());
         } catch (DataIntegrityViolationException exception) {
             throw new FeedException(ErrorCode.FEED_ALREADY_LIKED);
         }
         if (feedRepository.incrementLikeCount(feedId) == 0) {
             throw new FeedException(ErrorCode.FEED_NOT_FOUND);
+        }
+
+        if (!feed.getUser().getId().equals(userId)) {
+            eventPublisher.publishEvent(NotificationEvents.feedLiked(like.getId()));
         }
     }
 
@@ -215,6 +225,10 @@ public class FeedService {
             .build());
         if (feedRepository.incrementCommentCount(feed.getId()) == 0) {
             throw new FeedException(ErrorCode.FEED_NOT_FOUND);
+        }
+
+        if (!feed.getUser().getId().equals(author.getId())) {
+            eventPublisher.publishEvent(NotificationEvents.commentCreated(comment.getId()));
         }
 
         String profileImageUrl = profileRepository.findByUser_Id(author.getId())
