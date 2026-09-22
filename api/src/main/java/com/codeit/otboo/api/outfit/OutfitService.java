@@ -51,6 +51,12 @@ public class OutfitService {
     public OutfitCreateResponse create(UUID userId, OutfitCreateRequest request) {
         validateNoDuplicateClothesIds(request.clothesIds());
 
+        boolean isOotd = "OOTD".equals(request.category());
+        boolean hasWeatherId = request.weatherId() != null;
+        if (isOotd != hasWeatherId) {
+            throw new OutfitException(ErrorCode.OOTD_INVALID_INPUT_VALUE);
+        }
+
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new OutfitException(ErrorCode.USER_NOT_FOUND));
         List<Clothes> clothes = getClothesInRequestOrder(request.clothesIds());
@@ -60,7 +66,7 @@ public class OutfitService {
             .map(clothesItem -> new OutfitClothes(outfit, clothesItem))
             .toList());
 
-        if (request.category().equals("OOTD") && request.weatherId() != null) {
+        if (isOotd) {
             WeatherInfoResponse weatherForecast = weatherRepository.findById(request.weatherId())
                     .orElseThrow(() -> new OutfitException(ErrorCode.OOTD_WEATHER_FORECAST_NOT_FOUND));
             ootdRepository.save(Ootd.builder()
@@ -74,8 +80,6 @@ public class OutfitService {
                     .temperatureMin(weatherForecast.temperatureMin())
                     .temperatureMax(weatherForecast.temperatureMax())
                     .build());
-        } else {
-            throw new OutfitException(ErrorCode.OOTD_INVALID_INPUT_VALUE);
         }
 
         List<ClothesContributionSnapshot> clothesContributions = snapshotsOf(clothes);
