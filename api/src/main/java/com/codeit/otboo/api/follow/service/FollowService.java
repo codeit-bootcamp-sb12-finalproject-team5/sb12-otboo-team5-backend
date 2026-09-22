@@ -8,6 +8,7 @@ import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.domain.follow.entity.Follow;
 import com.codeit.otboo.domain.follow.exception.FollowException;
 import com.codeit.otboo.domain.follow.repository.FollowRepository;
+import com.codeit.otboo.domain.profile.exception.ProfileException;
 import com.codeit.otboo.domain.profile.repository.ProfileImageProjection;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
 import com.codeit.otboo.domain.user.entity.User;
@@ -267,6 +268,18 @@ public class FollowService {
         followedByMeId,
         followingMe
     );
+  }
+
+  public void deleteFollow(UUID followId, UUID currentUserId) {
+
+    Follow follow = followRepository.findById(followId)
+        .orElseThrow(FollowException::notFound);
+
+    if(!follow.getFollower().getId().equals(currentUserId)) {
+      throw ProfileException.accessDenied();
+    }
+
+    followRepository.delete(follow);
   }
 
 }

@@ -13,6 +13,10 @@ public class FollowException extends BusinessException {
     super(errorCode, cause);
   }
 
+  public static FollowException notFound() {
+    return new FollowException(ErrorCode.FOLLOW_NOT_FOUND);
+  }
+
   public static FollowException duplicate() {
     return new FollowException(ErrorCode.DUPLICATE_FOLLOW);
   }
