@@ -1,6 +1,8 @@
 package com.codeit.otboo.api.outfit;
 
 import com.codeit.otboo.api.outfit.dto.*;
+import com.codeit.otboo.api.recommendation.preference.ClothesContributionSnapshot;
+import com.codeit.otboo.api.recommendation.preference.PreferenceVectorAsyncService;
 import com.codeit.otboo.api.recommendation.temperature.TemperatureAdjustmentPolicy;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
@@ -24,6 +26,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,6 +45,7 @@ public class OutfitService {
     private final OotdRepository ootdRepository;
     private final TemperatureAdjustmentPolicy temperatureAdjustmentPolicy;
     private final S3StorageService s3StorageService;
+    private final PreferenceVectorAsyncService preferenceVectorAsyncService;
 
     @Transactional
     public OutfitCreateResponse create(UUID userId, OutfitCreateRequest request) {
@@ -72,6 +77,12 @@ public class OutfitService {
         } else {
             throw new OutfitException(ErrorCode.OOTD_INVALID_INPUT_VALUE);
         }
+
+        List<ClothesContributionSnapshot> clothesContributions = snapshotsOf(clothes);
+        runAfterCommit(() -> preferenceVectorAsyncService.increaseOutfitUsageContributions(
+            userId,
+            clothesContributions
+        ));
 
         return OutfitCreateResponse.of(outfit, clothes);
     }
@@ -106,6 +117,12 @@ public class OutfitService {
             throw new OutfitException(ErrorCode.ACCESS_DENIED);
         }
 
+        List<Clothes> previousClothes = request.clothesIds() == null
+            ? List.of()
+            : outfitClothesRepository.findAllByOutfit_Id(outfitId).stream()
+                .map(OutfitClothes::getClothes)
+                .toList();
+
         outfit.update(request.name(), request.description(), request.category());
         outfitRepository.saveAndFlush(outfit);
 
@@ -123,6 +140,16 @@ public class OutfitService {
                 .toList();
         }
 
+        if (request.clothesIds() != null) {
+            List<ClothesContributionSnapshot> addedClothes = snapshotsOf(clothesOnlyIn(clothes, previousClothes));
+            List<ClothesContributionSnapshot> removedClothes = snapshotsOf(clothesOnlyIn(previousClothes, clothes));
+            runAfterCommit(() -> preferenceVectorAsyncService.updateOutfitUsageContributions(
+                userId,
+                addedClothes,
+                removedClothes
+            ));
+        }
+
         return OutfitUpdateResponse.of(outfit, clothes);
     }
 
@@ -135,7 +162,16 @@ public class OutfitService {
             throw new OutfitException(ErrorCode.ACCESS_DENIED);
         }
 
+        List<ClothesContributionSnapshot> clothesContributions = snapshotsOf(
+            outfitClothesRepository.findAllByOutfit_Id(outfitId).stream()
+                .map(OutfitClothes::getClothes)
+                .toList()
+        );
         outfit.markDeleted();
+        runAfterCommit(() -> preferenceVectorAsyncService.decreaseOutfitUsageContributions(
+            userId,
+            clothesContributions
+        ));
     }
 
     @Transactional(readOnly = true)
@@ -205,5 +241,30 @@ public class OutfitService {
             throw new ClothesException(ErrorCode.CLOTHES_NOT_FOUND);
         }
         return clothesIds.stream().map(clothesById::get).toList();
+    }
+
+    private List<Clothes> clothesOnlyIn(List<Clothes> source, List<Clothes> compared) {
+        Set<UUID> comparedClothesIds = compared.stream().map(Clothes::getId).collect(Collectors.toSet());
+        return source.stream()
+            .filter(clothes -> !comparedClothesIds.contains(clothes.getId()))
+            .toList();
+    }
+
+    private List<ClothesContributionSnapshot> snapshotsOf(List<Clothes> clothes) {
+        return clothes.stream().map(ClothesContributionSnapshot::from).toList();
+    }
+
+    private void runAfterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
     }
 }

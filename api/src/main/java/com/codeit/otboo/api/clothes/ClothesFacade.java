@@ -27,19 +27,16 @@ import java.util.concurrent.CompletableFuture;
 public class ClothesFacade {
     private final ClothesService clothesService;
     private final ClothesAnalysisService clothesAnalysisService;
-    private final EmbeddingAsyncService embeddingAsyncService;
     private final S3StorageService s3StorageService;
     private final RestClient restClient;
 
     public ClothesResponse create(ClothesRequest req, MultipartFile image) {
         Clothes clothes = clothesService.create(req, image);
-        embeddingAsyncService.clothesEmbedding(clothes.getId(), clothes.getAttributeText());
         return ClothesResponse.of(clothes, clothes.getUser().getId(), s3StorageService.getPresignedUrl(clothes.getImageUrl()));
     }
 
     public ClothesResponse update(UUID clothesId, ClothesUpdateRequest req, MultipartFile image) {
         Clothes clothes = clothesService.update(clothesId, req, image);
-        embeddingAsyncService.clothesEmbedding(clothes.getId(), clothes.getAttributeText());
         return ClothesResponse.of(clothes, clothes.getUser().getId(), s3StorageService.getPresignedUrl(clothes.getImageUrl()));
     }
 
