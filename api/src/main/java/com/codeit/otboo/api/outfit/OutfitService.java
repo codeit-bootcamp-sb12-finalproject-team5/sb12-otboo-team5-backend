@@ -69,7 +69,7 @@ public class OutfitService {
                     .temperatureMin(weatherForecast.temperatureMin())
                     .temperatureMax(weatherForecast.temperatureMax())
                     .build());
-        } else {
+        } else if (request.category().equals("OOTD")) {
             throw new OutfitException(ErrorCode.OOTD_INVALID_INPUT_VALUE);
         }
 

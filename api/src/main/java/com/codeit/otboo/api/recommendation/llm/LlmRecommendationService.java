@@ -1,7 +1,7 @@
 package com.codeit.otboo.api.recommendation.llm;
 
 import com.codeit.otboo.api.recommendation.ranking.RankedClothesCandidates;
-import com.codeit.otboo.domain.weather.entity.WeatherForecast;
+import com.codeit.otboo.domain.weather.dto.WeatherInfoResponse;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.recommendation.exception.RecommendationException;
 
@@ -26,12 +26,12 @@ public class LlmRecommendationService {
     private final ResourceLoader resourceLoader;
     private final LlmRecommendationValidator validator;
 
-    public GeminiRecommendationResult generate(WeatherForecast weather, RankedClothesCandidates rankedCandidates) {
+    public GeminiRecommendationResult generate(WeatherInfoResponse weather, RankedClothesCandidates rankedCandidates) {
         return generate(weather, rankedCandidates, Set.of());
     }
 
     public GeminiRecommendationResult generate(
-        WeatherForecast weather,
+        WeatherInfoResponse weather,
         RankedClothesCandidates rankedCandidates,
         Set<String> recentFingerprints
     ) {
