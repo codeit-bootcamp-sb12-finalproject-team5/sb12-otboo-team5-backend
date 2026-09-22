@@ -1,6 +1,7 @@
 package com.codeit.otboo.domain.follow.entity;
 
 import com.codeit.otboo.domain.common.BaseEntity;
+import com.codeit.otboo.domain.follow.exception.FollowException;
 import com.codeit.otboo.domain.user.entity.User;
 
 import jakarta.persistence.Entity;
@@ -31,7 +32,7 @@ public class Follow extends BaseEntity {
 
 	public static Follow create(User follower, User followee) {
 		if (follower.getId().equals(followee.getId())) {
-			throw new IllegalArgumentException("자기 자신을 팔로우할 수 없습니다.");
+			throw FollowException.selfFollowNotAllowed();
 		}
 		return Follow.builder()
 			.follower(follower)

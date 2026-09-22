@@ -1,11 +1,17 @@
 package com.codeit.otboo.api.follow.service;
 
+import com.codeit.otboo.api.follow.dto.request.FollowCreateRequest;
+import com.codeit.otboo.api.follow.dto.response.FollowDto;
 import com.codeit.otboo.api.follow.dto.response.FollowUserDto;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.domain.follow.entity.Follow;
+import com.codeit.otboo.domain.follow.exception.FollowException;
 import com.codeit.otboo.domain.follow.repository.FollowRepository;
 import com.codeit.otboo.domain.profile.repository.ProfileImageProjection;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
+import com.codeit.otboo.domain.user.entity.User;
+import com.codeit.otboo.domain.user.exception.UserException;
+import com.codeit.otboo.domain.user.repository.UserRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,6 +25,66 @@ public class FollowService {
 
   private final FollowRepository followRepository;
   private final ProfileRepository profileRepository;
+  private final UserRepository userRepository;
+
+  public FollowDto createFollow(FollowCreateRequest request) {
+
+    User follower = userRepository.findById(request.followerId())
+        .orElseThrow(UserException::notFound);
+
+    User followee = userRepository.findById(request.followeeId())
+        .orElseThrow(UserException::notFound);
+
+    if(followRepository.existsByFollowerAndFollowee(follower, followee)) {
+      throw FollowException.duplicate();
+    }
+
+    Follow follow = Follow.create(follower, followee);
+
+    Follow savedFollow = followRepository.save(follow);
+
+    List<UUID> userIds = List.of(
+        savedFollow.getFollower().getId(),
+        savedFollow.getFollowee().getId()
+    );
+
+    List<ProfileImageProjection> profileImages =
+        profileRepository.findProfileImagesByUserIds(userIds);
+
+    String followerProfileImageUrl = profileImages.stream()
+        .filter(image ->
+            image.userId().equals(savedFollow.getFollower().getId())
+        )
+        .map(ProfileImageProjection::profileImageUrl)
+        .findFirst()
+        .orElse(null);
+
+    String followeeProfileImageUrl = profileImages.stream()
+        .filter(image ->
+            image.userId().equals(savedFollow.getFollowee().getId())
+        )
+        .map(ProfileImageProjection::profileImageUrl)
+        .findFirst()
+        .orElse(null);
+
+    FollowUserDto followerDto = new FollowUserDto(
+        savedFollow.getFollower().getId(),
+        savedFollow.getFollower().getName(),
+        followerProfileImageUrl
+    );
+
+    FollowUserDto followeeDto = new FollowUserDto(
+        savedFollow.getFollowee().getId(),
+        savedFollow.getFollowee().getName(),
+        followeeProfileImageUrl
+    );
+
+    return new FollowDto(
+        savedFollow.getId(),
+        followeeDto,
+        followerDto
+    );
+  }
 
   public CursorResponse<FollowUserDto> findFolloweesByFollowerId(
       UUID followerId,
