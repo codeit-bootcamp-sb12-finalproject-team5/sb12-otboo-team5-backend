@@ -12,6 +12,7 @@ import com.codeit.otboo.domain.feed.repository.FeedLikeRepository;
 import com.codeit.otboo.domain.feed.repository.FeedRepository;
 import com.codeit.otboo.domain.notification.entity.NotificationType;
 import com.codeit.otboo.domain.notification.event.FeedCommentNotificationPayload;
+import com.codeit.otboo.domain.notification.event.FeedNotificationCreateEvent;
 import com.codeit.otboo.domain.notification.event.FeedLikeNotificationPayload;
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
 import com.codeit.otboo.domain.outfit.entity.Ootd;
@@ -106,6 +107,31 @@ class FeedServiceTest {
         assertThat(response.likedByMe()).isFalse();
         assertThat(response.weather().skyStatus()).isEqualTo(SkyStatus.CLEAR);
         assertThat(response.weather().temperature().current()).isEqualByComparingTo("20.50");
+    }
+
+    @Test
+    void publishesFeedNotificationSoFollowersAreNotified() {
+        UUID userId = UUID.randomUUID();
+        UUID outfitId = UUID.randomUUID();
+        User user = User.builder().id(userId).name("author").build();
+        Outfit outfit = Outfit.builder().id(outfitId).user(user).category("OUTFIT").build();
+
+        when(outfitRepository.findByIdAndDeletedAtIsNull(outfitId)).thenReturn(Optional.of(outfit));
+        when(feedRepository.existsById(outfitId)).thenReturn(false);
+        when(feedRepository.save(any(Feed.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(outfitClothesRepository.findAllByOutfit_Id(outfitId)).thenReturn(List.of());
+        when(profileRepository.findByUser_Id(userId)).thenReturn(Optional.empty());
+
+        feedService.create(userId, new FeedRequest(userId, outfitId, "오늘의 착장"));
+
+        ArgumentCaptor<NotificationCreateMessage<FeedNotificationCreateEvent>> captor =
+            ArgumentCaptor.forClass(NotificationCreateMessage.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().type()).isEqualTo(NotificationType.FEED_CREATED);
+        assertThat(captor.getValue().payload().feedId()).isEqualTo(outfitId);
+        // 첫 페이지이므로 이어받기 커서가 없어야 한다.
+        assertThat(captor.getValue().payload().afterReceiverId()).isNull();
+        assertThat(captor.getValue().deduplicationKey()).isEqualTo("FEED_CREATED:" + outfitId);
     }
 
     @Test

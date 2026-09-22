@@ -88,6 +88,8 @@ public class FeedService {
             ? ootdRepository.findById(outfit.getId()).orElse(null)
             : null;
 
+        eventPublisher.publishEvent(NotificationEvents.feedCreated(feed.getId()));
+
         return FeedResponse.of(
             feed,
             clothes,
