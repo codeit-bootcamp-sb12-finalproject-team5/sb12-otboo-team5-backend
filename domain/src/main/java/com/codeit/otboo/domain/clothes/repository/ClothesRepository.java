@@ -12,4 +12,6 @@ public interface ClothesRepository extends JpaRepository<Clothes, UUID>, Clothes
 
     List<Clothes> findAllByIdInAndDeletedAtIsNull(Collection<UUID> clothesIds);
 
+    List<Clothes> findAllByUser_IdAndDeletedAtIsNull(UUID userId);
+
 }

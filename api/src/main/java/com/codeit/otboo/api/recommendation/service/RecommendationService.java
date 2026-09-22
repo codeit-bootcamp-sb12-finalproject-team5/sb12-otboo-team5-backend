@@ -4,6 +4,7 @@ import com.codeit.otboo.domain.recommendation.RecommendationType;
 import com.codeit.otboo.api.recommendation.dto.RecommendationResponse;
 import com.codeit.otboo.api.recommendation.dto.RecommendationRequest;
 import com.codeit.otboo.api.recommendation.dto.UserPreferenceRequest;
+import com.codeit.otboo.api.recommendation.preference.PreferenceVectorAsyncService;
 import com.codeit.otboo.api.recommendation.llm.GeminiRecommendationResult;
 import com.codeit.otboo.api.recommendation.llm.LlmRecommendationService;
 import com.codeit.otboo.api.recommendation.history.RecommendationDailyLimitPolicy;
@@ -16,6 +17,8 @@ import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
 import com.codeit.otboo.domain.clothes.repository.ClothesRepository;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
+import com.codeit.otboo.domain.weather.entity.WeatherForecast;
+import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
 import com.codeit.otboo.domain.profile.entity.Profile;
 import com.codeit.otboo.domain.profile.exception.ProfileException;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
@@ -24,7 +27,6 @@ import com.codeit.otboo.domain.weather.dto.WeatherInfoResponse;
 import com.codeit.otboo.domain.weather.exception.WeatherException;
 import com.codeit.otboo.support.openai.clothes.ClothesAnalysisService;
 import com.codeit.otboo.support.storage.S3StorageService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,8 +54,7 @@ public class RecommendationService {
     private final RecommendationRankingService rankingService;
     private final WeatherRepository weatherRepository;
     private final LlmRecommendationService llmRecommendationService;
-    private final ProfileRepository profileRepository;
-    private final ClothesAnalysisService clothesAnalysisService;
+    private final PreferenceVectorAsyncService preferenceVectorInitializationAsyncService;
     private final S3StorageService s3StorageService;
     private final ClothesRepository clothesRepository;
     private final RecommendationDailyLimitPolicy recommendationDailyLimitPolicy;
@@ -256,21 +257,8 @@ public class RecommendationService {
         }
     }
 
-    @Transactional
     public void initializePreferenceVector(UUID userId, UserPreferenceRequest request) {
-        log.info("[recommendation][preference] 선호 벡터 초기화를 시작 userId={}", userId);
-
-        Profile profile = profileRepository.findByUser_Id(userId)
-            .orElseThrow(ProfileException::profileNotFound);
-
-        float[] preferenceVector = clothesAnalysisService.embed(request.toEmbeddingText());
-        profile.updatePreferenceVector(preferenceVector);
-
-        log.info(
-            "[recommendation][preference] 선호 벡터 초기화가 완료 userId={}, vectorDimension={}",
-            userId,
-            preferenceVector == null ? null : preferenceVector.length
-        );
+        preferenceVectorInitializationAsyncService.initialize(userId, request.toEmbeddingText());
     }
 
     private int totalCandidateCount(RankedClothesCandidates ranked) {
