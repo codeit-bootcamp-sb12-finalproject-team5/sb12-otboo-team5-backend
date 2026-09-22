@@ -2,6 +2,7 @@ package com.codeit.otboo.api.clothes;
 
 import com.codeit.otboo.api.clothes.dto.*;
 import com.codeit.otboo.api.common.security.CustomUserDetails;
+import com.codeit.otboo.api.recommendation.preference.PreferenceVectorAsyncService;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.enums.*;
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
@@ -16,9 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -28,6 +32,8 @@ public class ClothesService {
     private final ClothesRepository clothesRepository;
     private final UserRepository userRepository;
     private final S3StorageService s3StorageService;
+    private final EmbeddingAsyncService embeddingAsyncService;
+    private final PreferenceVectorAsyncService preferenceVectorAsyncService;
 
     public List<ClothesAttributeResponse> getAttributes() {
         return List.of(
@@ -46,7 +52,11 @@ public class ClothesService {
         if (!req.ownerId().equals(user.getId())) {
             throw new ClothesException(ErrorCode.INVALID_INPUT_VALUE).addDetail("사용자 Id값 입력이 유효하지 않습니다", null);
         }
-        return save(req, image, user);
+        Clothes clothes = save(req, image, user);
+        UUID clothesId = clothes.getId();
+        String attributeText = clothes.getAttributeText();
+        runAfterCommit(() -> embeddingAsyncService.createClothesEmbedding(clothesId, attributeText));
+        return clothes;
     }
 
     private Clothes save(ClothesRequest req, MultipartFile image, User user) {
@@ -108,6 +118,9 @@ public class ClothesService {
             throw new ClothesException(ErrorCode.CLOTHES_NOT_FOUND).addDetail("이미 삭제된 의상입니다.", null);
         }
 
+        Integer previousPreference = clothes.getPreference();
+        float[] previousAttributeVector = copyOf(clothes.getAttributeVector());
+
         clothes.update(
                 req.name(),
                 req.brand(),
@@ -125,7 +138,22 @@ public class ClothesService {
             clothes.setImageUrl(s3StorageService.saveClothes(image, clothes.getId()));
         }
 
-        return clothesRepository.save(clothes);
+        Clothes updatedClothes = clothesRepository.save(clothes);
+        UUID userId = updatedClothes.getUser().getId();
+        String attributeText = updatedClothes.getAttributeText();
+        Integer updatedPreference = updatedClothes.getPreference();
+        runAfterCommit(() -> embeddingAsyncService.updateClothesEmbedding(clothesId, attributeText));
+        if (!Objects.equals(previousPreference, updatedPreference)) {
+            runAfterCommit(() -> preferenceVectorAsyncService.updateClothesPreferenceContribution(
+                userId,
+                clothesId,
+                previousPreference,
+                updatedPreference,
+                previousAttributeVector
+            ));
+        }
+
+        return updatedClothes;
     }
 
     @Transactional
@@ -135,7 +163,16 @@ public class ClothesService {
         if (!clothes.getUser().getId().equals(getCurrentUserId())) {
             throw new ClothesException(ErrorCode.ACCESS_DENIED).addDetail("삭제대상은 사용자의 의상이 아닙니다.", null);
         }
+        UUID userId = clothes.getUser().getId();
+        Integer preference = clothes.getPreference();
+        float[] attributeVector = copyOf(clothes.getAttributeVector());
         clothes.markDeleted();
+        runAfterCommit(() -> preferenceVectorAsyncService.removeClothesContribution(
+            userId,
+            clothesId,
+            preference,
+            attributeVector
+        ));
     }
 
     private UUID getCurrentUserId() {
@@ -152,6 +189,24 @@ public class ClothesService {
     private User getCurrentUserEntity(UUID userId) {
         return userRepository.findById(userId)
             .orElseThrow(() -> new IllegalStateException("DB에서 사용자를 찾을 수 없습니다."));
+    }
+
+    private void runAfterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
+    }
+
+    private float[] copyOf(float[] vector) {
+        return vector == null ? null : vector.clone();
     }
 
 

@@ -38,16 +38,22 @@ public class Outfit extends SoftDeletableEntity {
 	public Outfit(
 		User user,
 		String name,
+		String category,
 		String description
 	) {
 		this.user = user;
 		this.name = name;
+		this.category = category;
 		this.description = description;
 	}
 
-	public void update(String name, String description) {
+	public void update(String name, String category, String description) {
 		if (name != null) {
 			this.name = name;
+		}
+
+		if (category != null && !category.equals("OOTD") && !this.category.equals("OOTD")) {
+			this.category = category;
 		}
 
 		if (description != null) {

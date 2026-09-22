@@ -1,5 +1,6 @@
 package com.codeit.otboo.batch.notification.config;
 
+import com.codeit.otboo.batch.notification.metrics.WeatherNotificationMetrics;
 import com.codeit.otboo.batch.notification.processor.WeatherNotificationProcessor;
 import com.codeit.otboo.batch.notification.reader.WeatherNotificationGrid;
 import com.codeit.otboo.batch.notification.writer.WeatherNotificationEventWriter;
@@ -113,8 +114,11 @@ public class WeatherNotificationJobConfig {
     }
 
     @Bean
-    public WeatherNotificationEventWriter weatherNotificationEventWriter(NotificationEventPublisher publisher) {
-        return new WeatherNotificationEventWriter(publisher, Clock.systemUTC());
+    public WeatherNotificationEventWriter weatherNotificationEventWriter(
+        NotificationEventPublisher publisher,
+        WeatherNotificationMetrics metrics
+    ) {
+        return new WeatherNotificationEventWriter(publisher, Clock.systemUTC(), metrics);
     }
 
     @Bean

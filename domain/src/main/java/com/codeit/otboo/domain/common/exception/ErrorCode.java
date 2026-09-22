@@ -38,14 +38,25 @@ public enum ErrorCode {
     CLOTHES_ANALYSIS_FAILED(502, "의상 분석에 실패했습니다."),
     INVALID_ATTRIBUTE_VALUE(400, "유효하지 않은 의상 속성입니다."),
     CLOTHES_ATTRIBUTE_PARSE_FAILED(500, "의상 속성작업에 실패했습니다."),
+    SELECTED_CLOTHES_NOT_FOUND(404, "선택한 의상을 찾을 수 없습니다."),
+    SELECTED_CLOTHES_NOT_OWNED(403, "선택한 의상에 대한 권한이 없습니다."),
+    DUPLICATED_SELECTED_CLOTHES(400, "선택한 의상이 중복되어 있습니다."),
+    INVALID_SELECTED_CLOTHES_COMBINATION(400, "선택한 의상 조합이 올바르지 않습니다."),
 
     // ===== 아웃핏 =====
     OUTFIT_NOT_FOUND(404, "Outfit을 찾을 수 없습니다."),
     DUPLICATE_OUTFIT_CLOTHES(409, "Outfit에 동일한 의상이 중복되어 있습니다."),
     RECOMMENDATION_GENERATION_FAILED(502, "추천 생성에 실패했습니다."),
+    OOTD_WEATHER_FORECAST_NOT_FOUND(404, "OOTD의 날씨정보를 찾을 수 없습니다."),
+    OOTD_INVALID_INPUT_VALUE(400, "OOTD 생성을 위한 category, weatherId값이 올바르지 않습니다"),
+    OOTD_NOT_FOUND(404, "OOTD 아웃핏의 정보를 찾을 수 없습니다."),
+    RECOMMENDATION_DAILY_LIMIT_EXCEEDED(429, "오늘의 추천 횟수를 모두 사용했습니다."),
 
-    // ===== 피드 =====
-    // 담당자가 추가
+    // ===== 피드 =====,
+    FEED_ALREADY_EXISTS(409, "해당 Outfit은 이미 피드로 등록되어 있습니다."),
+    FEED_NOT_FOUND(404, "피드를 찾을 수 없습니다."),
+    FEED_ALREADY_LIKED(409, "이미 좋아요한 피드입니다."),
+    FEED_LIKE_NOT_FOUND(404, "좋아요 정보를 찾을 수 없습니다."),
 
     // ===== 날씨 =====
     WEATHER_DATA_UNAVAILABLE(503, "날씨 데이터를 가져올 수 없습니다."),

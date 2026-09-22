@@ -5,6 +5,10 @@ plugins {
 description = 'notification worker'
 
 dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
     implementation project(':domain')
     implementation project(':support')
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'

@@ -1,6 +1,7 @@
 package com.codeit.otboo.batch.weather.config;
 
 import com.codeit.otboo.batch.weather.processor.NormalizedGridResult;
+import com.codeit.otboo.batch.weather.metrics.WeatherCollectionMetrics;
 import com.codeit.otboo.batch.common.exception.BatchException;
 import com.codeit.otboo.batch.weather.processor.WeatherDataCountException;
 import com.codeit.otboo.batch.weather.processor.WeatherDataProcessor;
@@ -13,6 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
+import org.springframework.batch.core.JobParametersBuilder;
+import java.time.OffsetDateTime;
+import com.codeit.otboo.support.weather.util.KmaTimeCalculator;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.JobParametersInvalidException;
@@ -42,11 +46,16 @@ public class WeatherBatchJobConfig {
     private final WeatherJdbcItemWriter weatherJdbcItemWriter;
     private final WeatherSyncStepListener weatherSyncStepListener;
     private final CacheManager cacheManager;
+    private final WeatherCollectionMetrics metrics;
 
     @Bean
     public Job dailyWeatherSyncJob() {
         return new JobBuilder(WeatherBatchExecutionService.JOB_NAME, jobRepository)
-                .incrementer(new RunIdIncrementer())
+                .incrementer(parameters -> new JobParametersBuilder(new RunIdIncrementer().getNext(parameters))
+                        // 서버 시작 시 새 실행은 이전 수집 시각을 승계하지 않습니다.
+                        // 동일 파라미터로 JobLauncher.run을 호출하는 재시작에는 적용되지 않습니다.
+                        .addString("collectionAt", OffsetDateTime.now(KmaTimeCalculator.KST).toString())
+                        .toJobParameters())
                 .validator(parameters -> {
                     if (parameters.getString("collectionAt") == null) return;
                     try {
@@ -60,6 +69,7 @@ public class WeatherBatchJobConfig {
                 })
                 .start(weatherSyncStep())
                 .listener(weatherViewCacheEvictListener())
+                .listener(metrics)
                 .build();
     }
 
@@ -77,6 +87,7 @@ public class WeatherBatchJobConfig {
                 .skip(WeatherDataCountException.class)
                 .skipLimit(Integer.MAX_VALUE)
                 .listener(weatherSyncStepListener)
+                .listener((Object) metrics)
                 .build();
     }
 

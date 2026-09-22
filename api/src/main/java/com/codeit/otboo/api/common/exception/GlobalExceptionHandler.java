@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -40,6 +41,22 @@ public class GlobalExceptionHandler {
         }
 
         log.warn("[VALIDATION] {}", details);
+
+        ErrorCode code = ErrorCode.INVALID_INPUT_VALUE;
+        return ResponseEntity
+                .status(HttpStatus.valueOf(code.getStatus()))
+                .body(ErrorResponse.of(
+                        e.getClass().getSimpleName(),
+                        code.getMessage(),
+                        details));
+    }
+
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ErrorResponse> handleBindException(BindException e) {
+        Map<String, Object> details = new HashMap<>();
+        for (FieldError error : e.getBindingResult().getFieldErrors()) {
+            details.put(error.getField(), error.getDefaultMessage());
+        }
 
         ErrorCode code = ErrorCode.INVALID_INPUT_VALUE;
         return ResponseEntity

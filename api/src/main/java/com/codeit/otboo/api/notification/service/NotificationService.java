@@ -10,6 +10,7 @@ import com.codeit.otboo.domain.notification.repository.NotificationRepository;
 import com.codeit.otboo.domain.notification.repository.NotificationQueryRepository;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,12 @@ public class NotificationService {
             page.sortBy(),
             page.sortDirection()
         );
+    }
+
+    public List<NotificationDto> findMissed(UUID receiverId, UUID lastEventId, int limit) {
+        return queryRepository.findUnreadAfter(receiverId, lastEventId, limit).stream()
+                .map(this::toDto)
+                .toList();
     }
 
     @Transactional

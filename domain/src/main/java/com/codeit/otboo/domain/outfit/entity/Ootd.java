@@ -1,10 +1,12 @@
 package com.codeit.otboo.domain.outfit.entity;
 
-import java.math.BigDecimal;
-
 import com.codeit.otboo.domain.common.UpdatableEntity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import com.codeit.otboo.domain.weather.entity.SkyStatus;
+import com.codeit.otboo.domain.weather.entity.PrecipitationType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -17,6 +19,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "ootd")
 @Getter @SuperBuilder @ToString(callSuper = true)
@@ -28,11 +32,13 @@ public class Ootd extends UpdatableEntity {
 	@JoinColumn(name = "outfit_id")
 	private Outfit outfit;
 
+	@Enumerated(EnumType.STRING)
 	@Column(name = "sky_status", length = 20, nullable = false)
-	private String skyStatus;
+	private SkyStatus skyStatus;
 
+	@Enumerated(EnumType.STRING)
 	@Column(name = "precipitation_type", length = 20, nullable = false)
-	private String precipitationType;
+	private PrecipitationType precipitationType;
 
 	@Column(name = "precipitation_amount", precision = 8, scale = 2, nullable = false)
 	private BigDecimal precipitationAmount;

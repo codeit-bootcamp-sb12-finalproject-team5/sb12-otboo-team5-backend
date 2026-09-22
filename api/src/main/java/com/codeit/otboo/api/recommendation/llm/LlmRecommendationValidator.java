@@ -1,5 +1,6 @@
 package com.codeit.otboo.api.recommendation.llm;
 
+import com.codeit.otboo.domain.recommendation.OutfitFingerprintGenerator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,8 +18,17 @@ public class LlmRecommendationValidator {
             return ValidationResult.invalid(ValidationFailureReason.INVALID_RANK);
 
         Map<UUID, String> categories = new HashMap<>();
+        Map<UUID, String> roles = new HashMap<>();
+        Set<UUID> selectedClothesIds = new HashSet<>();
+        for (LlmRecommendationRequest.LlmClothesCandidate selectedClothes : request.selectedClothes()) {
+            categories.put(selectedClothes.id(), selectedClothes.category());
+            roles.put(selectedClothes.id(), selectedClothes.role());
+            selectedClothesIds.add(selectedClothes.id());
+        }
+
         for (LlmRecommendationRequest.LlmClothesCandidate candidate : request.candidates()) {
             categories.put(candidate.id(), candidate.category());
+            roles.put(candidate.id(), candidate.role());
         }
 
         Set<Set<UUID>> outfitSets = new HashSet<>();
@@ -37,31 +47,59 @@ public class LlmRecommendationValidator {
             if (!categories.keySet().containsAll(ids))
                 return ValidationResult.invalid(ValidationFailureReason.UNKNOWN_CLOTHES_ID);
 
+            if (!ids.containsAll(selectedClothesIds))
+                return ValidationResult.invalid(ValidationFailureReason.MISSING_SELECTED_CLOTHES);
+
             if (ids.stream().anyMatch(id -> !isAllowedCategory(categories.get(id))))
                 return ValidationResult.invalid(ValidationFailureReason.INVALID_CATEGORY);
 
             if (!outfitSets.add(Set.copyOf(ids)))
                 return ValidationResult.invalid(ValidationFailureReason.DUPLICATED_OUTFIT);
 
-            long tops = count(categories, ids, "TOP");
-            long bottoms = count(categories, ids, "BOTTOM");
-            long outers = count(categories, ids, "OUTER");
-            long shoes = count(categories, ids, "SHOES");
-            if (tops < 1) return ValidationResult.invalid(ValidationFailureReason.INVALID_TOP_COUNT);
-            if (bottoms != 1) return ValidationResult.invalid(ValidationFailureReason.INVALID_BOTTOM_COUNT);
-            if (outers > 1) return ValidationResult.invalid(ValidationFailureReason.INVALID_OUTER_COUNT);
-            if (shoes > 1) return ValidationResult.invalid(ValidationFailureReason.INVALID_SHOES_COUNT);
+            long tops = count(roles, ids, "TOP");
+            long bottoms = count(roles, ids, "BOTTOM");
+            long dresses = count(roles, ids, "ONE_PIECE");
+            boolean hasTwoPiece = tops >= 1 && bottoms == 1 && dresses == 0;
+            boolean hasOnePiece = dresses == 1 && tops == 0 && bottoms == 0;
+            if (!hasTwoPiece && !hasOnePiece) {
+                return ValidationResult.invalid(ValidationFailureReason.INVALID_BASIC_OUTFIT);
+            }
+
+            if (count(categories, ids, "OUTER") > 1
+                || count(categories, ids, "SHOES") > 1
+                || count(categories, ids, "HAT") > 1
+                || count(categories, ids, "BAG") > 1
+                || count(categories, ids, "ACCESSORY") > 1) {
+                return ValidationResult.invalid(ValidationFailureReason.INVALID_OPTIONAL_COUNT);
+            }
         }
 
         return ValidationResult.valid();
     }
 
-    private long count(Map<UUID, String> categories, List<UUID> ids, String category) {
-        return ids.stream().filter(id -> category.equals(categories.get(id))).count();
+    public LlmRecommendationResponse removeRecentDuplicateOutfits(
+        LlmRecommendationResponse response,
+        Set<String> recentFingerprints
+    ) {
+        List<LlmRecommendationResponse.GeneratedOutfit> filtered = response.outfits().stream()
+            .filter(outfit -> !recentFingerprints.contains(OutfitFingerprintGenerator.generate(outfit.clothesIds())))
+            .toList();
+        return new LlmRecommendationResponse(java.util.stream.IntStream.range(0, filtered.size())
+            .mapToObj(index -> {
+                LlmRecommendationResponse.GeneratedOutfit outfit = filtered.get(index);
+                return new LlmRecommendationResponse.GeneratedOutfit(
+                    index + 1, outfit.clothesIds(), outfit.reason(), outfit.styleTags());
+            }).toList());
+    }
+
+    private long count(Map<UUID, String> values, List<UUID> ids, String value) {
+        return ids.stream().filter(id -> value.equals(values.get(id))).count();
     }
 
     private boolean isAllowedCategory(String category) {
-        return "TOP".equals(category) || "BOTTOM".equals(category) || "OUTER".equals(category) || "SHOES".equals(category);
+        return "TOP".equals(category) || "PANTS".equals(category) || "SKIRT".equals(category)
+            || "DRESS".equals(category) || "OUTER".equals(category) || "SHOES".equals(category)
+            || "HAT".equals(category) || "BAG".equals(category) || "ACCESSORY".equals(category);
     }
 
     record ValidationResult(ValidationFailureReason reason) {

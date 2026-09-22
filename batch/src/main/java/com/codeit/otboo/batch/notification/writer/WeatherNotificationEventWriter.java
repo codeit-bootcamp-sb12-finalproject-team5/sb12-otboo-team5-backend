@@ -1,5 +1,6 @@
 package com.codeit.otboo.batch.notification.writer;
 
+import com.codeit.otboo.batch.notification.metrics.WeatherNotificationMetrics;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
 import com.codeit.otboo.domain.notification.event.WeatherNotificationCreateEvent;
@@ -21,6 +22,7 @@ public class WeatherNotificationEventWriter implements
 
     private final NotificationEventPublisher publisher;
     private final Clock clock;
+    private final WeatherNotificationMetrics metrics;
 
     @Override
     public void write(Chunk<? extends NotificationCreateMessage<WeatherNotificationCreateEvent>> chunk) {
@@ -36,6 +38,7 @@ public class WeatherNotificationEventWriter implements
             try {
                 publisher.publishCreate(message.payload().weatherGridId().toString(), message)
                         .get(15, TimeUnit.SECONDS);
+                metrics.recordPublished();
             } catch (InterruptedException exception) {
                 Thread.currentThread().interrupt();
                 throw new NotificationException(ErrorCode.NOTIFICATION_PROCESSING_INTERRUPTED, exception);

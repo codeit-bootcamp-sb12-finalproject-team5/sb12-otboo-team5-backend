@@ -48,7 +48,7 @@ services:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
       retries: 20
     restart: always

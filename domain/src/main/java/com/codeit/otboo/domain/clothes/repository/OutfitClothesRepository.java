@@ -14,6 +14,30 @@ public interface OutfitClothesRepository extends JpaRepository<OutfitClothes, UU
 
     List<OutfitClothes> findAllByOutfit_IdIn(List<UUID> outfitIds);
 
+    @Query("""
+        select outfitClothes.clothes.id as clothesId,
+            count(outfitClothes.id) as usageCount
+        from OutfitClothes outfitClothes
+        where outfitClothes.outfit.user.id = :userId
+          and outfitClothes.outfit.deletedAt is null
+          and outfitClothes.clothes.user.id = :userId
+          and outfitClothes.clothes.deletedAt is null
+        group by outfitClothes.clothes.id
+        """)
+    List<OutfitClothesUsageCount> countActiveOutfitUsageByUserId(@Param("userId") UUID userId);
+
+    @Query("""
+        select count(outfitClothes.id)
+        from OutfitClothes outfitClothes
+        where outfitClothes.outfit.user.id = :userId
+          and outfitClothes.outfit.deletedAt is null
+          and outfitClothes.clothes.id = :clothesId
+        """)
+    long countActiveOutfitUsageByUserIdAndClothesId(
+        @Param("userId") UUID userId,
+        @Param("clothesId") UUID clothesId
+    );
+
     @Modifying(flushAutomatically = true)
     @Query("delete from OutfitClothes outfitClothes where outfitClothes.outfit.id = :outfitId")
     void deleteAllByOutfitId(@Param("outfitId") UUID outfitId);

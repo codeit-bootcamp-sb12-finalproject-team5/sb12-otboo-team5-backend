@@ -6,6 +6,7 @@ import com.codeit.otboo.domain.notification.entity.QNotification;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -45,6 +46,20 @@ public class NotificationQueryRepositoryImpl implements NotificationQueryReposit
         return new CursorResponse<>(data, last == null ? null : last.getCreatedAt().toString(),
                 last == null ? null : last.getId(), hasNext,
                 totalCount == null ? 0L : totalCount, "createdAt", "DESCENDING");
+    }
+
+    // 알림 id는 UUIDv7이라 생성 순서대로 커진다. 그래서 id 하나로 "그 이후"를 고를 수 있다.
+    @Override
+    public List<Notification> findUnreadAfter(UUID receiverId, UUID lastEventId, int limit) {
+        QNotification notification = QNotification.notification;
+
+        return queryFactory.selectFrom(notification)
+                .where(notification.receiver.id.eq(receiverId),
+                        notification.readAt.isNull(),
+                        notification.id.gt(lastEventId))
+                .orderBy(notification.id.asc())
+                .limit(limit)
+                .fetch();
     }
 
     private BooleanExpression cursorCondition(

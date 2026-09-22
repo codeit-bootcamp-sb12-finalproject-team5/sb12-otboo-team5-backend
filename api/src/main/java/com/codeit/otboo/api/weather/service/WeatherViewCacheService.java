@@ -1,5 +1,7 @@
 package com.codeit.otboo.api.weather.service;
 
+import com.codeit.otboo.domain.weather.entity.PrecipitationType;
+import com.codeit.otboo.domain.weather.entity.SkyStatus;
 import com.codeit.otboo.api.weather.dto.response.HumidityDto;
 import com.codeit.otboo.api.weather.dto.response.PrecipitationDto;
 import com.codeit.otboo.api.weather.dto.response.TemperatureDto;
@@ -14,7 +16,6 @@ import com.codeit.otboo.api.weather.dto.response.WeatherGridDto;
 import com.codeit.otboo.domain.weather.entity.WeatherObservation;
 import com.codeit.otboo.support.weather.client.KmaClient;
 import com.codeit.otboo.support.common.config.CacheConfig;
-import com.codeit.otboo.support.weather.dto.response.KmaForecastBundleDto;
 import com.codeit.otboo.support.weather.normalize.KmaForecastNormalizer;
 import com.codeit.otboo.support.weather.util.KmaTimeCalculator;
 import java.math.BigDecimal;
@@ -59,16 +60,31 @@ public class WeatherViewCacheService {
             targetAt.truncatedTo(ChronoUnit.DAYS).plusDays(6)
         );
 
-        if (forecasts.stream().noneMatch(forecast -> forecast.getForecastAt().isEqual(targetAt))) {
-            KmaForecastBundleDto bundle = kmaClient.findLatestVillageForecast(grid.nx(), grid.ny())
-                .orElseThrow(() -> new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE));
+        boolean missingTarget = forecasts.stream()
+            .noneMatch(forecast -> forecast.getForecastAt().isEqual(targetAt));
 
-            List<WeatherForecast> incoming = KmaForecastNormalizer.normalizeForecasts(WeatherGrid.builder().id(grid.id()).build(), bundle);
+        LocalDate fourthDate = targetAt.withOffsetSameInstant(KmaTimeCalculator.KST)
+            .toLocalDate().plusDays(3);
 
-            if (incoming.stream().noneMatch(forecast -> forecast.getForecastAt().isEqual(targetAt))) {
+        boolean missingFourthDate = forecasts.stream().noneMatch(forecast -> forecast.getForecastAt()
+            .withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDate().equals(fourthDate));
+
+        if (missingTarget || missingFourthDate) {
+            var bundle = kmaClient.findLatestVillageForecast(grid.nx(), grid.ny());
+
+            if (bundle.isPresent()) {
+                List<WeatherForecast> incoming = KmaForecastNormalizer.normalizeForecasts(
+                    WeatherGrid.builder().id(grid.id()).build(), bundle.get());
+
+                if (missingTarget && incoming.stream()
+                        .noneMatch(forecast -> forecast.getForecastAt().isEqual(targetAt))) {
+                    throw new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE);
+                }
+
+                weatherRepository.upsertForecasts(incoming);
+            } else if (missingTarget) {
                 throw new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE);
             }
-            weatherRepository.upsertForecasts(incoming);
         }
 
         OffsetDateTime previousAt = targetAt.minusDays(1);
@@ -152,10 +168,10 @@ public class WeatherViewCacheService {
                     .max(BigDecimal::compareTo)
                     .orElse(BigDecimal.ZERO);
 
-            String precipitationType = day.all().stream()
+            PrecipitationType precipitationType = day.all().stream()
                     .map(WeatherForecast::getPrecipitationType)
-                    .filter(type -> type != null && !type.isBlank() && !"NONE".equals(type))
-                    .findFirst().orElse("NONE");
+                    .filter(type -> type != null && type != PrecipitationType.NONE)
+                    .findFirst().orElse(PrecipitationType.NONE);
 
             BigDecimal wind = value(current.getWindSpeed());
 
@@ -164,7 +180,7 @@ public class WeatherViewCacheService {
                     current.getId(),
                     current.getForecastedAt().withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDateTime(),
                     current.getForecastAt().withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDateTime(),
-                    blankDefault(current.getSkyStatus(), "CLOUDY"),
+                    orDefault(current.getSkyStatus(), SkyStatus.CLOUDY),
                     new PrecipitationDto(precipitationType, rainAmount, probability),
                     new HumidityDto(value(current.getHumidity()), humidityDiff),
                     new TemperatureDto(value(current.getTemperature()), temperatureDiff, min, max),
@@ -217,8 +233,8 @@ public class WeatherViewCacheService {
         return value == null ? BigDecimal.ZERO : value;
     }
 
-    private String blankDefault(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
+    private SkyStatus orDefault(SkyStatus value, SkyStatus fallback) {
+        return value == null ? fallback : value;
     }
 
     private record SelectedDay(

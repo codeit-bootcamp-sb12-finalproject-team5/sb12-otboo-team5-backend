@@ -1,11 +1,10 @@
 package com.codeit.otboo.api.outfit;
 
-import com.codeit.otboo.api.outfit.dto.OutfitCreateRequest;
-import com.codeit.otboo.api.outfit.dto.OutfitCreateResponse;
-import com.codeit.otboo.api.outfit.dto.OutfitDetailResponse;
-import com.codeit.otboo.api.outfit.dto.OutfitListResponse;
-import com.codeit.otboo.api.outfit.dto.OutfitUpdateRequest;
-import com.codeit.otboo.api.outfit.dto.OutfitUpdateResponse;
+import com.codeit.otboo.api.outfit.dto.*;
+import com.codeit.otboo.api.recommendation.preference.ClothesContributionSnapshot;
+import com.codeit.otboo.api.recommendation.preference.PreferenceVectorAsyncService;
+import com.codeit.otboo.api.recommendation.temperature.TemperatureAdjustmentPolicy;
+import com.codeit.otboo.api.weather.repository.WeatherRepository;
 import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.entity.OutfitClothes;
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
@@ -13,23 +12,25 @@ import com.codeit.otboo.domain.clothes.repository.ClothesRepository;
 import com.codeit.otboo.domain.clothes.repository.OutfitClothesRepository;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
+import com.codeit.otboo.domain.outfit.entity.Ootd;
 import com.codeit.otboo.domain.outfit.entity.Outfit;
 import com.codeit.otboo.domain.outfit.exception.OutfitException;
+import com.codeit.otboo.domain.outfit.repository.OotdRepository;
 import com.codeit.otboo.domain.outfit.repository.OutfitRepository;
 import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
+import com.codeit.otboo.domain.weather.dto.WeatherInfoResponse;
+import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
+import com.codeit.otboo.support.storage.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,19 +40,53 @@ public class OutfitService {
     private final OutfitClothesRepository outfitClothesRepository;
     private final ClothesRepository clothesRepository;
     private final UserRepository userRepository;
+    private final WeatherForecastRepository weatherForecastRepository;
+    private final WeatherRepository weatherRepository;
+    private final OotdRepository ootdRepository;
+    private final TemperatureAdjustmentPolicy temperatureAdjustmentPolicy;
+    private final S3StorageService s3StorageService;
+    private final PreferenceVectorAsyncService preferenceVectorAsyncService;
 
     @Transactional
     public OutfitCreateResponse create(UUID userId, OutfitCreateRequest request) {
         validateNoDuplicateClothesIds(request.clothesIds());
 
+        boolean isOotd = "OOTD".equals(request.category());
+        boolean hasWeatherId = request.weatherId() != null;
+        if (isOotd != hasWeatherId) {
+            throw new OutfitException(ErrorCode.OOTD_INVALID_INPUT_VALUE);
+        }
+
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new OutfitException(ErrorCode.USER_NOT_FOUND));
         List<Clothes> clothes = getClothesInRequestOrder(request.clothesIds());
 
-        Outfit outfit = outfitRepository.save(new Outfit(user, request.name(), request.description()));
+        Outfit outfit = outfitRepository.save(new Outfit(user, request.name(), request.category(), request.description()));
         outfitClothesRepository.saveAll(clothes.stream()
             .map(clothesItem -> new OutfitClothes(outfit, clothesItem))
             .toList());
+
+        if (isOotd) {
+            WeatherInfoResponse weatherForecast = weatherRepository.findById(request.weatherId())
+                    .orElseThrow(() -> new OutfitException(ErrorCode.OOTD_WEATHER_FORECAST_NOT_FOUND));
+            ootdRepository.save(Ootd.builder()
+                    .outfit(outfit)
+                    .skyStatus(weatherForecast.skyStatus())
+                    .precipitationType(weatherForecast.precipitationType())
+                    .precipitationAmount(weatherForecast.precipitationAmount())
+                    .precipitationProbability(weatherForecast.precipitationProbability())
+                    .temperatureCurrent(weatherForecast.temperatureCurrent())
+                    .temperatureComparedToDayBefore(weatherForecast.temperatureComparedToDayBefore())
+                    .temperatureMin(weatherForecast.temperatureMin())
+                    .temperatureMax(weatherForecast.temperatureMax())
+                    .build());
+        }
+
+        List<ClothesContributionSnapshot> clothesContributions = snapshotsOf(clothes);
+        runAfterCommit(() -> preferenceVectorAsyncService.increaseOutfitUsageContributions(
+            userId,
+            clothesContributions
+        ));
 
         return OutfitCreateResponse.of(outfit, clothes);
     }
@@ -68,7 +103,13 @@ public class OutfitService {
         List<Clothes> clothes = outfitClothesRepository.findAllByOutfit_Id(outfitId).stream()
             .map(OutfitClothes::getClothes)
             .toList();
-        return OutfitDetailResponse.of(outfit, clothes);
+
+        Ootd ootd = null;
+        if (outfit.getCategory().equals("OOTD")) {
+            ootd = ootdRepository.findById(outfit.getId())
+                    .orElseThrow(() -> new OutfitException(ErrorCode.OOTD_NOT_FOUND));
+        }
+        return OutfitDetailResponse.of(outfit, clothes, ootd, s3StorageService::getPresignedUrl);
     }
 
     @Transactional
@@ -80,7 +121,13 @@ public class OutfitService {
             throw new OutfitException(ErrorCode.ACCESS_DENIED);
         }
 
-        outfit.update(request.name(), request.description());
+        List<Clothes> previousClothes = request.clothesIds() == null
+            ? List.of()
+            : outfitClothesRepository.findAllByOutfit_Id(outfitId).stream()
+                .map(OutfitClothes::getClothes)
+                .toList();
+
+        outfit.update(request.name(), request.description(), request.category());
         outfitRepository.saveAndFlush(outfit);
 
         List<Clothes> clothes;
@@ -97,6 +144,16 @@ public class OutfitService {
                 .toList();
         }
 
+        if (request.clothesIds() != null) {
+            List<ClothesContributionSnapshot> addedClothes = snapshotsOf(clothesOnlyIn(clothes, previousClothes));
+            List<ClothesContributionSnapshot> removedClothes = snapshotsOf(clothesOnlyIn(previousClothes, clothes));
+            runAfterCommit(() -> preferenceVectorAsyncService.updateOutfitUsageContributions(
+                userId,
+                addedClothes,
+                removedClothes
+            ));
+        }
+
         return OutfitUpdateResponse.of(outfit, clothes);
     }
 
@@ -109,7 +166,16 @@ public class OutfitService {
             throw new OutfitException(ErrorCode.ACCESS_DENIED);
         }
 
+        List<ClothesContributionSnapshot> clothesContributions = snapshotsOf(
+            outfitClothesRepository.findAllByOutfit_Id(outfitId).stream()
+                .map(OutfitClothes::getClothes)
+                .toList()
+        );
         outfit.markDeleted();
+        runAfterCommit(() -> preferenceVectorAsyncService.decreaseOutfitUsageContributions(
+            userId,
+            clothesContributions
+        ));
     }
 
     @Transactional(readOnly = true)
@@ -132,8 +198,19 @@ public class OutfitService {
             ));
 
         List<OutfitListResponse> data = outfits.stream()
-            .map(outfit -> OutfitListResponse.of(
-                outfit, clothesByOutfitId.getOrDefault(outfit.getId(), List.of())))
+            .map(outfit -> {
+                Ootd ootd = null;
+                if (outfit.getCategory().equals("OOTD")) {
+                    ootd = ootdRepository.findById(outfit.getId())
+                            .orElseThrow(() -> new OutfitException(ErrorCode.OOTD_NOT_FOUND));
+                }
+                return OutfitListResponse.of(
+                        outfit,
+                        clothesByOutfitId.getOrDefault(outfit.getId(), List.of()),
+                        ootd,
+                        s3StorageService::getPresignedUrl
+                );
+            })
             .toList();
 
         UUID nextOutfitId = hasNext ? outfits.get(outfits.size() - 1).getId() : null;
@@ -168,5 +245,30 @@ public class OutfitService {
             throw new ClothesException(ErrorCode.CLOTHES_NOT_FOUND);
         }
         return clothesIds.stream().map(clothesById::get).toList();
+    }
+
+    private List<Clothes> clothesOnlyIn(List<Clothes> source, List<Clothes> compared) {
+        Set<UUID> comparedClothesIds = compared.stream().map(Clothes::getId).collect(Collectors.toSet());
+        return source.stream()
+            .filter(clothes -> !comparedClothesIds.contains(clothes.getId()))
+            .toList();
+    }
+
+    private List<ClothesContributionSnapshot> snapshotsOf(List<Clothes> clothes) {
+        return clothes.stream().map(ClothesContributionSnapshot::from).toList();
+    }
+
+    private void runAfterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
     }
 }
