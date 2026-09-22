@@ -19,9 +19,9 @@ import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.profile.entity.Profile;
 import com.codeit.otboo.domain.profile.exception.ProfileException;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
-import com.codeit.otboo.domain.weather.entity.WeatherForecast;
+import com.codeit.otboo.api.weather.repository.WeatherRepository;
+import com.codeit.otboo.domain.weather.dto.WeatherInfoResponse;
 import com.codeit.otboo.domain.weather.exception.WeatherException;
-import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
 import com.codeit.otboo.support.openai.clothes.ClothesAnalysisService;
 import com.codeit.otboo.support.storage.S3StorageService;
 import jakarta.transaction.Transactional;
@@ -50,7 +50,7 @@ public class RecommendationService {
     );
 
     private final RecommendationRankingService rankingService;
-    private final WeatherForecastRepository weatherForecastRepository;
+    private final WeatherRepository weatherRepository;
     private final LlmRecommendationService llmRecommendationService;
     private final ProfileRepository profileRepository;
     private final ClothesAnalysisService clothesAnalysisService;
@@ -141,7 +141,7 @@ public class RecommendationService {
             return new RecommendationResponse(List.of());
         }
 
-        WeatherForecast weather = weatherForecastRepository.findById(weatherId)
+        WeatherInfoResponse weather = weatherRepository.findById(weatherId)
             .orElseThrow(() -> new WeatherException(ErrorCode.WEATHER_DATA_UNAVAILABLE));
 
         log.info(
