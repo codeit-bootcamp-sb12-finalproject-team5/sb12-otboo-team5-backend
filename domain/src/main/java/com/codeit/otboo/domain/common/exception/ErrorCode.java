@@ -47,6 +47,7 @@ public enum ErrorCode {
     OUTFIT_NOT_FOUND(404, "Outfit을 찾을 수 없습니다."),
     DUPLICATE_OUTFIT_CLOTHES(409, "Outfit에 동일한 의상이 중복되어 있습니다."),
     RECOMMENDATION_GENERATION_FAILED(502, "추천 생성에 실패했습니다."),
+    RECOMMENDATION_GENERATION_TIMEOUT(504, "추천 생성 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요."),
     OOTD_WEATHER_FORECAST_NOT_FOUND(404, "OOTD의 날씨정보를 찾을 수 없습니다."),
     OOTD_INVALID_INPUT_VALUE(400, "OOTD 생성을 위한 category, weatherId값이 올바르지 않습니다"),
     OOTD_NOT_FOUND(404, "OOTD 아웃핏의 정보를 찾을 수 없습니다."),

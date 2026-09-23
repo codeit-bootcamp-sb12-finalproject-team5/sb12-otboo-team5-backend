@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RecommendationDailyLimitPolicy {
     private static final ZoneId SERVICE_ZONE = ZoneId.of("Asia/Seoul");
-    private static final int OOTD_DAILY_LIMIT = 3;
-    private static final int OUTFIT_DAILY_LIMIT = 5;
+    private static final int OOTD_DAILY_LIMIT = 100;
+    private static final int OUTFIT_DAILY_LIMIT = 100;
 
     private final RecommendationRequestHistoryRepository requestHistoryRepository;
 
