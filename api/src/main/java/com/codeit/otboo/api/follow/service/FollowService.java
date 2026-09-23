@@ -100,14 +100,16 @@ public class FollowService {
       String cursor,
       UUID idAfter,
       int limit,
-      Sort.Direction direction
+      Sort.Direction direction,
+      String nameLike
   ) {
     List<Follow> follows = followRepository.findFolloweesByFollowerId(
         followerId,
         cursor,
         idAfter,
         limit + 1,
-        direction
+        direction,
+        nameLike
     );
 
     boolean hasNext = follows.size() > limit;
@@ -173,14 +175,16 @@ public class FollowService {
       String cursor,
       UUID idAfter,
       int limit,
-      Sort.Direction direction
+      Sort.Direction direction,
+      String nameLike
   ) {
     List<Follow> follows = followRepository.findFollowersByFolloweeId(
         followeeId,
         cursor,
         idAfter,
         limit + 1,
-        direction
+        direction,
+        nameLike
     );
 
     boolean hasNext = follows.size() > limit;
