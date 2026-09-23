@@ -1,13 +1,11 @@
 package com.codeit.otboo.api.weather.repository;
 
+import com.codeit.otboo.api.weather.util.WeatherViewCalculator;
+
 import com.codeit.otboo.domain.weather.dto.WeatherInfoResponse;
-import com.codeit.otboo.domain.weather.entity.PrecipitationType;
-import com.codeit.otboo.domain.weather.entity.SkyStatus;
 import com.codeit.otboo.support.weather.util.KmaTimeCalculator;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.Objects;
 import com.codeit.otboo.domain.weather.entity.WeatherForecast;
 import com.codeit.otboo.domain.weather.entity.WeatherGrid;
 import com.codeit.otboo.domain.weather.entity.WeatherObservation;
@@ -75,17 +73,21 @@ public class WeatherRepository {
 
         for (var group : grouped.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
             gridRepository.findByIdForUpdate(group.getKey()).orElseThrow();
+
             List<OffsetDateTime> observedTimes = group.getValue().stream()
                     .map(WeatherObservation::getObservedAt)
                     .toList();
+
             Map<Instant, WeatherObservation> existingByTime = observationRepository
                     .findByGrid_IdAndObservedAtIn(group.getKey(), observedTimes).stream()
                     .collect(Collectors.toMap(
                             observation -> observation.getObservedAt().toInstant(), observation -> observation));
+
             List<WeatherObservation> newObservations = new ArrayList<>();
 
             for (WeatherObservation incoming : group.getValue()) {
                 WeatherObservation existing = existingByTime.get(incoming.getObservedAt().toInstant());
+
                 if (existing == null) {
                     newObservations.add(incoming);
                     existingByTime.put(incoming.getObservedAt().toInstant(), incoming);
@@ -93,6 +95,7 @@ public class WeatherRepository {
                     existing.updateFrom(incoming);
                 }
             }
+
             observationRepository.saveAll(newObservations);
         }
     }
@@ -107,17 +110,21 @@ public class WeatherRepository {
 
         for (var group : grouped.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
             gridRepository.findByIdForUpdate(group.getKey()).orElseThrow();
+
             List<OffsetDateTime> forecastTimes = group.getValue().stream()
                     .map(WeatherForecast::getForecastAt)
                     .toList();
+
             Map<Instant, WeatherForecast> existingByTime = forecastRepository
                     .findByGrid_IdAndForecastAtIn(group.getKey(), forecastTimes).stream()
                     .collect(Collectors.toMap(
                             forecast -> forecast.getForecastAt().toInstant(), forecast -> forecast));
+
             List<WeatherForecast> newForecasts = new ArrayList<>();
 
             for (WeatherForecast incoming : group.getValue()) {
                 WeatherForecast existing = existingByTime.get(incoming.getForecastAt().toInstant());
+
                 if (existing == null) {
                     newForecasts.add(incoming);
                     existingByTime.put(incoming.getForecastAt().toInstant(), incoming);
@@ -125,6 +132,7 @@ public class WeatherRepository {
                     existing.updateIfNewer(incoming);
                 }
             }
+
             forecastRepository.saveAll(newForecasts);
         }
     }
@@ -147,63 +155,31 @@ public class WeatherRepository {
     }
 
     private WeatherInfoResponse toWeatherInfo(WeatherForecast forecast) {
-        BigDecimal current = forecast.getTemperature();
-        BigDecimal min = forecast.getMinTemperature();
-        BigDecimal max = forecast.getMaxTemperature();
+        OffsetDateTime now = OffsetDateTime.now(KmaTimeCalculator.KST);
+        OffsetDateTime dayStart = forecast.getForecastAt()
+            .withOffsetSameInstant(KmaTimeCalculator.KST).truncatedTo(ChronoUnit.DAYS);
 
-        if (min == null || max == null) {
-            List<BigDecimal> temperatures = sameDayTemperatures(forecast);
-            if (min == null) {
-                min = temperatures.stream().min(BigDecimal::compareTo).orElse(current);
-            }
-            if (max == null) {
-                max = temperatures.stream().max(BigDecimal::compareTo).orElse(current);
-            }
+        UUID gridId = forecast.getGrid().getId();
+        List<WeatherForecast> daily = forecastRepository.findRange(gridId, dayStart, dayStart.plusDays(1));
+
+        if (daily.isEmpty()) daily = List.of(forecast);
+
+        BigDecimal previous;
+
+        if (dayStart.toLocalDate().equals(now.toLocalDate())) {
+            previous = observationRepository.findByGrid_IdAndObservedAt(
+                    gridId, forecast.getForecastAt().minusDays(1))
+                .map(WeatherObservation::getTemperature).orElse(null);
+        } else {
+            List<WeatherForecast> previousDay = forecastRepository.findRange(
+                gridId, dayStart.minusDays(1), dayStart);
+
+            OffsetDateTime desired = dayStart.minusDays(1).with(
+                WeatherViewCalculator.forecastSlotForToday(now).toLocalTime());
+            previous = WeatherViewCalculator.representative(previousDay, desired)
+                .map(WeatherForecast::getTemperature).orElse(null);
         }
 
-        return new WeatherInfoResponse(
-                forecast.getSkyStatus() == null ? SkyStatus.CLOUDY : forecast.getSkyStatus(),
-                forecast.getPrecipitationType() == null
-                        ? PrecipitationType.NONE : forecast.getPrecipitationType(),
-                zeroIfNull(forecast.getPrecipitationAmount()),
-                zeroIfNull(forecast.getPrecipitationProbability()),
-                current,
-                comparedToDayBefore(forecast),
-                min,
-                max
-        );
-    }
-
-    private List<BigDecimal> sameDayTemperatures(WeatherForecast forecast) {
-        OffsetDateTime dayStart = forecast.getForecastAt()
-                .withOffsetSameInstant(KmaTimeCalculator.KST)
-                .truncatedTo(ChronoUnit.DAYS);
-
-        return forecastRepository.findRange(forecast.getGrid().getId(), dayStart, dayStart.plusDays(1))
-                .stream()
-                .map(WeatherForecast::getTemperature)
-                .filter(Objects::nonNull)
-                .toList();
-    }
-
-    private BigDecimal comparedToDayBefore(WeatherForecast forecast) {
-        UUID gridId = forecast.getGrid().getId();
-        OffsetDateTime dayBefore = forecast.getForecastAt().minusDays(1);
-
-        LocalDate forecastDate = forecast.getForecastAt()
-                .withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDate();
-        LocalDate today = OffsetDateTime.now(KmaTimeCalculator.KST).toLocalDate();
-
-        BigDecimal previous = forecastDate.isEqual(today)
-                ? observationRepository.findByGrid_IdAndObservedAt(gridId, dayBefore)
-                        .map(WeatherObservation::getTemperature).orElse(null)
-                : forecastRepository.findByGrid_IdAndForecastAtIn(gridId, List.of(dayBefore))
-                        .stream().findFirst().map(WeatherForecast::getTemperature).orElse(null);
-
-        return previous == null ? null : forecast.getTemperature().subtract(previous);
-    }
-
-    private BigDecimal zeroIfNull(BigDecimal value) {
-        return value == null ? BigDecimal.ZERO : value;
+        return WeatherViewCalculator.calculate(forecast, daily, previous);
     }
 }

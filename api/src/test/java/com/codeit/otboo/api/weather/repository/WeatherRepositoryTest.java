@@ -133,8 +133,8 @@ class WeatherRepositoryTest {
 
         assertThat(info.temperatureMin()).isEqualByComparingTo("10");
         assertThat(info.temperatureMax()).isEqualByComparingTo("25");
-        // 이미 값이 있으면 그날 예보를 뒤질 이유가 없다.
-        verify(forecasts, never()).findRange(any(), any(), any());
+        // 강수 집계를 위해 최저·최고온도가 있어도 당일 데이터는 조회합니다.
+        verify(forecasts).findRange(any(), any(), any());
     }
 
     // 단기예보는 최저/최고를 하루 중 특정 슬롯에만 담아 준다. 다른 슬롯을 집으면 비어 있다.
@@ -174,8 +174,8 @@ class WeatherRepositoryTest {
         var at = TODAY_NOON.plusDays(2);
         var forecast = forecast(at, "18", "10", "25");
         when(forecasts.findById(forecast.getId())).thenReturn(Optional.of(forecast));
-        when(forecasts.findByGrid_IdAndForecastAtIn(GRID.getId(), List.of(at.minusDays(1))))
-                .thenReturn(List.of(forecast(at.minusDays(1), "20", null, null)));
+        when(forecasts.findRange(any(), any(), any()))
+                .thenReturn(List.of(forecast), List.of(forecast(at.minusDays(1), "20", null, null)));
 
         var info = repository.findById(forecast.getId()).orElseThrow();
 
@@ -207,4 +207,57 @@ class WeatherRepositoryTest {
         assertThat(info.precipitationType()).isEqualTo(PrecipitationType.RAIN);
         assertThat(info.skyStatus()).isEqualTo(SkyStatus.CLOUDY);
     }
+    @Test
+    void aggregatesRainAcrossDayEvenWhenSelectedSlotIsDry() {
+        var current = forecast(TODAY_NOON, "18", "10", "25");
+        org.springframework.test.util.ReflectionTestUtils.setField(current, "precipitationType", PrecipitationType.NONE);
+        var rainy = WeatherForecast.builder().id(java.util.UUID.randomUUID()).grid(GRID)
+            .forecastAt(TODAY_NOON.plusHours(3)).forecastedAt(TODAY_NOON.minusHours(3))
+            .temperature(new java.math.BigDecimal("22"))
+            .precipitationType(PrecipitationType.RAIN)
+            .precipitationAmount(new java.math.BigDecimal("5"))
+            .precipitationProbability(new java.math.BigDecimal("80")).build();
+        when(forecasts.findById(current.getId())).thenReturn(Optional.of(current));
+        when(forecasts.findRange(any(), any(), any())).thenReturn(List.of(current, rainy));
+        var info = repository.findById(current.getId()).orElseThrow();
+        assertThat(info.precipitationAmount()).isEqualByComparingTo("5");
+        assertThat(info.precipitationProbability()).isEqualByComparingTo("80");
+        assertThat(info.precipitationType()).isEqualTo(PrecipitationType.RAIN);
+    }
+
+    @Test
+    void midnightOnlyLastDayUsesSamePreviousRepresentativeAsScreen() {
+        var now = TODAY_NOON.plusMinutes(30);
+        var day = TODAY_NOON.plusDays(4).withHour(0);
+        var current = forecast(day, "18", null, null);
+        var previousMidnight = forecast(day.minusDays(1), "10", null, null);
+        var previousNoon = forecast(day.minusDays(1).withHour(12), "20", null, null);
+        var previousEvening = forecast(day.minusDays(1).withHour(18), "30", null, null);
+        var previous = List.of(previousMidnight, previousNoon, previousEvening);
+        var all = List.of(previousMidnight, previousNoon, previousEvening, current);
+        when(forecasts.findById(current.getId())).thenReturn(Optional.of(current));
+        when(forecasts.findRange(any(), any(), any())).thenReturn(List.of(current), previous);
+        try (var time = org.mockito.Mockito.mockStatic(java.time.OffsetDateTime.class,
+                org.mockito.Mockito.CALLS_REAL_METHODS)) {
+            time.when(() -> java.time.OffsetDateTime.now(KmaTimeCalculator.KST)).thenReturn(now);
+            var info = repository.findById(current.getId()).orElseThrow();
+            var screenRepo = mock(WeatherRepository.class);
+            when(screenRepo.findForecasts(any(), any(), any())).thenReturn(all);
+            var screen = new com.codeit.otboo.api.weather.service.WeatherViewCacheService(
+                screenRepo, mock(com.codeit.otboo.support.weather.client.KmaClient.class));
+            List<com.codeit.otboo.api.weather.dto.response.WeatherViewData> views =
+                org.springframework.test.util.ReflectionTestUtils.invokeMethod(screen, "assemble",
+                    com.codeit.otboo.api.weather.dto.response.WeatherGridDto.from(GRID),
+                    now.withHour(15).withMinute(0));
+            var view = views.stream().filter(value -> value.id().equals(current.getId())).findFirst().orElseThrow();
+            assertThat(info.temperatureComparedToDayBefore()).isEqualByComparingTo("-2");
+            assertThat(info.temperatureComparedToDayBefore()).isEqualTo(view.temperature().comparedToDayBefore());
+            assertThat(info.temperatureMin()).isEqualTo(view.temperature().min());
+            assertThat(info.temperatureMax()).isEqualTo(view.temperature().max());
+            assertThat(info.precipitationType()).isEqualTo(view.precipitation().type());
+            assertThat(info.precipitationAmount()).isEqualTo(view.precipitation().amount());
+            assertThat(info.precipitationProbability()).isEqualTo(view.precipitation().probability());
+        }
+    }
+
 }

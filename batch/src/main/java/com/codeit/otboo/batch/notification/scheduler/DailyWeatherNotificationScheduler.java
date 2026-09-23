@@ -34,7 +34,7 @@ public class DailyWeatherNotificationScheduler {
     public void runDailyNotification() {
         var parameters = new JobParametersBuilder()
                 .addString("collectionDate", LocalDate.now(ZoneOffset.ofHours(9)).toString())
-                .toJobParameters();
+            .toJobParameters();
 
         try {
             executor.execute(() -> {

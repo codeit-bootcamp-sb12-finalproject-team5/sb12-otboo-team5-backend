@@ -1,7 +1,7 @@
 package com.codeit.otboo.api.weather.service;
 
-import com.codeit.otboo.domain.weather.entity.PrecipitationType;
-import com.codeit.otboo.domain.weather.entity.SkyStatus;
+import com.codeit.otboo.api.weather.util.WeatherViewCalculator;
+
 import com.codeit.otboo.api.weather.dto.response.HumidityDto;
 import com.codeit.otboo.api.weather.dto.response.PrecipitationDto;
 import com.codeit.otboo.api.weather.dto.response.TemperatureDto;
@@ -23,11 +23,9 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
@@ -145,33 +143,8 @@ public class WeatherViewCacheService {
                     ? (previousObservation == null ? null : previousObservation.getHumidity())
                     : (adjacentDay ? previousSelectedForecast.getHumidity() : null);
 
-            BigDecimal temperatureDiff = difference(current.getTemperature(), previousTemperature);
             BigDecimal humidityDiff = difference(current.getHumidity(), previousHumidity);
-            BigDecimal min = current.getMinTemperature() != null ? current.getMinTemperature()
-                    : day.all().stream().map(WeatherForecast::getTemperature)
-                            .filter(Objects::nonNull).min(BigDecimal::compareTo)
-                            .orElse(value(current.getTemperature()));
-
-            BigDecimal max = current.getMaxTemperature() != null ? current.getMaxTemperature()
-                    : day.all().stream().map(WeatherForecast::getTemperature)
-                            .filter(Objects::nonNull).max(BigDecimal::compareTo)
-                            .orElse(value(current.getTemperature()));
-
-            BigDecimal rainAmount = day.all().stream()
-                    .map(WeatherForecast::getPrecipitationAmount)
-                    .filter(Objects::nonNull)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            BigDecimal probability = day.all().stream()
-                    .map(WeatherForecast::getPrecipitationProbability)
-                    .filter(Objects::nonNull)
-                    .max(BigDecimal::compareTo)
-                    .orElse(BigDecimal.ZERO);
-
-            PrecipitationType precipitationType = day.all().stream()
-                    .map(WeatherForecast::getPrecipitationType)
-                    .filter(type -> type != null && type != PrecipitationType.NONE)
-                    .findFirst().orElse(PrecipitationType.NONE);
+            var info = WeatherViewCalculator.calculate(current, day.all(), previousTemperature);
 
             BigDecimal wind = value(current.getWindSpeed());
 
@@ -180,10 +153,11 @@ public class WeatherViewCacheService {
                     current.getId(),
                     current.getForecastedAt().withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDateTime(),
                     current.getForecastAt().withOffsetSameInstant(KmaTimeCalculator.KST).toLocalDateTime(),
-                    orDefault(current.getSkyStatus(), SkyStatus.CLOUDY),
-                    new PrecipitationDto(precipitationType, rainAmount, probability),
+                    info.skyStatus(),
+                    new PrecipitationDto(info.precipitationType(), info.precipitationAmount(), info.precipitationProbability()),
                     new HumidityDto(value(current.getHumidity()), humidityDiff),
-                    new TemperatureDto(value(current.getTemperature()), temperatureDiff, min, max),
+                    new TemperatureDto(info.temperatureCurrent(), info.temperatureComparedToDayBefore(),
+                            info.temperatureMin(), info.temperatureMax()),
                     new WindSpeedDto(wind,
                             wind.compareTo(BigDecimal.valueOf(9)) >= 0 ? "STRONG"
                                     : wind.compareTo(BigDecimal.valueOf(4)) >= 0
@@ -213,11 +187,7 @@ public class WeatherViewCacheService {
             if (daily.isEmpty()) continue;
 
             OffsetDateTime desired = date.atTime(targetAt.toLocalTime()).atOffset(KmaTimeCalculator.KST);
-            WeatherForecast representative = daily.stream()
-                    .filter(forecast -> !forecast.getForecastAt().isAfter(desired))
-                    .max(Comparator.comparing(WeatherForecast::getForecastAt))
-                    .orElseGet(() -> daily.stream()
-                            .min(Comparator.comparing(WeatherForecast::getForecastAt)).orElseThrow());
+            WeatherForecast representative = WeatherViewCalculator.representative(daily, desired).orElseThrow();
 
             selected.add(new SelectedDay(representative, daily));
         }
@@ -231,10 +201,6 @@ public class WeatherViewCacheService {
 
     private BigDecimal value(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
-    }
-
-    private SkyStatus orDefault(SkyStatus value, SkyStatus fallback) {
-        return value == null ? fallback : value;
     }
 
     private record SelectedDay(
