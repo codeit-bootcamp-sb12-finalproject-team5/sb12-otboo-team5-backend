@@ -22,7 +22,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends SoftDeletableEntity {
 
-	@Column(name = "email", unique = true, length = 255)
+	@Column(name = "email", nullable = false, unique = true, length = 255)
 	private String email;
 
 	@Column(name = "name", nullable = false, length = 50)

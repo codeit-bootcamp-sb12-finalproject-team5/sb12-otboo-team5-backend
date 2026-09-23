@@ -26,18 +26,18 @@ class UserOauthServiceTest {
             userRepository, userOauthLinkRepository, profileService);
 
     @Test
-    void createsCompleteOauthUserWithoutEmailOrPassword() {
+    void createsKakaoUserWithGeneratedEmailWhenProviderDoesNotSupplyOne() {
         UserOauthInfo info = new UserOauthInfo(
-                OAuthProvider.KAKAO, "provider-user-id", null, null, null);
+                OAuthProvider.KAKAO, "provider-user-id", "woody", null, null);
         when(userOauthLinkRepository.findByProviderAndProviderId(
                 OAuthProvider.KAKAO, "provider-user-id")).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         User user = userOauthService.loginOrSignup(info);
 
-        assertThat(user.getEmail()).isNull();
+        assertThat(user.getEmail()).matches("woody-[0-9a-f]{12}@kakao\\.com");
         assertThat(user.getPassword()).isNull();
-        assertThat(user.getName()).isEqualTo("KAKAO 사용자");
+        assertThat(user.getName()).isEqualTo("woody");
         assertThat(user.getRole()).isEqualTo(UserRole.USER);
         assertThat(user.getLocked()).isFalse();
         assertThat(user.getTokenVersion()).isZero();
@@ -46,8 +46,35 @@ class UserOauthServiceTest {
     }
 
     @Test
+    void preservesEmailProvidedByGoogle() {
+        UserOauthInfo info = new UserOauthInfo(
+                OAuthProvider.GOOGLE, "provider-user-id", "woody", "woody@gmail.com", null);
+        when(userOauthLinkRepository.findByProviderAndProviderId(
+                OAuthProvider.GOOGLE, "provider-user-id")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User user = userOauthService.loginOrSignup(info);
+
+        assertThat(user.getEmail()).isEqualTo("woody@gmail.com");
+    }
+
+    @Test
+    void usesKakaoNicknameInGeneratedEmail() {
+        UserOauthInfo info = new UserOauthInfo(
+                OAuthProvider.KAKAO, "provider-user-id-2", "우디", null, null);
+        when(userOauthLinkRepository.findByProviderAndProviderId(
+                OAuthProvider.KAKAO, "provider-user-id-2")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User user = userOauthService.loginOrSignup(info);
+
+        assertThat(user.getEmail()).matches("우디-[0-9a-f]{12}@kakao\\.com");
+    }
+
+    @Test
     void reusesLinkedOauthUserWithoutCreatingAnotherProfile() {
         User linkedUser = User.builder()
+                .email("linked-kakao@kakao.com")
                 .name("카카오 사용자")
                 .role(UserRole.USER)
                 .locked(false)
