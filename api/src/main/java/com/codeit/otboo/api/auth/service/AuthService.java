@@ -2,10 +2,10 @@ package com.codeit.otboo.api.auth.service;
 
 import com.codeit.otboo.api.auth.dto.JwtDto;
 import com.codeit.otboo.api.auth.dto.SignInRequest;
-import com.codeit.otboo.api.user.dto.UserDto;
 import com.codeit.otboo.api.common.mail.EmailSender;
 import com.codeit.otboo.api.common.mail.TempPasswordGenerator;
 import com.codeit.otboo.api.common.security.JwtTokenProvider;
+import com.codeit.otboo.api.user.dto.UserDto;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
 import com.codeit.otboo.domain.user.entity.RefreshToken;
 import com.codeit.otboo.domain.user.entity.User;
@@ -13,13 +13,14 @@ import com.codeit.otboo.domain.user.exception.UserException;
 import com.codeit.otboo.domain.user.repository.RefreshTokenRepository;
 import com.codeit.otboo.domain.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
-import java.time.OffsetDateTime;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -53,6 +54,23 @@ public class AuthService {
         user.setTokenVersion(user.getTokenVersion() + 1);
         refreshTokenRepository.deleteByUser(user);
 
+        return issueTokens(user);
+    }
+
+    /** OAuth2 로그인 */
+    @Transactional
+    public JwtDto signInOauth(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserException::notFound);
+        return completeSignIn(user);
+    }
+    private JwtDto completeSignIn(User user) {
+        if (Boolean.TRUE.equals(user.getLocked())) {
+            throw UserException.accountLocked();
+        }
+        user.setTokenVersion(user.getTokenVersion() + 1);
+
+        refreshTokenRepository.deleteByUser(user);
         return issueTokens(user);
     }
 
@@ -113,7 +131,8 @@ public class AuthService {
 
     /** 비밀번호 또는 임시 비밀번호 검증 */
     private boolean matchesPassword(User user, String rawPassword) {
-        if (passwordEncoder.matches(rawPassword, user.getPassword())) {
+        String password = user.getPassword();
+        if (password != null && passwordEncoder.matches(rawPassword, password)) {
             return true;
         }
 

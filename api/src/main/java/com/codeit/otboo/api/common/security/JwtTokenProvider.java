@@ -31,15 +31,19 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessValiditySeconds * 1000);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(userId.toString())
-                .claim("email", email)
                 .claim("role", role)
                 .claim("tokenVersion", tokenVersion)
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(key)
-                .compact();
+                .signWith(key);
+
+        if (email != null) {
+            builder.claim("email", email);
+        }
+
+        return builder.compact();
     }
 
     /** Refresh Token 발급 */

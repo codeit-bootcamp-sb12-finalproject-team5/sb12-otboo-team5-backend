@@ -28,6 +28,18 @@ class JwtTokenProviderTest {
         assertThat(claims.get("tokenVersion", Integer.class)).isEqualTo(3);
     }
 
+    @Test
+    void createsAccessTokenWithoutEmailClaimForOauthOnlyUser() {
+        UUID userId = UUID.randomUUID();
+
+        String token = provider.createAccessToken(userId, null, "USER", 0);
+        Claims claims = provider.parseClaims(token);
+
+        assertThat(claims.getSubject()).isEqualTo(userId.toString());
+        assertThat(claims.get("email")).isNull();
+        assertThat(claims.get("role", String.class)).isEqualTo("USER");
+    }
+
     /** Refresh Token 에도 tokenVersion 이 담기는지 확인합니다. */
     @Test
     void createsRefreshTokenWithTokenVersion() {
