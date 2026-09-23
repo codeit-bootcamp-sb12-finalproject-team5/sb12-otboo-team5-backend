@@ -45,15 +45,11 @@ public class FollowController {
 
   @GetMapping("/followings")
   public ResponseEntity<CursorResponse<FollowUserDto>> getFollowings(
-      @AuthenticationPrincipal CustomUserDetails userDetails,
       @RequestParam UUID followerId,
       @RequestParam int limit,
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false) UUID idAfter
   ) {
-    if (!followerId.equals(userDetails.getUserId())) {
-      throw ProfileException.accessDenied();
-    }
     return ResponseEntity.ok(
         followService.findFolloweesByFollowerId(
             followerId,
@@ -67,15 +63,11 @@ public class FollowController {
 
   @GetMapping("/followers")
   public ResponseEntity<CursorResponse<FollowUserDto>> getFollowers(
-      @AuthenticationPrincipal CustomUserDetails userDetails,
       @RequestParam UUID followeeId,
       @RequestParam int limit,
       @RequestParam(required = false) String cursor,
       @RequestParam(required = false) UUID idAfter
   ) {
-    if (!followeeId.equals(userDetails.getUserId())) {
-      throw ProfileException.accessDenied();
-    }
     return ResponseEntity.ok(
         followService.findFollowersByFolloweeId(
             followeeId,
