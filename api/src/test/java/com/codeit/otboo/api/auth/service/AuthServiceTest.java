@@ -113,6 +113,20 @@ class AuthServiceTest {
                         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.INVALID_CREDENTIALS));
     }
 
+    /** OAuth 계정처럼 기본 비밀번호가 없는 사용자는 일반 로그인을 거부한다. */
+    @Test
+    void rejectsPasswordSignInWhenUserHasNoPassword() {
+        User found = user(null, false, 0);
+        when(userRepository.findByEmail("woody@otboo.io")).thenReturn(Optional.of(found));
+
+        assertThatThrownBy(() ->
+                authService.signIn(new SignInRequest("woody@otboo.io", "otboo1234")))
+                .isInstanceOfSatisfying(UserException.class, e ->
+                        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.INVALID_CREDENTIALS));
+
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
+    }
+
     /** 잠긴 계정은 비밀번호 검증 전에 차단하는지 확인합니다. */
     @Test
     void rejectsLockedAccountBeforePasswordCheck() {

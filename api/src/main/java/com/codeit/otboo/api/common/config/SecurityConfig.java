@@ -1,18 +1,20 @@
 package com.codeit.otboo.api.common.config;
 
+import com.codeit.otboo.api.auth.service.CustomOidcUserService;
 import com.codeit.otboo.api.common.security.JwtAuthenticationFilter;
+import com.codeit.otboo.api.common.security.OAuthLoginFailureHandler;
+import com.codeit.otboo.api.common.security.OAuthLoginSuccessHandler;
 import com.codeit.otboo.api.common.security.SecurityExceptionHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -23,13 +25,43 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final SecurityExceptionHandler securityExceptionHandler;
+    private final CustomOidcUserService customOidcUserService;
+    private final OAuthLoginSuccessHandler oauthLoginSuccessHandler;
+    private final OAuthLoginFailureHandler oauthLoginFailureHandler;
 
+    /* 신규 OAuth2 OIDC 로그인 처리용 */
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    @Order(1)
+    public SecurityFilterChain oauthSecurityFilterChain(
+            HttpSecurity http
+    ) throws Exception {
+
+        http
+                .securityMatcher(
+                        "/oauth2/**",
+                        "/login/oauth2/**"
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll()
+                )
+
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                )
+                .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .oidcUserService(customOidcUserService)
+                        )
+                        .successHandler(oauthLoginSuccessHandler)
+                        .failureHandler(oauthLoginFailureHandler)
+                );
+
+        return http.build();
     }
 
+    /* 기존 JWT기반 인증처리용 */
     @Bean
+    @Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             // JWT 사용이므로 세션을 만들지 않음
@@ -61,7 +93,6 @@ public class SecurityConfig {
                 // 인증 없이 접근 가능
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 // STOMP CONNECT 인증은 WebSocket 채널 인터셉터에서 처리할 예정
                 .requestMatchers("/ws", "/ws/**").permitAll()
                 .requestMatchers("/error").permitAll()

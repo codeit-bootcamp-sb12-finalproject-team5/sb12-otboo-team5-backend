@@ -49,6 +49,31 @@ spring:
           options:
             model: gemini-3.5-flash-lite
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - openid
+              - profile_nickname
+        provider:
+          kakao:
+            issuer-uri: https://kauth.kakao.com
+
+
 server:
   port: ${SERVER_PORT:8080}
 
@@ -77,6 +102,9 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-validity-seconds: 1800
   refresh-token-validity-seconds: 1209600
+
+oauth:
+  frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI:http://localhost:5173/#/auth/oauth/callback}
 
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY:}
