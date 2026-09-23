@@ -29,12 +29,8 @@ public class ProfileController {
 
   @GetMapping
   public ResponseEntity<ProfileDto> getProfile(
-      @PathVariable UUID userId,
-      @AuthenticationPrincipal CustomUserDetails userDetails
+      @PathVariable UUID userId
   ) {
-    if (!userId.equals(userDetails.getUserId())) {
-      throw ProfileException.accessDenied();
-    }
     return ResponseEntity.ok(profileService.getProfile(userId));
   }
 
