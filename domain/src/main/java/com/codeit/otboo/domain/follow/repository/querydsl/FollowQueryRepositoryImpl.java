@@ -23,12 +23,14 @@ public class FollowQueryRepositoryImpl implements FollowQueryRepository {
       String cursor,
       UUID idAfter,
       int limit,
-      Sort.Direction direction
+      Sort.Direction direction,
+      String nameLike
   ) {
     JPAQuery<Follow> query = queryFactory
         .selectFrom(follow)
         .where(
             follow.follower.id.eq(followerId),
+            followeeNameLikeCondition(nameLike),
             cursorCondition(cursor, idAfter, direction)
         );
 
@@ -55,11 +57,14 @@ public class FollowQueryRepositoryImpl implements FollowQueryRepository {
       String cursor,
       UUID idAfter,
       int limit,
-      Sort.Direction direction) {
+      Sort.Direction direction,
+      String nameLike
+  ) {
     JPAQuery<Follow> query = queryFactory
         .selectFrom(follow)
         .where(
             follow.followee.id.eq(followeeId),
+            followerNameLikeCondition(nameLike),
             cursorCondition(cursor, idAfter, direction)
         );
 
@@ -100,6 +105,22 @@ public class FollowQueryRepositoryImpl implements FollowQueryRepository {
         .fetchOne();
 
     return count != null ? count : 0L;
+  }
+
+  private BooleanExpression followeeNameLikeCondition(String nameLike) {
+    if (nameLike == null || nameLike.isBlank()) {
+      return null;
+    }
+
+    return follow.followee.name.containsIgnoreCase(nameLike);
+  }
+
+  private BooleanExpression followerNameLikeCondition(String nameLike) {
+    if (nameLike == null || nameLike.isBlank()) {
+      return null;
+    }
+
+    return follow.follower.name.containsIgnoreCase(nameLike);
   }
 
   private BooleanExpression cursorCondition(
