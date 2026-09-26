@@ -12,7 +12,8 @@ public interface FollowQueryRepository {
       String cursor,
       UUID idAfter,
       int limit,
-      Sort.Direction direction
+      Sort.Direction direction,
+      String nameLike
   );
 
   List<Follow> findFollowersByFolloweeId(
@@ -20,7 +21,8 @@ public interface FollowQueryRepository {
       String cursor,
       UUID idAfter,
       int limit,
-      Sort.Direction direction
+      Sort.Direction direction,
+      String nameLike
   );
 
   long countFolloweesByFollowerId(UUID followerId);

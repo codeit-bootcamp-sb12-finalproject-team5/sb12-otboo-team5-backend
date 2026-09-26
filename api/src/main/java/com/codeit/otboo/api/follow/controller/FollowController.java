@@ -48,7 +48,9 @@ public class FollowController {
       @RequestParam UUID followerId,
       @RequestParam int limit,
       @RequestParam(required = false) String cursor,
-      @RequestParam(required = false) UUID idAfter
+      @RequestParam(required = false) UUID idAfter,
+      @RequestParam(required = false) String nameLike,
+      @RequestParam(defaultValue = "DESC") Sort.Direction direction
   ) {
     return ResponseEntity.ok(
         followService.findFolloweesByFollowerId(
@@ -56,7 +58,8 @@ public class FollowController {
             cursor,
             idAfter,
             limit,
-            Sort.Direction.DESC
+            direction,
+            nameLike
         )
     );
   }
@@ -66,7 +69,9 @@ public class FollowController {
       @RequestParam UUID followeeId,
       @RequestParam int limit,
       @RequestParam(required = false) String cursor,
-      @RequestParam(required = false) UUID idAfter
+      @RequestParam(required = false) UUID idAfter,
+      @RequestParam(required = false) String nameLike,
+      @RequestParam(defaultValue = "DESC") Sort.Direction direction
   ) {
     return ResponseEntity.ok(
         followService.findFollowersByFolloweeId(
@@ -74,7 +79,8 @@ public class FollowController {
             cursor,
             idAfter,
             limit,
-            Sort.Direction.DESC
+            direction,
+            nameLike
         )
     );
   }
