@@ -1,6 +1,7 @@
 package com.codeit.otboo.domain.clothes.repository;
 
 import com.codeit.otboo.domain.clothes.entity.OutfitClothes;
+import com.codeit.otboo.domain.clothes.entity.Clothes;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,9 @@ import org.springframework.data.repository.query.Param;
 public interface OutfitClothesRepository extends JpaRepository<OutfitClothes, UUID> {
 
     List<OutfitClothes> findAllByOutfit_Id(UUID outfitId);
+
+    @Query("select oc.clothes from OutfitClothes oc where oc.outfit.id = :outfitId")
+    List<Clothes> findClothesByOutfitId(@Param("outfitId") UUID outfitId);
 
     List<OutfitClothes> findAllByOutfit_IdIn(List<UUID> outfitIds);
 

@@ -4,7 +4,7 @@ import com.codeit.otboo.domain.clothes.enums.ClothesCategory;
 import com.codeit.otboo.domain.clothes.enums.ClothesGender;
 import com.codeit.otboo.domain.clothes.enums.ClothesSeason;
 import com.codeit.otboo.domain.clothes.enums.Displayable;
-import com.codeit.otboo.support.openai.clothes.ClothesAnalysisResult;
+import com.codeit.otboo.support.llm.clothes.dto.ClothesAnalysisResult;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

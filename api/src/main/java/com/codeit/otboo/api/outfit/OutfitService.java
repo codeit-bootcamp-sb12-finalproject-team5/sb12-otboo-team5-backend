@@ -21,6 +21,7 @@ import com.codeit.otboo.domain.user.entity.User;
 import com.codeit.otboo.domain.user.repository.UserRepository;
 import com.codeit.otboo.domain.weather.dto.WeatherInfoResponse;
 import com.codeit.otboo.domain.weather.repository.WeatherForecastRepository;
+import com.codeit.otboo.support.llm.outfit.dto.GeneratedOutfitImage;
 import com.codeit.otboo.support.storage.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -92,13 +94,19 @@ public class OutfitService {
     }
 
     @Transactional(readOnly = true)
-    public OutfitDetailResponse get(UUID outfitId, UUID userId) {
+    public Outfit getOwnedOutfit(UUID outfitId, UUID userId) {
         Outfit outfit = outfitRepository.findByIdAndDeletedAtIsNull(outfitId)
             .orElseThrow(() -> new OutfitException(ErrorCode.OUTFIT_NOT_FOUND));
 
         if (!outfit.getUser().getId().equals(userId)) {
             throw new OutfitException(ErrorCode.ACCESS_DENIED);
         }
+        return outfit;
+    }
+
+    @Transactional(readOnly = true)
+    public OutfitDetailResponse get(UUID outfitId, UUID userId) {
+        Outfit outfit = getOwnedOutfit(outfitId, userId);
 
         List<Clothes> clothes = outfitClothesRepository.findAllByOutfit_Id(outfitId).stream()
             .map(OutfitClothes::getClothes)
@@ -225,12 +233,41 @@ public class OutfitService {
         );
     }
 
+    @Transactional
+    public OutfitImageResponse createImage(GeneratedOutfitImage image, UUID outfitId, UUID userId) {
+        Outfit outfit = getOwnedOutfit(outfitId, userId);
+        deleteExistingImage(outfit);
+        String imageKey = s3StorageService.saveOutfit(image.imageBytes(), image.mimeType(), outfitId);
+        outfit.updateImageKey(imageKey);
+        return new OutfitImageResponse(outfit.getId(), s3StorageService.getPresignedUrl(imageKey));
+    }
+
+    @Transactional
+    public OutfitImageResponse createImage(MultipartFile image, UUID outfitId, UUID userId) {
+        Outfit outfit = getOwnedOutfit(outfitId, userId);
+        deleteExistingImage(outfit);
+        String imageKey = s3StorageService.saveOutfit(image, outfitId);
+        outfit.updateImageKey(imageKey);
+        return new OutfitImageResponse(outfit.getId(), s3StorageService.getPresignedUrl(imageKey));
+    }
+
+    @Transactional
+    public void deleteImage(UUID outfitId, UUID userId) {
+        Outfit outfit = getOwnedOutfit(outfitId, userId);
+        deleteExistingImage(outfit);
+        outfit.updateImageKey(null);
+    }
+
+    private void deleteExistingImage(Outfit outfit) {
+        if (outfit.getImageKey() != null && !outfit.getImageKey().isBlank()) {
+            s3StorageService.deleteOne(outfit.getImageKey());
+        }
+    }
     private void validateNoDuplicateClothesIds(List<UUID> clothesIds) {
         if (new HashSet<>(clothesIds).size() != clothesIds.size()) {
             throw new OutfitException(ErrorCode.DUPLICATE_OUTFIT_CLOTHES);
         }
     }
-
     private List<Clothes> getClothesInRequestOrder(List<UUID> clothesIds) {
         List<Clothes> foundClothes = clothesRepository.findAllById(clothesIds);
 
@@ -246,18 +283,15 @@ public class OutfitService {
         }
         return clothesIds.stream().map(clothesById::get).toList();
     }
-
     private List<Clothes> clothesOnlyIn(List<Clothes> source, List<Clothes> compared) {
         Set<UUID> comparedClothesIds = compared.stream().map(Clothes::getId).collect(Collectors.toSet());
         return source.stream()
             .filter(clothes -> !comparedClothesIds.contains(clothes.getId()))
             .toList();
     }
-
     private List<ClothesContributionSnapshot> snapshotsOf(List<Clothes> clothes) {
         return clothes.stream().map(ClothesContributionSnapshot::from).toList();
     }
-
     private void runAfterCommit(Runnable action) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             action.run();

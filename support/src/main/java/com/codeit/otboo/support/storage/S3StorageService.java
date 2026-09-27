@@ -4,10 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -33,6 +35,12 @@ public class S3StorageService {
     @Value("${cloud.aws.s3.profile-prefix}")
     private String profilePrefix;
 
+    @Value("${cloud.aws.s3.outfit-prefix}")
+    private String outfitPrefix;
+
+    public record StoredObject(byte[] bytes, String contentType) {
+    }
+
     /**
      * S3에 파일 업로드
      *
@@ -50,6 +58,22 @@ public class S3StorageService {
         saveOne(file, objectKey);
         return objectKey;
     }
+    public String saveOutfit(byte[] imageBytes, String contentType, UUID outfitId) {
+        if (imageBytes == null || imageBytes.length == 0) {
+            throw new IllegalArgumentException("Outfit image is required");
+        }
+        String extension = extensionForContentType(contentType);
+        String objectKey = outfitPrefix + "/" + outfitId + "/generated" + extension;
+        saveOne(imageBytes, contentType, objectKey);
+        return objectKey;
+    }
+    public String saveOutfit(MultipartFile file, UUID outfitId) {
+        String extension = extractExtension(file.getOriginalFilename());
+        String objectKey = outfitPrefix + "/" + outfitId + "/original" + extension;
+        saveOne(file, objectKey);
+        return objectKey;
+    }
+
     private void saveOne(MultipartFile file, String objectKey) {
         try {
             PutObjectRequest request = PutObjectRequest.builder()
@@ -64,6 +88,17 @@ public class S3StorageService {
         } catch (IOException e) {
             throw new RuntimeException("S3 파일 업로드 실패: " + objectKey, e);
         }
+    }
+
+    private void saveOne(byte[] bytes, String contentType, String objectKey) {
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(objectKey)
+                        .contentType(contentType)
+                        .build(),
+                RequestBody.fromBytes(bytes)
+        );
     }
 
 
@@ -88,6 +123,18 @@ public class S3StorageService {
         } catch (Exception e) {
             throw new RuntimeException("S3 파일 삭제 실패: " + objectKey, e);
         }
+    }
+
+    public StoredObject getObject(String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) {
+            throw new IllegalArgumentException("S3 object key is required");
+        }
+
+        ResponseBytes<GetObjectResponse> response = s3Client.getObjectAsBytes(GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(objectKey)
+                .build());
+        return new StoredObject(response.asByteArray(), response.response().contentType());
     }
 
     /**
@@ -126,5 +173,14 @@ public class S3StorageService {
         return originalName.substring(
                 originalName.lastIndexOf(".")
         );
+    }
+
+    private String extensionForContentType(String contentType) {
+        return switch (contentType) {
+            case "image/jpeg" -> ".jpg";
+            case "image/png" -> ".png";
+            case "image/webp" -> ".webp";
+            default -> throw new IllegalArgumentException("Unsupported outfit image type: " + contentType);
+        };
     }
 }

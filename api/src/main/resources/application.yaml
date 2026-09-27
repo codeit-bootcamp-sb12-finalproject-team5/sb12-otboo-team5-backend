@@ -42,12 +42,6 @@ spring:
       embedding:
         options:
           model: text-embedding-3-small
-    google:
-      genai:
-        api-key: ${GEMINI_API_KEY}
-        chat:
-          options:
-            model: gemini-3.5-flash-lite
 
   security:
     oauth2:
@@ -90,13 +84,16 @@ management:
 
 gemini:
   api-key: ${GEMINI_API_KEY}
-  model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
-  timeout-seconds: ${GEMINI_TIMEOUT_SECONDS:10}
-
-clothes:
-  analysis:
-    gemini:
-      min-request-interval: 6s
+  recommendation:
+    model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
+    timeout-seconds: ${GEMINI_TIMEOUT_SECONDS:10}
+  clothes-analysis:
+    model: ${GEMINI_CLOTHES_ANALYSIS_MODEL:gemini-3.5-flash-lite}
+    timeout: ${GEMINI_CLOTHES_ANALYSIS_TIMEOUT:90s}
+    min-request-interval: ${GEMINI_CLOTHES_ANALYSIS_MIN_REQUEST_INTERVAL:6s}
+  outfit-look:
+    model: ${GEMINI_OUTFIT_LOOK_MODEL:gemini-3.1-flash-image}
+    timeout: ${GEMINI_OUTFIT_LOOK_TIMEOUT:120s}
 
 jwt:
   secret: ${JWT_SECRET}
@@ -128,6 +125,7 @@ cloud:
       bucket: ${AWS_S3_BUCKET}
       clothes-prefix: otboo-clothes-dev
       profile-prefix: otboo-profile-dev
+      outfit-prefix: otboo-outfit-dev
     region: ${AWS_REGION}
     credentials:
       access-key: ${AWS_ACCESS_KEY_ID}
