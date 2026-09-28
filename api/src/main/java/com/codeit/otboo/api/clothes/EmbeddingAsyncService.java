@@ -5,7 +5,7 @@ import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
 import com.codeit.otboo.domain.clothes.repository.ClothesRepository;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
-import com.codeit.otboo.support.openai.clothes.ClothesAnalysisService;
+import com.codeit.otboo.support.llm.clothes.ClothesAnalysisService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;

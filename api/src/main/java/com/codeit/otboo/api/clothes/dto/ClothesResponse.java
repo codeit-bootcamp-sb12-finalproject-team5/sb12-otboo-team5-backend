@@ -4,7 +4,7 @@ import com.codeit.otboo.domain.clothes.entity.Clothes;
 import com.codeit.otboo.domain.clothes.enums.*;
 import com.codeit.otboo.domain.clothes.exception.ClothesException;
 import com.codeit.otboo.domain.common.exception.ErrorCode;
-import com.codeit.otboo.support.openai.clothes.ClothesAnalysisResult;
+import com.codeit.otboo.support.llm.clothes.dto.ClothesAnalysisResult;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;

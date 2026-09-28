@@ -2,17 +2,8 @@ package com.codeit.otboo.domain.outfit.entity;
 
 import com.codeit.otboo.domain.common.SoftDeletableEntity;
 import com.codeit.otboo.domain.user.entity.User;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
@@ -29,6 +20,10 @@ public class Outfit extends SoftDeletableEntity {
 
 	@Column(columnDefinition = "TEXT")
 	private String description;
+
+	@Setter
+	@Column(name = "image_key", length = 1000)
+	private String imageKey;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "user_id", nullable = false)
@@ -60,6 +55,11 @@ public class Outfit extends SoftDeletableEntity {
 			this.description = description;
 		}
 
+		touch();
+	}
+
+	public void updateImageKey(String imageKey) {
+		this.imageKey = imageKey;
 		touch();
 	}
 }

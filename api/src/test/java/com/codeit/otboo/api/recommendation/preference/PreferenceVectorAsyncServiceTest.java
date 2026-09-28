@@ -11,7 +11,7 @@ import com.codeit.otboo.domain.clothes.repository.OutfitClothesRepository;
 import com.codeit.otboo.domain.clothes.repository.OutfitClothesUsageCount;
 import com.codeit.otboo.domain.profile.entity.Profile;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
-import com.codeit.otboo.support.openai.clothes.ClothesAnalysisService;
+import com.codeit.otboo.support.llm.clothes.ClothesAnalysisService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
