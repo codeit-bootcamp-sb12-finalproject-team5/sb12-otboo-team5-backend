@@ -2,8 +2,8 @@ package com.codeit.otboo.api.clothes;
 
 import com.codeit.otboo.api.clothes.dto.*;
 import com.codeit.otboo.domain.common.dto.CursorResponse;
-import com.codeit.otboo.support.openai.clothes.ClothesAnalysisResult;
-import com.codeit.otboo.support.openai.clothes.ClothesAnalysisService;
+import com.codeit.otboo.support.llm.clothes.dto.ClothesAnalysisResult;
+import com.codeit.otboo.support.llm.clothes.ClothesAnalysisService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,9 @@ public class ClothesController {
 
     @GetMapping("/attribute-defs")
     public ResponseEntity<List<ClothesAttributeResponse>> getClothesAttributes(
-        @RequestParam(required = false) String sortBy, @RequestParam(required = false) String sortDirection, @RequestParam(required = false) String keywordLike
+        @RequestParam(required = false) String sortBy,
+        @RequestParam(required = false) String sortDirection,
+        @RequestParam(required = false) String keywordLike
     ) {
         return ResponseEntity.ok(clothesService.getAttributes());
     }

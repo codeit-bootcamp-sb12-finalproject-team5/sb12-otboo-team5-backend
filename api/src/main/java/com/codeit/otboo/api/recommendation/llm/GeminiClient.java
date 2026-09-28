@@ -27,8 +27,8 @@ public class GeminiClient {
         WebClient.Builder webClientBuilder,
         ObjectMapper objectMapper,
         @Value("${gemini.api-key}") String apiKey,
-        @Value("${gemini.model}") String model,
-        @Value("${gemini.timeout-seconds}") long timeoutSeconds
+        @Value("${gemini.recommendation.model}") String model,
+        @Value("${gemini.recommendation.timeout-seconds}") long timeoutSeconds
     ) {
         this.webClient = webClientBuilder
             .baseUrl("https://generativelanguage.googleapis.com")

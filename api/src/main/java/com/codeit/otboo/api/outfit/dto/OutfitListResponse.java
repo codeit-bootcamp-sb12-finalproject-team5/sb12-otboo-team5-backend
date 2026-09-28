@@ -15,6 +15,7 @@ public record OutfitListResponse(
     String name,
     String description,
     String category,
+    String image,
     List<ClothesSummary> clothes,
     FeedResponse.OotdWeatherResponse weather,
     OffsetDateTime createdAt
@@ -36,6 +37,7 @@ public record OutfitListResponse(
             outfit.getName(),
             outfit.getDescription(),
             outfit.getCategory(),
+            imageUrlResolver.apply(outfit.getImageKey()),
             clothes.stream().map(clothesItem -> ClothesSummary.of(
                 clothesItem, imageUrlResolver.apply(clothesItem.getImageUrl())
             )).toList(),

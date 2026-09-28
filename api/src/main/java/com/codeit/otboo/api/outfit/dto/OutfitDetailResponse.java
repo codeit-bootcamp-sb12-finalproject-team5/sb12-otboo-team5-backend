@@ -13,6 +13,7 @@ public record OutfitDetailResponse(
     String name,
     String description,
     String category,
+    String image,
     List<ClothesImage> clothes,
     FeedResponse.OotdWeatherResponse weather
 ) {
@@ -33,6 +34,7 @@ public record OutfitDetailResponse(
             outfit.getName(),
             outfit.getDescription(),
             outfit.getCategory(),
+            imageUrlResolver.apply(outfit.getImageKey()),
             clothes.stream().map(clothesItem -> ClothesImage.of(
                 clothesItem, imageUrlResolver.apply(clothesItem.getImageUrl())
             )).toList(),
