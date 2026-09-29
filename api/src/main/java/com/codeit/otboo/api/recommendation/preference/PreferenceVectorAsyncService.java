@@ -7,7 +7,7 @@ import com.codeit.otboo.domain.clothes.repository.OutfitClothesUsageCount;
 import com.codeit.otboo.domain.profile.entity.Profile;
 import com.codeit.otboo.domain.profile.exception.ProfileException;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
-import com.codeit.otboo.support.openai.clothes.ClothesAnalysisService;
+import com.codeit.otboo.support.llm.clothes.ClothesAnalysisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

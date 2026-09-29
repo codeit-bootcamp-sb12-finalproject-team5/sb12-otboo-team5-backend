@@ -10,7 +10,7 @@ import com.codeit.otboo.api.notification.event.NotificationCommittedListener;
 import com.codeit.otboo.api.notification.event.NotificationEvents;
 import com.codeit.otboo.domain.user.entity.UserRole;
 import com.codeit.otboo.support.notification.kafka.NotificationEventPublisher;
-import com.codeit.otboo.support.openai.config.AsyncConfig;
+import com.codeit.otboo.support.llm.config.AsyncConfig;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
