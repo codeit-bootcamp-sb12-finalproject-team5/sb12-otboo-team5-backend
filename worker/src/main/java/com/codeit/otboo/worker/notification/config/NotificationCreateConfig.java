@@ -2,6 +2,7 @@ package com.codeit.otboo.worker.notification.config;
 
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
 import com.codeit.otboo.support.notification.kafka.NotificationConsumers;
+import com.codeit.otboo.support.notification.kafka.NotificationKafkaConfig;
 import com.codeit.otboo.support.notification.kafka.NotificationKafkaJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -23,7 +24,7 @@ public class NotificationCreateConfig {
     public ConcurrentKafkaListenerContainerFactory<String, NotificationCreateMessage<JsonNode>>
             notificationCreateFactory(KafkaProperties properties,
                                       ObjectProvider<MeterRegistry> registries) {
-        return NotificationConsumers.factory(
+        var factory = NotificationConsumers.<NotificationCreateMessage<JsonNode>>factory(
             properties,
             NotificationKafkaJson.mapper()
                 .getTypeFactory()
@@ -36,5 +37,8 @@ public class NotificationCreateConfig {
             consumers -> registries.ifAvailable(
                 registry -> consumers.addListener(new MicrometerConsumerListener<>(registry)))
         );
+        // 파티션 수만큼 스레드를 띄운다.
+        factory.setConcurrency(NotificationKafkaConfig.CREATE_PARTITIONS);
+        return factory;
     }
 }

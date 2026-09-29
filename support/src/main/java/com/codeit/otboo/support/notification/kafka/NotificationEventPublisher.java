@@ -17,7 +17,8 @@ public class NotificationEventPublisher {
     }
 
     public CompletableFuture<Void> publishBroadcast(NotificationBroadcastEvent event) {
-        return send(NotificationTopics.BROADCAST, event.notification().receiverId().toString(), event);
+        return send(NotificationTopics.BROADCAST, event.schemaVersion() == 1 ? event.notification().receiverId().toString()
+                : event.notifications().get(0).notificationId().toString(), event);
     }
 
     private CompletableFuture<Void> send(String topic, String key, Object message) {

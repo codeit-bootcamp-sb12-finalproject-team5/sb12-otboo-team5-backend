@@ -67,27 +67,17 @@ public class NotificationCreateListener {
         }
         // handler 내부의 별도 트랜잭션 프록시가 정상 반환한 뒤에만 발행한다.
         var result = handler.handle(message);
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(12);
-
-        for (var notification : result.notifications()) {
-            if (System.nanoTime() >= deadline) {
-                log.error("NOTIFICATION_BROADCAST_BUDGET_EXCEEDED eventId={} topic={} partition={} offset={}",
-                        message.eventId(), record.topic(), record.partition(), record.offset());
-                break; // 남은 실시간 전송은 목록 조회로 보완하고 다음 페이지 인계는 계속한다.
-            }
-
+        if (!result.notifications().isEmpty()) {
             try {
-                publisher.publishBroadcast(NotificationBroadcastEvent.of(notification))
-                        .get(Math.max(1, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
+                publisher.publishBroadcast(NotificationBroadcastEvent.of(result.notifications()))
+                        .get(12, TimeUnit.SECONDS);
             } catch (InterruptedException exception) {
                 Thread.currentThread().interrupt();
-
                 throw new NotificationException(ErrorCode.NOTIFICATION_PROCESSING_INTERRUPTED, exception);
             } catch (ExecutionException | TimeoutException | RuntimeException exception) {
-                // 저장 성공 후 실시간 전달 실패는 목록 조회로 복구한다. 원본은 완료 처리한다.
-                log.error("NOTIFICATION_BROADCAST_FAILED notificationId={} eventId={} topic={} partition={} offset={}",
-                        notification.id(), message.eventId(), record.topic(), record.partition(),
-                        record.offset(), exception);
+                log.error("NOTIFICATION_BROADCAST_FAILED count={} eventId={} topic={} partition={} offset={}",
+                        result.notifications().size(), message.eventId(), record.topic(),
+                        record.partition(), record.offset(), exception);
             }
         }
 

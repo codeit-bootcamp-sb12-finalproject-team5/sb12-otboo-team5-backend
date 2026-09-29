@@ -106,7 +106,7 @@ class NotificationCreateListenerTest {
                 OffsetDateTime.now(), UUID.randomUUID(), "title", "content", NotificationLevel.INFO))));
         CompletableFuture<Void> pending = mock(CompletableFuture.class);
         var interrupted = new InterruptedException("test interruption");
-        when(pending.get(anyLong(), eq(java.util.concurrent.TimeUnit.NANOSECONDS))).thenThrow(interrupted);
+        when(pending.get(anyLong(), eq(java.util.concurrent.TimeUnit.SECONDS))).thenThrow(interrupted);
         when(publisher.publishBroadcast(any())).thenReturn(pending);
         try {
             assertThatThrownBy(() -> listener.receive(record()))
@@ -158,4 +158,22 @@ class NotificationCreateListenerTest {
                 .isInstanceOf(NotificationException.class);
         verify(handler, never()).handle(any());
     }
+    @Test
+    void broadcastsOneReferenceBatchForFiveHundredSavedNotifications() {
+        var listener = listener();
+        var saved = java.util.stream.IntStream.range(0, 500).mapToObj(i ->
+                new NotificationDto(UUID.randomUUID(), OffsetDateTime.now(), UUID.randomUUID(),
+                        "title", "content", NotificationLevel.INFO)).toList();
+        when(handler.handle(any())).thenReturn(NotificationHandlingResult.completed(saved));
+        when(publisher.publishBroadcast(any())).thenReturn(CompletableFuture.completedFuture(null));
+        listener.receive(record());
+        var captor = org.mockito.ArgumentCaptor.forClass(
+                com.codeit.otboo.domain.notification.event.NotificationBroadcastEvent.class);
+        verify(publisher, times(1)).publishBroadcast(captor.capture());
+        assertThat(captor.getValue().schemaVersion()).isEqualTo(2);
+        assertThat(captor.getValue().notification()).isNull();
+        assertThat(captor.getValue().notifications()).hasSize(500);
+        assertThat(captor.getValue().notifications().get(0).notificationId()).isEqualTo(saved.get(0).id());
+    }
+
 }

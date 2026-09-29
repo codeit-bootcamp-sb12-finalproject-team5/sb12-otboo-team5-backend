@@ -9,7 +9,6 @@ import com.codeit.otboo.domain.notification.entity.NotificationType;
 import com.codeit.otboo.domain.notification.dto.NotificationContent;
 import java.util.Optional;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.UUID;
 import com.codeit.otboo.domain.notification.entity.NotificationLevel;
 import lombok.RequiredArgsConstructor;
@@ -37,14 +36,6 @@ public class NotificationSaveService {
     @Transactional
     public List<NotificationDto> savePage(NotificationType type, String key, List<UUID> receivers,
             String title, String content, NotificationLevel level) {
-        List<NotificationDto> saved = new ArrayList<>();
-
-        for (UUID receiver : receivers) {
-            repository.insert(
-                type, key, new NotificationContent(receiver, title, content, level))
-                    .ifPresent(saved::add);
-        }
-
-        return List.copyOf(saved);
+        return List.copyOf(repository.insertPage(type, key, receivers, title, content, level));
     }
 }

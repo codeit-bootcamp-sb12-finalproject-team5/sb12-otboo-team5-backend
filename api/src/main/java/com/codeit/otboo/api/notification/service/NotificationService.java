@@ -56,6 +56,13 @@ public class NotificationService {
                 .toList();
     }
 
+    public List<NotificationDto> findForDelivery(List<UUID> notificationIds) {
+        if (notificationIds.isEmpty()) {
+            return List.of();
+        }
+        return repository.findAllById(notificationIds).stream().map(this::toDto).toList();
+    }
+
     @Transactional
     public void readNotification(UUID receiverId, UUID notificationId) {
         var notification = repository.findByIdAndReceiverId(notificationId, receiverId)

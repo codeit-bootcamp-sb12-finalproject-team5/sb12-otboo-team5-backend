@@ -25,6 +25,24 @@ class NotificationServiceTest {
     private final UUID receiver = UUID.randomUUID();
 
     @Test
+    void loadsDeliveryNotificationsTogetherAndMapsWithinService() {
+        var first = notification();
+        var second = notification();
+        var ids = List.of(first.getId(), second.getId());
+        when(repository.findAllById(ids)).thenReturn(List.of(first, second));
+        var result = service.findForDelivery(ids);
+        assertThat(result).extracting(value -> value.id()).containsExactlyElementsOf(ids);
+        verify(repository, times(1)).findAllById(ids);
+        verifyNoMoreInteractions(repository);
+    }
+
+    @Test
+    void emptyDeliveryDoesNotQueryDatabase() {
+        assertThat(service.findForDelivery(List.of())).isEmpty();
+        verifyNoInteractions(repository, queryRepository);
+    }
+
+    @Test
     void mapsRepositoryPageToApiResponse() {
         var first = notification();
         when(queryRepository.findUnread(receiver, null, null, 1))

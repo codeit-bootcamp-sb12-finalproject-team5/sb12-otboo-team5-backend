@@ -128,9 +128,9 @@ class NotificationPipelineIntegrationTest {
             broker.consumeFromAnEmbeddedTopic(consumer, true, NotificationTopics.BROADCAST);
             publisher.publishCreate(payload.receiverId().toString(), message).get(10, TimeUnit.SECONDS);
             var record = KafkaTestUtils.getSingleRecord(consumer, NotificationTopics.BROADCAST, Duration.ofSeconds(20));
-            assertThat(record.value().notification().receiverId()).isEqualTo(payload.receiverId());
+            assertThat(record.value().notifications().get(0).receiverId()).isEqualTo(payload.receiverId());
             assertThat(jdbc.queryForObject("SELECT count(*) FROM notification WHERE id = ?", Integer.class,
-                    record.value().notification().id())).isEqualTo(1);
+                    record.value().notifications().get(0).notificationId())).isEqualTo(1);
             publisher.publishCreate(payload.receiverId().toString(), message).get(10, TimeUnit.SECONDS);
             assertThat(consumer.poll(Duration.ofSeconds(2))).isEmpty();
             assertThat(jdbc.queryForObject("SELECT count(*) FROM notification", Integer.class)).isEqualTo(1);
@@ -294,9 +294,9 @@ class NotificationPipelineIntegrationTest {
             broker.consumeFromAnEmbeddedTopic(consumer, true, NotificationTopics.BROADCAST);
             publisher.publishCreate(receiver.toString(), message).get(10, TimeUnit.SECONDS);
             var notification = KafkaTestUtils.getSingleRecord(consumer, NotificationTopics.BROADCAST, Duration.ofSeconds(20))
-                    .value().notification();
-            assertThat(notification.content()).isEqualTo("실제 DM 내용");
-            assertThat(notification.title()).isEqualTo("[DM] 작성자");
+                    .value().notifications().get(0);
+            assertThat(jdbc.queryForObject("SELECT content FROM notification WHERE id=?", String.class, notification.notificationId())).isEqualTo("실제 DM 내용");
+            assertThat(jdbc.queryForObject("SELECT title FROM notification WHERE id=?", String.class, notification.notificationId())).isEqualTo("[DM] 작성자");
             assertThat(notification.receiverId()).isEqualTo(receiver);
         }
         jdbc.update("UPDATE dm_room_member SET left_at=now() WHERE user_id=?", receiver);
