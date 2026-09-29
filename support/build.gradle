@@ -28,6 +28,9 @@ dependencies {
     // HTML Parser
     implementation 'org.jsoup:jsoup:1.21.1'
 
+    // Detect image types from file contents, independently of upload/S3 metadata.
+    implementation 'org.apache.tika:tika-core:3.3.2'
+
     // UUID v7
     implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
 

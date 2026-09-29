@@ -76,14 +76,15 @@ public class S3StorageService {
 
     private void saveOne(MultipartFile file, String objectKey) {
         try {
+            byte[] bytes = file.getBytes();
             PutObjectRequest request = PutObjectRequest.builder()
                     .bucket(bucket)
                     .key(objectKey)
-                    .contentType(file.getContentType())
+                    .contentType(ImageContentType.detect(bytes))
                     .build();
             s3Client.putObject(
                     request,
-                    RequestBody.fromBytes(file.getBytes())
+                    RequestBody.fromBytes(bytes)
             );
         } catch (IOException e) {
             throw new RuntimeException("S3 파일 업로드 실패: " + objectKey, e);
