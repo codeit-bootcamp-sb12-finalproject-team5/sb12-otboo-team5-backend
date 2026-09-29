@@ -3,6 +3,14 @@ package com.codeit.otboo.api.notification.service;
 import com.codeit.otboo.api.notification.repository.SseEmitterRepository;
 import com.codeit.otboo.domain.notification.dto.NotificationDto;
 import jakarta.annotation.PreDestroy;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.event.EventListener;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.Ordered;
+import java.util.Map;
+import java.util.Set;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -20,10 +28,27 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 @Slf4j
-public class NotificationSseService {
+public class NotificationSseService implements ApplicationContextAware {
 
     private static final long CONNECTION_TIMEOUT_MILLIS = 30 * 60 * 1000L;
     private static final int REPLAY_LIMIT = 50;
+
+    private final Object lifecycleMonitor = new Object();
+    private volatile boolean closing;
+    private ApplicationContext applicationContext;
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
+    @EventListener
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public void onContextClosed(ContextClosedEvent event) {
+        if (event.getApplicationContext() == applicationContext) {
+            shutdown();
+        }
+    }
 
     private final BooleanSupplier ready;
     private final SseEmitterRepository emitterRepository;
@@ -50,7 +75,7 @@ public class NotificationSseService {
     }
 
     public SseEmitter subscribe(UUID receiverId, UUID lastEventId) {
-        if (!ready.getAsBoolean()) {
+        if (closing || !ready.getAsBoolean()) {
             log.warn("[SSE] 구독 거부 receiverId={} 사유=브로드캐스트 수신 준비 안 됨", receiverId);
             throw new NotificationException(ErrorCode.NOTIFICATION_STREAM_UNAVAILABLE);
         }
@@ -62,8 +87,7 @@ public class NotificationSseService {
             log.debug("[SSE] 연결 종료 receiverId={} 남은 전체 연결={}", receiverId, emitterRepository.count());
         });
         emitter.onTimeout(() -> {
-            emitterRepository.delete(receiverId, emitter);
-            emitter.complete();
+            completeSafely(receiverId, emitter);
             log.info("[SSE] 연결 시간 초과 receiverId={} 제한={}분 (클라이언트가 재연결한다)",
                     receiverId, CONNECTION_TIMEOUT_MILLIS / 60_000L);
         });
@@ -73,13 +97,19 @@ public class NotificationSseService {
             log.debug("[SSE] 연결 오류 receiverId={} 사유={}", receiverId, error.toString());
         });
 
+        synchronized (lifecycleMonitor) {
+            if (closing) {
+                completeSafely(receiverId, emitter);
+                throw new NotificationException(ErrorCode.NOTIFICATION_STREAM_UNAVAILABLE);
+            }
+            closeExistingConnections(receiverId);
+            emitterRepository.save(receiverId, emitter);
+        }
+
         if (!send(receiverId, emitter, "connected", SseEmitter.event().comment("connected").reconnectTime(3000))) {
             log.warn("[SSE] 연결 시작 실패 receiverId={} 단계=초기 메시지 전송", receiverId);
             return emitter;
         }
-
-        closeExistingConnections(receiverId);
-        emitterRepository.save(receiverId, emitter);
 
         log.info("[SSE] 연결 시작 receiverId={} 이 사용자 연결={} 전체 연결={}",
                 receiverId, emitterRepository.countByReceiver(receiverId), emitterRepository.count());
@@ -90,7 +120,7 @@ public class NotificationSseService {
     }
 
     private void replayMissed(UUID receiverId, UUID lastEventId, SseEmitter emitter) {
-        if (lastEventId == null) {
+        if (closing || lastEventId == null) {
             return;
         }
 
@@ -114,14 +144,16 @@ public class NotificationSseService {
 
     private void closeExistingConnections(UUID receiverId) {
         for (SseEmitter previous : emitterRepository.findEmitters(receiverId)) {
-            emitterRepository.delete(receiverId, previous);
-            previous.complete();
+            completeSafely(receiverId, previous);
             log.info("[SSE] 기존 연결 종료 receiverId={} 사유=사용자당 연결 1개 유지", receiverId);
         }
     }
 
     /** Kafka 브로드캐스팅 수신부에서 호출할 로컬 연결 전달 진입점. */
     public void publish(NotificationDto notification) {
+        if (closing) {
+            return;
+        }
         var emitters = emitterRepository.findEmitters(notification.receiverId());
 
         if (emitters.isEmpty()) {
@@ -144,6 +176,9 @@ public class NotificationSseService {
 
     @Scheduled(initialDelay = 25, fixedRate = 25, timeUnit = TimeUnit.SECONDS)
     public void heartbeat() {
+        if (closing) {
+            return;
+        }
         int sent = 0;
         int failed = 0;
 
@@ -172,12 +207,19 @@ public class NotificationSseService {
 
     private boolean send(UUID receiverId, SseEmitter emitter, String kind, SseEmitter.SseEventBuilder event) {
         synchronized (emitter) {
+            if (closing) {
+                return false;
+            }
             try {
                 emitter.send(event);
                 return true;
             } catch (IOException | IllegalStateException e) {
                 emitterRepository.delete(receiverId, emitter);
-                emitter.completeWithError(e);
+                try {
+                    emitter.completeWithError(e);
+                } catch (IllegalStateException alreadyClosed) {
+                    log.debug("[SSE] 이미 종료된 연결 receiverId={}", receiverId);
+                }
                 // 클라이언트가 먼저 끊어도 발생하므로 예외 종류와 메시지만 남기고, 스택은 debug에서 본다.
                 log.warn("[SSE] 전송 실패로 연결 정리 receiverId={} 종류={} 사유={}: {}",
                         receiverId, kind, e.getClass().getSimpleName(), e.getMessage());
@@ -187,15 +229,32 @@ public class NotificationSseService {
         }
     }
 
+    private void completeSafely(UUID receiverId, SseEmitter emitter) {
+        emitterRepository.delete(receiverId, emitter);
+        synchronized (emitter) {
+            try {
+                emitter.complete();
+            } catch (RuntimeException exception) {
+                log.debug("[SSE] 연결 종료 처리 실패 receiverId={}", receiverId, exception);
+            }
+        }
+    }
+
     @PreDestroy
     public void shutdown() {
-        int closing = emitterRepository.count();
-
-        emitterRepository.findAll().forEach((receiverId, emitters) -> emitters.forEach(emitter -> {
-            emitterRepository.delete(receiverId, emitter);
-            emitter.complete();
-        }));
-
-        log.info("[SSE] 서버 종료로 연결 정리 연결수={}", closing);
+        Map<UUID, Set<SseEmitter>> connections;
+        synchronized (lifecycleMonitor) {
+            if (closing) {
+                return;
+            }
+            closing = true;
+            connections = emitterRepository.findAll();
+            connections.forEach((receiverId, emitters) ->
+                    emitters.forEach(emitter -> emitterRepository.delete(receiverId, emitter)));
+        }
+        connections.forEach((receiverId, emitters) ->
+                emitters.forEach(emitter -> completeSafely(receiverId, emitter)));
+        int count = connections.values().stream().mapToInt(Set::size).sum();
+        log.info("[SSE] 서버 종료로 연결 정리 연결수={}", count);
     }
 }
