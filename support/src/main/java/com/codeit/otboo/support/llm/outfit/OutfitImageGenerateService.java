@@ -6,6 +6,7 @@ import com.codeit.otboo.domain.clothes.repository.OutfitClothesRepository;
 import com.codeit.otboo.domain.outfit.entity.Outfit;
 import com.codeit.otboo.support.llm.outfit.dto.GeneratedOutfitImage;
 import com.codeit.otboo.support.storage.S3StorageService;
+import com.codeit.otboo.support.storage.ImageContentType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -101,10 +102,17 @@ public class OutfitImageGenerateService {
             if (bytes.length == 0 || bytes.length > MAX_IMAGE_BYTES) {
                 throw new IllegalArgumentException("Clothing image must be between 1 byte and 10 MB: " + item.getId());
             }
-            String mimeType = image.contentType();
+            String mimeType;
+            try {
+                mimeType = ImageContentType.resolve(bytes, image.contentType());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Cannot identify clothing image type: "
+                        + item.getId() + " (key=" + imageKey + ", contentType=" + image.contentType() + ")", e);
+            }
             if (!List.of("image/jpeg", "image/png", "image/webp", "image/heic", "image/heif")
                     .contains(mimeType)) {
-                throw new IllegalArgumentException("Unsupported clothing image type: " + mimeType);
+                throw new IllegalArgumentException("Unsupported clothing image type: " + mimeType
+                        + " (clothesId=" + item.getId() + ", key=" + imageKey + ")");
             }
             requestBytes += ((long) bytes.length + 2) / 3 * 4;
             if (requestBytes > MAX_INLINE_REQUEST_BYTES) {

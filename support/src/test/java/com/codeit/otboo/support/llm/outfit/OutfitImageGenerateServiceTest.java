@@ -9,6 +9,11 @@ import com.codeit.otboo.support.storage.S3StorageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.http.client.reactive.MockClientHttpRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -34,6 +39,52 @@ class OutfitImageGenerateServiceTest {
     private final OutfitClothesRepository repository = mock(OutfitClothesRepository.class);
     private final S3StorageService storage = mock(S3StorageService.class);
     private final Outfit outfit = Outfit.builder().id(UUID.randomUUID()).build();
+
+    @ParameterizedTest
+    @CsvSource({
+            "jpeg, application/octet-stream, true",
+            "jpeg, application/octet-stream, false",
+            "png, application/octet-stream, true",
+            "png, , false",
+            "jpeg, '', true",
+            "jpeg, binary/octet-stream, false"
+    })
+    void detectsLegacyImageTypeBeforeSendingToGemini(String format, String metadata, boolean fitting) throws Exception {
+        Clothes item = clothing("legacy.jpg", ClothesCategory.TOP);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ImageIO.write(new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB), format, output);
+        byte[] bytes = output.toByteArray();
+        when(repository.findClothesByOutfitId(outfit.getId())).thenReturn(List.of(item));
+        when(storage.getObject("legacy.jpg")).thenReturn(new S3StorageService.StoredObject(bytes, metadata));
+        AtomicReference<JsonNode> sent = new AtomicReference<>();
+        OutfitImageGenerateService generator = service(capturingBuilder(sent));
+
+        if (fitting) {
+            generator.generateFitting(outfit);
+        } else {
+            generator.generateOverview(outfit);
+        }
+
+        assertThat(sent.get().at("/contents/0/parts/1/inline_data/mime_type").asText())
+                .isEqualTo("image/" + format);
+        assertThat(sent.get().at("/contents/0/parts/1/inline_data/data").asText())
+                .isEqualTo(Base64.getEncoder().encodeToString(bytes));
+    }
+
+    @Test
+    void rejectsNonImageBytesEvenWhenFilenameEndsWithJpg() {
+        Clothes item = clothing("invalid.jpg", ClothesCategory.TOP);
+        when(repository.findClothesByOutfitId(outfit.getId())).thenReturn(List.of(item));
+        when(storage.getObject("invalid.jpg")).thenReturn(new S3StorageService.StoredObject(
+                "<html>Not an image</html>".getBytes(), "application/octet-stream"));
+        WebClient.Builder builder = WebClient.builder().exchangeFunction(request -> {
+            throw new AssertionError("Invalid images must not be sent to Gemini");
+        });
+
+        assertThatThrownBy(() -> service(builder).generateFitting(outfit))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Cannot identify clothing image type", "invalid.jpg", item.getId().toString());
+    }
 
     @Test
     void sendsEveryOutfitImageAndReturnsGeneratedImage() throws Exception {

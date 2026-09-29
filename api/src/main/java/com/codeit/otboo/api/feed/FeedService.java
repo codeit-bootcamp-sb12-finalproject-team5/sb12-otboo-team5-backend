@@ -96,6 +96,7 @@ public class FeedService {
             s3StorageService.getPresignedUrl(profileImageUrl),
             ootd,
             false,
+            s3StorageService.getPresignedUrl(outfit.getImageKey()),
             clothesItem -> s3StorageService.getPresignedUrl(clothesItem.getImageUrl())
         );
     }
@@ -150,6 +151,7 @@ public class FeedService {
                     ? ootdByOutfitId.get(feed.getId())
                     : null,
                 likedFeedIds.contains(feed.getId()),
+                s3StorageService.getPresignedUrl(feed.getOutfit().getImageKey()),
                 clothes -> s3StorageService.getPresignedUrl(clothes.getImageUrl())
             ))
             .toList();
@@ -339,6 +341,7 @@ public class FeedService {
             profileImageUrl,
             ootd,
             likedByMe,
+            s3StorageService.getPresignedUrl(feed.getOutfit().getImageKey()),
             clothesItem -> s3StorageService.getPresignedUrl(clothesItem.getImageUrl())
         );
     }

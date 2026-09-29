@@ -1,20 +1,17 @@
 package com.codeit.otboo.api.recommendation;
 
 import com.codeit.otboo.api.common.security.CustomUserDetails;
-import com.codeit.otboo.api.recommendation.dto.RecommendationResponse;
-import com.codeit.otboo.api.recommendation.dto.RecommendationRequest;
-import com.codeit.otboo.api.recommendation.dto.RecommendationUsageResponse;
+import com.codeit.otboo.api.recommendation.dto.*;
 import com.codeit.otboo.api.recommendation.history.RecommendationDailyLimitPolicy;
-import com.codeit.otboo.domain.recommendation.RecommendationType;
-import com.codeit.otboo.api.recommendation.dto.UserPreferenceRequest;
 import com.codeit.otboo.api.recommendation.service.RecommendationService;
+import com.codeit.otboo.domain.recommendation.RecommendationType;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -45,6 +42,13 @@ public class RecommendationController {
         @Valid @ModelAttribute RecommendationRequest request
     ) {
         return ResponseEntity.ok(recommendationService.recommendOutfit(principal.getUserId(), request));
+    }
+
+    @GetMapping("/preferences")
+    public ResponseEntity<List<UserPreferenceSurveyOption>> getUserPreferenceOption(
+        @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        return ResponseEntity.ok(recommendationService.getUserPreferenceOptions(principal.getUserId()));
     }
 
     @PostMapping("/preferences")

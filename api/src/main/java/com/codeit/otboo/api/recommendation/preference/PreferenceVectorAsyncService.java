@@ -7,7 +7,6 @@ import com.codeit.otboo.domain.clothes.repository.OutfitClothesUsageCount;
 import com.codeit.otboo.domain.profile.entity.Profile;
 import com.codeit.otboo.domain.profile.exception.ProfileException;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
-import com.codeit.otboo.support.llm.clothes.ClothesAnalysisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -26,17 +25,14 @@ import static com.codeit.otboo.api.recommendation.ranking.RecommendationRankingP
 @RequiredArgsConstructor
 public class PreferenceVectorAsyncService {
 
-    private final ClothesAnalysisService clothesAnalysisService;
     private final ClothesRepository clothesRepository;
     private final OutfitClothesRepository outfitClothesRepository;
     private final ProfileRepository profileRepository;
 
-    @Async("taskExecutor")
     @Transactional
-    public void initialize(UUID userId, String surveyText) {
-        log.info("[recommendation][preference] 선호 벡터 비동기 초기화를 시작 userId={}", userId);
+    public void initialize(UUID userId, float[] surveyVector) {
+        log.info("[recommendation][preference] 선호 벡터 초기화를 시작 userId={}", userId);
 
-        float[] surveyVector = clothesAnalysisService.embed(surveyText);
         List<Clothes> clothes = clothesRepository.findAllByUser_IdAndDeletedAtIsNull(userId);
         Map<UUID, Long> outfitUsageCountByClothesId = outfitClothesRepository
             .countActiveOutfitUsageByUserId(userId)
@@ -58,7 +54,7 @@ public class PreferenceVectorAsyncService {
         profile.updatePreferenceVector(toFloatArray(preferenceVectorSum));
 
         log.info(
-            "[recommendation][preference] 선호 벡터 비동기 초기화가 완료 userId={}, clothesCount={}, "
+            "[recommendation][preference] 선호 벡터 초기화가 완료 userId={}, clothesCount={}, "
                 + "contributedClothesCount={}, vectorDimension={}",
             userId,
             clothes.size(),

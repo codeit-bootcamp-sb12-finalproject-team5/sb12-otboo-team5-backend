@@ -21,4 +21,6 @@ public interface ClothesQueryRepository {
 
     List<Clothes> findOutfitCandidates();
 
+    List<Clothes> findSurveyCandidates();
+
 }

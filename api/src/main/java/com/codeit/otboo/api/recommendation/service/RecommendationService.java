@@ -3,12 +3,13 @@ package com.codeit.otboo.api.recommendation.service;
 import com.codeit.otboo.api.recommendation.dto.RecommendationRequest;
 import com.codeit.otboo.api.recommendation.dto.RecommendationResponse;
 import com.codeit.otboo.api.recommendation.dto.UserPreferenceRequest;
+import com.codeit.otboo.api.recommendation.dto.UserPreferenceSurveyOption;
+import com.codeit.otboo.api.recommendation.preference.PreferenceSurveyService;
 import com.codeit.otboo.api.recommendation.history.RecommendationDailyLimitPolicy;
 import com.codeit.otboo.api.recommendation.history.RecommendationHistoryQueryService;
 import com.codeit.otboo.api.recommendation.history.RecommendationHistorySaveService;
 import com.codeit.otboo.api.recommendation.llm.GeminiRecommendationResult;
 import com.codeit.otboo.api.recommendation.llm.LlmRecommendationService;
-import com.codeit.otboo.api.recommendation.preference.PreferenceVectorAsyncService;
 import com.codeit.otboo.api.recommendation.ranking.RankedClothes;
 import com.codeit.otboo.api.recommendation.ranking.RankedClothesCandidates;
 import com.codeit.otboo.api.weather.repository.WeatherRepository;
@@ -48,7 +49,7 @@ public class RecommendationService {
     private final RecommendationRankingService rankingService;
     private final WeatherRepository weatherRepository;
     private final LlmRecommendationService llmRecommendationService;
-    private final PreferenceVectorAsyncService preferenceVectorInitializationAsyncService;
+    private final PreferenceSurveyService preferenceSurveyService;
     private final S3StorageService s3StorageService;
     private final ClothesRepository clothesRepository;
     private final RecommendationDailyLimitPolicy recommendationDailyLimitPolicy;
@@ -252,7 +253,11 @@ public class RecommendationService {
     }
 
     public void initializePreferenceVector(UUID userId, UserPreferenceRequest request) {
-        preferenceVectorInitializationAsyncService.initialize(userId, request.toEmbeddingText());
+        preferenceSurveyService.initialize(userId, request.clothesIds());
+    }
+
+    public List<UserPreferenceSurveyOption> getUserPreferenceOptions(UUID userId) {
+        return preferenceSurveyService.getOptions(userId);
     }
 
     private int totalCandidateCount(RankedClothesCandidates ranked) {

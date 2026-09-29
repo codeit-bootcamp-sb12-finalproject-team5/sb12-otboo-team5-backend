@@ -100,6 +100,16 @@ public class ClothesQueryRepositoryImpl implements ClothesQueryRepository {
             .fetch();
     }
 
+    @Override
+    public List<Clothes> findSurveyCandidates() {
+        QClothes clothes = QClothes.clothes;
+        return queryFactory.selectFrom(clothes)
+            .where(clothes.deletedAt.isNull(),
+                clothes.user.role.eq(com.codeit.otboo.domain.user.entity.UserRole.ADMIN))
+            .orderBy(clothes.id.asc())
+            .fetch();
+    }
+
     private BooleanExpression typeEqualEq(QClothes clothes, ClothesCategory typeEqual) {
         return typeEqual != null
             ? clothes.category.eq(typeEqual)

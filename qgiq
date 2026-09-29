@@ -1,0 +1,2169 @@
+[33mcommit 1820fabc2c95e72f199ec44fc018f74eb716869e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mrefactor/preferencevector[m[33m, [m[1;31morigin/refactor/preferencevector[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Tue Sep 29 16:44:43 2026 +0900
+
+    hotfix: feed 생성 API 오류해결
+
+[33mcommit 97ede1f3790b27af710a67a83d84601734359bb7[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Tue Sep 29 16:23:35 2026 +0900
+
+    refactor: OOTD 이미지 타입오류 해결
+
+[33mcommit b98d0bf7d0baf3c24a48e3792fac07b6864a9ddd[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Tue Sep 29 15:29:26 2026 +0900
+
+    refactor: 사용자 선호벡터 초기화설문 리팩토링
+            - 기존 의상속성 설문에서 의상선택 설문으로 변경
+            - 초기화설문 GET & POST API 수정
+            - 피드 대표이미지 설정
+
+[33mcommit 9461729033d8e1f752378a5b4adb5294e93df374[m[33m ([m[1;31morigin/dev[m[33m, [m[1;32mdev[m[33m)[m
+Merge: 2ee0d83 c52efca
+Author: Kyeong Hun Lee <kyhun1007@naver.com>
+Date:   Tue Sep 29 10:34:48 2026 +0900
+
+    Merge pull request #54 from codeit-bootcamp-sb12-finalproject-team5/feat/notification-api
+    
+    feat: 알림 생성 토픽 파티션 분할 및 다중 스레드 적용
+
+[33mcommit c52efcaf55d1ad338c73d78ef771c292c55e8b7c[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 29 10:33:44 2026 +0900
+
+    refactor: kafka기본 설정 클래스 코드 정리
+
+[33mcommit c827898cea38e2d788eb233c81a85c267881f43d[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 29 09:25:41 2026 +0900
+
+    fix: 서버 종료 시 SSE 연결 선제 정리 및 종료 중 연결 등록 차단
+
+[33mcommit e7759eaf373b0fcab5580db58b76a74c07a7cf61[m
+Merge: 120b32c 2ee0d83
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 29 09:17:05 2026 +0900
+
+    Merge branch 'dev' into feat/notification-api
+
+[33mcommit 120b32c28abe012251982017ebb39b128b1aed4f[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 29 09:16:34 2026 +0900
+
+    feat: 알림 생성 토픽 파티션 분할 및 worker 스레드 도입으로 알림 처리 속도 개선
+
+[33mcommit 2ee0d8307606fe9f3be0f365ebf2aa8fd8711571[m
+Merge: b03d2e5 87ee352
+Author: SeoHyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 28 14:35:55 2026 +0900
+
+    Merge pull request #51 from codeit-bootcamp-sb12-finalproject-team5/refactor/optimize-recommendation
+    
+    refactor: 추천 LLM 재시도 정책 및 예외 처리 개선(KAN-128)
+
+[33mcommit b03d2e5adfb44ba422f433d51f5151a27a7168bd[m
+Merge: c8eeeea f131a02
+Author: SeoHyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 28 14:33:06 2026 +0900
+
+    Merge pull request #53 from codeit-bootcamp-sb12-finalproject-team5/feat/outfit-image
+    
+    [KAN-147] feat/Outfit 이미지 필드추가
+
+[33mcommit f131a02fdb71e2117581fc0f6513773fef14da37[m[33m ([m[1;31morigin/feat/outfit-image[m[33m, [m[1;32mfeat/outfit-image[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Mon Sep 28 05:58:33 2026 +0900
+
+    feat: Outfit 이미지 필드추가
+            - Outfit 이미지 Gemini생성 API 구현
+            - Outfit 이미지 저장 & 삭제 API 구현
+
+[33mcommit c8eeeeaedd7a3d2dc1a049041093823d44967ad4[m
+Merge: 41f4d3e 20b5d68
+Author: Kyeong Hun Lee <kyhun1007@naver.com>
+Date:   Fri Sep 25 02:23:09 2026 +0900
+
+    Merge pull request #52 from codeit-bootcamp-sb12-finalproject-team5/feature/follow
+    
+    feat: 팔로우 목록 nameLike 검색 및 정렬 기능 추가
+
+[33mcommit 20b5d68109121c8beb9b897ef4fe07d1caf4f7c0[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Wed Sep 23 22:10:22 2026 +0900
+
+    feat: 팔로우 목록 nameLike 검색 및 정렬 기능 추가
+
+[33mcommit 41f4d3e3aef948789e429246e862e82d2aa3d81a[m
+Merge: b9dd7b5 162c4e2
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Wed Sep 23 18:05:25 2026 +0900
+
+    Merge pull request #50 from codeit-bootcamp-sb12-finalproject-team5/refactor/auth
+    
+    refactor: kakao oauth 이메일문제 해결
+
+[33mcommit 87ee3526f785aff2e5b6304faa40610b7db562aa[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 23 17:50:35 2026 +0900
+
+    fix: 추천 횟수 수정
+
+[33mcommit 162c4e2953ee0628af9673ce8daf7f0c5137716f[m[33m ([m[1;31morigin/refactor/auth[m[33m, [m[1;32mrefactor/auth[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Wed Sep 23 17:40:46 2026 +0900
+
+    refactor: kakao oauth 이메일문제 해결
+            - V10 users 스키마에 email 다시추가 & UNIQUE 설정
+            - kakao oauth시 더미이메일 생성 & 적재
+
+[33mcommit d3b6b432f72f561a31e9ab041a8f51ff56b64dcb[m
+Merge: 5cc19f8 b9dd7b5
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 23 17:15:38 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into refactor/optimize-recommendation
+
+[33mcommit b9dd7b5ce2406a3ee0f87b6db20b5487df738746[m
+Merge: 2f45a23 ca42aae
+Author: yecoder514 <cjstk9081@gmail.com>
+Date:   Wed Sep 23 17:13:33 2026 +0900
+
+    Merge pull request #48 from codeit-bootcamp-sb12-finalproject-team5/feature/follow
+    
+    fix: 팔로워 및 팔로잉 목록 조회 API 접근 권한 제한 로직 제거
+
+[33mcommit 2f45a231c56b74d8a72ff977634a283a242e0780[m
+Merge: cf1a0b3 e56c6ae
+Author: yecoder514 <cjstk9081@gmail.com>
+Date:   Wed Sep 23 17:13:23 2026 +0900
+
+    Merge pull request #47 from codeit-bootcamp-sb12-finalproject-team5/feature/profile
+    
+    fix: 프로필 조회 API 접근 권한 제한 로직 제거
+
+[33mcommit ca42aae5a9e029ae6284c39911baaebb1a207cf3[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Wed Sep 23 16:05:00 2026 +0900
+
+    fix: 팔로워 및 팔로잉 목록 조회 API 접근 권한 제한 로직 제거
+
+[33mcommit 4f82cd2a4f4f94884286222639b728ea936086ac[m
+Merge: 0ee007f acd37de
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Wed Sep 23 15:56:41 2026 +0900
+
+    Merge remote-tracking branch 'origin/dev' into feature/follow
+
+[33mcommit 5cc19f862722f8601eab1bf8249dc2227e45257d[m
+Merge: 352b544 cf1a0b3
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 23 15:42:11 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into refactor/optimize-recommendation
+
+[33mcommit cf1a0b3a65ff39e056d80e4a3eb72b062477bc88[m
+Merge: acd37de dce7b7f
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Wed Sep 23 15:41:14 2026 +0900
+
+    Merge pull request #46 from codeit-bootcamp-sb12-finalproject-team5/feat/oauth
+    
+    feat: Oauth2 google & kakao registration and login 추가
+
+[33mcommit 352b54486afdc41d689b0946b3129e39e5d779a1[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 23 15:38:03 2026 +0900
+
+    refactor: 추천 LLM 재시도 정책 및 예외 처리 개선(KAN-128)
+    
+    - Gemini 호출 최대 2회로 제한하고 전체 생성 시간 예산 적용
+    - 타임아웃 및 외부 API 실패 추천 도메인 예외로 변환
+    - 보정 및 추천 이력 프롬프트 문구 한국어로 통일
+
+[33mcommit e56c6aebf071e9e6a97c816c87accf89b7c60534[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Wed Sep 23 15:36:24 2026 +0900
+
+    fix: 프로필 조회 API 접근 권한 제한 로직 제거
+
+[33mcommit dce7b7f8af18f9463416903066c8097a4902e798[m[33m ([m[1;31morigin/feat/oauth[m[33m, [m[1;32mfeat/oauth[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Wed Sep 23 15:31:46 2026 +0900
+
+    feat: Oauth2 google & kakao registration and login 추가
+
+[33mcommit acd37de07b2ffa9cca53b58dd7bf3b302fcdf59d[m
+Merge: 18a6cda 1e93c3d
+Author: Kyeong Hun Lee <kyhun1007@naver.com>
+Date:   Tue Sep 22 18:43:57 2026 +0900
+
+    Merge pull request #45 from codeit-bootcamp-sb12-finalproject-team5/feat/monitoring
+    
+    feat: 피드 관련 알림 기능 추가 및 배치 메타데이터 flyway 로 이관
+
+[33mcommit 1e93c3dac19165c082cae74909f88b954986744b[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 22 18:27:44 2026 +0900
+
+    feat: 피드 생성시 알림 생성, 팔로윙 시 알림 생성 기능 추가
+
+[33mcommit 3482a42401f0c6b057169f44e3fedbdd50a90ab6[m
+Merge: 801bda7 18a6cda
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 22 18:18:47 2026 +0900
+
+    Merge branch 'dev' into feat/monitoring
+
+[33mcommit 801bda70ef0e1e631f1f162253c95b57a69b9b1a[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 22 18:15:52 2026 +0900
+
+    refactor: 불필요 테스트 삭제
+
+[33mcommit 18a6cda34a11f9541a92482dd78fd04ac28aa07c[m
+Merge: 9d0c0b9 8f9a0ad
+Author: yecoder514 <cjstk9081@gmail.com>
+Date:   Tue Sep 22 18:12:54 2026 +0900
+
+    Merge pull request #44 from codeit-bootcamp-sb12-finalproject-team5/feature/follow
+    
+    팔로우 CRD 구현
+
+[33mcommit 9d0c0b95d4227ea91a92041c3b35b06217882ab1[m
+Merge: 83149c3 fa34cd1
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Tue Sep 22 18:12:02 2026 +0900
+
+    Merge pull request #43 from codeit-bootcamp-sb12-finalproject-team5/hotfix/outfit-patch
+    
+    hotfix/outfit-patch
+
+[33mcommit fa34cd118919a7129aae66bfbd67b3bfc7a9c4f2[m[33m ([m[1;31morigin/hotfix/outfit-patch[m[33m, [m[1;32mhotfix/outfit-patch[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Tue Sep 22 18:08:52 2026 +0900
+
+    hotfix/outfit-patch
+            - 아웃핏 카테고리 & 설명 업데이트 버그수정
+
+[33mcommit 01a407be23a288795957adbbd2a012589c1b503f[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 22 18:02:13 2026 +0900
+
+    refactor: Spring Batch 메타데이터 스키마 관리를 Flyway로 이관
+
+[33mcommit 2c78fc20ee1651f387922609fa88a54a8a30c247[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 22 17:52:46 2026 +0900
+
+    feat: 피드에 좋아요, 댓글 등록시 게시자에게 알림 기능 추가
+
+[33mcommit 96a1660c98f31738088eb36822048ed9fad1430e[m
+Merge: 21c7481 83149c3
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 22 17:05:25 2026 +0900
+
+    Merge branch 'dev' into feat/monitoring
+
+[33mcommit 0ee007f5307a4afdb880640b0dfa50a54784baeb[m
+Merge: 8f9a0ad 83149c3
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Tue Sep 22 15:56:10 2026 +0900
+
+    Merge remote-tracking branch 'origin/dev' into feature/follow
+
+[33mcommit 8f9a0ad86baf238aad790d9b6057b7decabdad4a[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Tue Sep 22 15:43:38 2026 +0900
+
+    feat: Follow 취소 API 구현
+
+[33mcommit 097e7b29a649146a2b4fdb85ea4d6bb10d59b6b4[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Tue Sep 22 15:36:56 2026 +0900
+
+    feat: Follow 요약 정보 조회 API 구현
+
+[33mcommit c5a5e68a00e1e279ea2e1d8ec3c7b71600546f87[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Tue Sep 22 15:29:35 2026 +0900
+
+    feat: Follow 생성 API 구현
+
+[33mcommit 0055b657e0eb1a2fd8be1306d34482825e4bed45[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Tue Sep 22 15:13:02 2026 +0900
+
+    feat: Follow 팔로잉 및 팔로워 목록 조회 구현
+
+[33mcommit 43730a325f1beaf5bf754db42b6dbbe4db188403[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Tue Sep 22 14:09:49 2026 +0900
+
+    feat: 기본 Repository 메서드 구현
+
+[33mcommit 83149c321ffe1004b430d367f88086a8fff11d6f[m
+Merge: f0efddc a706ac5
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Tue Sep 22 13:23:28 2026 +0900
+
+    Merge pull request #42 from codeit-bootcamp-sb12-finalproject-team5/feat/prefvector
+    
+    Feat/prefvector
+
+[33mcommit 21c7481566eb621c9589e627789c01fa60e620d6[m
+Merge: 87d2906 f0efddc
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 22 13:15:34 2026 +0900
+
+    Merge branch 'dev' into feat/monitoring
+
+[33mcommit a706ac53d9f1deeb4d512c6a20b0db2979df11d5[m
+Merge: 99b94cb f0efddc
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Tue Sep 22 11:55:11 2026 +0900
+
+    Merge branch 'dev' into feat/prefvector
+
+[33mcommit 99b94cb9696208453edd89c53dc7d90da19f5a83[m[33m ([m[1;31morigin/feat/prefvector[m[33m, [m[1;32mfeat/prefvector[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Tue Sep 22 11:48:26 2026 +0900
+
+    refactor: OOTD & Outfit Create Service 논리적오류 수정
+
+[33mcommit 221217c019fbbcfb66176580e452f2ae3bd9599a[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Tue Sep 22 11:02:52 2026 +0900
+
+    feat: recommendation 사용자 선호벡터 초기화 & 업데이트 적용
+            - 사용자 선호벡터 설문초기화
+            - 사용자 선호벡터 업데이트 적용
+
+[33mcommit f0efddcb9c3ec4a434b751e99ba669bc14461dbd[m
+Merge: cdab225 9643162
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Tue Sep 22 11:01:06 2026 +0900
+
+    Merge pull request #41 from codeit-bootcamp-sb12-finalproject-team5/refactor/recommendation
+    
+    refactor: 추천 로직에서 날씨 조회하는 로직 수정
+
+[33mcommit 96431621b28355ffadacc0aeef26c01b679bca3b[m
+Merge: 355e1e1 cdab225
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 22 10:02:32 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into refactor/recommendation
+
+[33mcommit 355e1e161b7e0828af6d04027589a01a00df7f4a[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 22 10:02:09 2026 +0900
+
+    feat: ootd 추가
+
+[33mcommit 87d29069429d715c0a88c41cc9b617827b15f0f8[m
+Merge: bac286e cdab225
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 21 20:42:14 2026 +0900
+
+    fix: 날씨 알림 배치 작업시 오류 발생해도 남은 격자에 대한 작업 진행하도록 내결함성 추가
+
+[33mcommit cdab225aafb57a720b00f114d69b514933be0dab[m
+Merge: 5a6e82b bf21038
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Mon Sep 21 18:28:02 2026 +0900
+
+    Merge pull request #40 from codeit-bootcamp-sb12-finalproject-team5/feat/outfit
+    
+    refactor: Outfit & Feed 프론트엔드 연동 리팩토링
+
+[33mcommit e19180ab6b3c8b56244fbbd0388a4cfcc155c307[m
+Merge: 69f7ed9 5a6e82b
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 21 18:19:21 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into refactor/recommendation
+
+[33mcommit bf210380196910247366aa3e3265ff81249e672e[m[33m ([m[1;31morigin/feat/outfit[m[33m, [m[1;32mfeat/outfit[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Mon Sep 21 17:48:06 2026 +0900
+
+    refactor: Outfit Request and Reqponse 리팩토링
+
+[33mcommit bac286ea303fb5f72d596b309ce071fd41873865[m
+Merge: b47a665 5a6e82b
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 21 17:02:44 2026 +0900
+
+    Merge branch 'dev' into feat/monitoring
+
+[33mcommit 5a6e82b91e127721c2a95a96b4a58e24a1608086[m
+Merge: db4511a ca996ad
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Mon Sep 21 16:20:17 2026 +0900
+
+    Merge pull request #39 from codeit-bootcamp-sb12-finalproject-team5/feat/feed
+    
+    Feed 도메인 CRUD 구현 및 테스트완료
+
+[33mcommit ca996ad84505c7dd22d8a136eac4a382e14a3624[m
+Merge: d1f5552 db4511a
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Mon Sep 21 16:12:37 2026 +0900
+
+    Merge branch 'dev' into feat/feed
+
+[33mcommit 69f7ed9ccd176e7964d221ac3dc0497a251104f2[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 21 16:10:15 2026 +0900
+
+    refactor: 추천 필터링 날씨 온도 평균기온으로 변경
+
+[33mcommit 87d6ce62eba60cdf80f1c52fbce81adff71e41c1[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 21 16:04:26 2026 +0900
+
+    refactor: 추천 로직의 날씨 조회를 WeatherRepository로 통합
+
+[33mcommit d1f55520809c983d3aa20b0c6ac7af1cf88ff923[m[33m ([m[1;31morigin/feat/feed[m[33m, [m[1;32mfeat/feed[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Mon Sep 21 16:04:21 2026 +0900
+
+    refactor: Feed API & Frontend 테스트 및 리펙터링
+
+[33mcommit b47a66512ffb74eccfa77937f006b8edc8b5ec55[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 21 15:49:41 2026 +0900
+
+    refactor: 날씨 데이터 요청이 항상 같은 값을 반환할 수 있도록 공통 로직으로 합침
+
+[33mcommit db4511a00c3b195d27bb22706a4e2e7b0edd236f[m
+Merge: 20d64c8 9c356ed
+Author: SeoHyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 21 15:24:39 2026 +0900
+
+    Merge pull request #37 from codeit-bootcamp-sb12-finalproject-team5/refactor/recommendation
+    
+    feat: 추천 이력 기반 다양성 및 일일 추천 제한 구현
+
+[33mcommit 0a07881f471767ffdc059cac922795c0623e7ff6[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Mon Sep 21 14:30:02 2026 +0900
+
+    feat: Outfit OOTD CRUD 적용
+
+[33mcommit 20d64c8bf758b3a5c61de8321304a8e3c80426a9[m
+Merge: 1970efd 4cb37f0
+Author: Kyeong Hun Lee <kyhun1007@naver.com>
+Date:   Mon Sep 21 14:24:37 2026 +0900
+
+    Merge pull request #38 from codeit-bootcamp-sb12-finalproject-team5/feat/monitoring
+    
+    faet: 특정 날씨 조회 메서드 추가
+
+[33mcommit 4cb37f09a5b89d0ce7d13b64cb531d59274edf93[m
+Merge: 1134da9 0eb21f2
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 21 14:20:00 2026 +0900
+
+    Merge remote-tracking branch 'origin/feat/monitoring' into feat/monitoring
+
+[33mcommit 1134da9be67968ad94f70a761dd0ace7fc5b6357[m
+Merge: 5c328c4 1970efd
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 21 14:08:05 2026 +0900
+
+    Merge branch 'dev' into feat/monitoring
+
+[33mcommit 0eb21f256acaacb62a956ba32f91690c6bd9300f[m
+Merge: 5c328c4 1970efd
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 21 14:08:05 2026 +0900
+
+    Merge branch 'dev' into feat/monitoring
+
+[33mcommit 5c328c46d914637366240a9b3afb9a78f9d29918[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 21 14:07:20 2026 +0900
+
+    faet: 특정 날씨데이터 조회 메서드 추가
+
+[33mcommit 9c356ed018aa5a56e985d84e199adec3f6cd61b5[m
+Merge: b72fb26 1970efd
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 21 13:10:09 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into refactor/recommendation
+
+[33mcommit b72fb26e95914a63b546a761437b0c3303193c22[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 21 13:05:59 2026 +0900
+
+    fix: LlmClothesCandidate rankinScore 데이터 타입 변경
+
+[33mcommit 1970efd39d658a73ac4d4a7a9a88a352090415c7[m
+Merge: c93b69e 4f9519d
+Author: yecoder514 <cjstk9081@gmail.com>
+Date:   Mon Sep 21 11:46:59 2026 +0900
+
+    Merge pull request #35 from codeit-bootcamp-sb12-finalproject-team5/feature/profile
+    
+    프로필 저장 위치를 기준으로 날씨 조회 기능 추가
+
+[33mcommit 33eb724725330122dd6fedf672342def36b9cb4b[m
+Merge: ab041b6 c93b69e
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 21 11:43:08 2026 +0900
+
+    fix: merge ì 충돌 해결
+
+[33mcommit 85b7f10a5b024c8310aedc34fcfcd080d09e93a4[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Mon Sep 21 10:40:26 2026 +0900
+
+    refactor: Outfit & OOTD 리팩터링중
+
+[33mcommit 20a15a866bc968cf4335473687edeb74388eac58[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Mon Sep 21 05:32:21 2026 +0900
+
+    feat: Feed, FeedLike, FeedComment CRUD 구현
+            - Feed 전체 API 구현
+            - Outfit Create&Update시 category값 추가
+
+[33mcommit 1ef8ce3388ade4ceb8888bb7e98f050e421c99e9[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 21 11:35:59 2026 +0900
+
+    refactor: 하늘상태 및 예측정보 Enum 추가에 따른 응답 Dto 내 타입 조정
+
+[33mcommit ab041b6b55f6faec5a5ffd9f1a2ba48ed5301eb9[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 21 11:28:59 2026 +0900
+
+    chore: 주석 정리 및 안 사용하는 코드 정리
+
+[33mcommit c93b69e8afb54f044e533a5a4879c2b52511df74[m
+Merge: 0eb694e 4f78393
+Author: Kyeong Hun Lee <kyhun1007@naver.com>
+Date:   Mon Sep 21 11:20:08 2026 +0900
+
+    Merge pull request #36 from codeit-bootcamp-sb12-finalproject-team5/feat/monitoring
+    
+    feat: 모니터링 도구 추가 및 날씨상태 하늘상태 Enum으로 변경
+
+[33mcommit 4f78393dcd302e88912331d7c941ce648088631a[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 21 11:06:57 2026 +0900
+
+    refactor: 하늘상태 및 예측정보 Enum 추가 및 캐시 타임아웃 도입
+
+[33mcommit e724729ba233318b2a7cdeb8bd77a538299688df[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 21 10:28:25 2026 +0900
+
+    feat: 날씨 데이터 기준 미달시 api 재조회 기능 추가
+
+[33mcommit b4d6ab491b4bb6596f991a10eaa1b216bab454d1[m
+Merge: 6229b69 ce75e4b
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 21 10:27:14 2026 +0900
+
+    Merge remote-tracking branch 'origin/feat/monitoring' into feat/monitoring
+
+[33mcommit 4f9519dda6dd60aa28f0bef3d819839005181d72[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Mon Sep 21 09:35:18 2026 +0900
+
+    fix: preferenceVector에 VECTOR JdbcTypeCode 적용
+
+[33mcommit 48deb511eea2a267c3333c00e463114f19d46daf[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Sun Sep 20 19:21:52 2026 +0900
+
+    feat: 남자 의상 추천 에러 수정
+
+[33mcommit 1a30840c043744db250b492355e9159bf56fc0e7[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Sun Sep 20 19:06:33 2026 +0900
+
+    feat: 추천 이력 저장 및 일일 추천 제한 연동(#KAN-132, 133)
+    
+    - 사용자별 일일 추천 횟수 제한 추가(OOTD - 3회, Outfit-5회)
+
+[33mcommit 5c7cbdc4448f72fe98b71aabe4d873ea2b1aa0f5[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Sun Sep 20 16:47:52 2026 +0900
+
+    feat: 최근 추천 이력 기반 다양성 패널티 적용(#KAN-132, 133)
+    
+    - 최근 3회 노출 의상에 강한 패널티 적용
+    - 최근 4-10회 노출 의상에 약한 패널티 적용
+
+[33mcommit 41a0b29657fc1b16273497de527622c4ab696399[m
+Merge: 7f9c0d8 0eb694e
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Sun Sep 20 16:37:24 2026 +0900
+
+    Merge remote-tracking branch 'origin/dev' into feature/follow
+
+[33mcommit f5e3c478de08220e84887199b3c5bb538ee5a540[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Sun Sep 20 16:33:58 2026 +0900
+
+    feat: 추천 이력 저장 위한 도메인 모델 및 마이그레이션 추가(#KAN-132, 133)
+    
+    - RecommendationType을 domain 모듈로 이동
+    - 추천 요청 이력 엔티티 RecommendationRequestHistory 추가
+    - 선택 의상 연결 엔티티 RecommendationRequestSelectedClothes 추가
+    - 추천 코디 이력 엔티티 RecommendationOutfitHistory 추가
+    - 추천 코디 의상 연결 엔티티 RecommendationOutfitClothes 추가
+    - Flyway V7 마이그레이션 추가
+
+[33mcommit 6f09ea5b7419d4f906b0869c46c967905b66b017[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Sun Sep 20 13:47:08 2026 +0900
+
+    feat: 고정ì 의상 기반 Gemini 코디 생성 지원 구현
+
+[33mcommit b94dfc2bdbc5c190ff6b48202abdd69ed89ea80f[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Sun Sep 20 01:41:25 2026 +0900
+
+    feat: 프로필 저장 위치를 기준으로 날씨 조회 기능 추가
+    
+    - WeatherService에 WeatherGrid 기반 날씨 조회 메서드 추가
+    - WeatherServiceImpl에 WeatherGrid를 이용한 날씨 조회 구현
+    - ProfileService에서 사용자의 Profile에 저장된 WeatherGrid로 날씨 조회
+    - ProfileController에 프로필 저장 위치 기반 날씨 조회 API 추가
+
+[33mcommit 6229b6999c25987669d831c063858ba3244c312a[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 18 18:39:51 2026 +0900
+
+    fix: sse heartbeat 25초로 설정과 lab에 이미지 재 빌드 스크립트 파일 추가
+
+[33mcommit ce75e4bd660ebfbf0e62e9c9e1ab86f45b621262[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 18 18:39:51 2026 +0900
+
+    fix: sse heartbeat 25초로 설정과 lab에 이미지 재 빌드 스크립트 파일 추가
+
+[33mcommit a9a9bcaceaf3f231cc1c7adddd40440ef4a30525[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 18 18:21:05 2026 +0900
+
+    feat: ALB 사용 전 테스트용 nginx를 추가하여 두 API서버로 요청 분산
+
+[33mcommit d3cd1a9fa0844aebe2a2cb0d46bdcac8eafe3419[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 18 18:19:48 2026 +0900
+
+    feat: 성능 측정을 위한 api두개 worker와 배치 서버를 동시에 띄우는 compose 파일 및 Dockerfile 추가
+
+[33mcommit 33c0501d0de14fa6bcef0acee565a953d65b13c3[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Fri Sep 18 18:19:46 2026 +0900
+
+    feat: 선택  의상 기반 필터링 및 랭킹 지원(#KAN-138)
+
+[33mcommit ddb3907cc33d2ed460d40ca327727b7462f6e21f[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 18 18:18:39 2026 +0900
+
+    feat: worker 서버의 web 사용을 true로 변경 . 관리용 포트 노출"
+
+[33mcommit 1fec4d2bbc69fb573b3432ef6b7fc6c56ace28ca[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Fri Sep 18 17:29:11 2026 +0900
+
+    feat: 선택 의상 기반 추천 요청 및 검증 추가(#KAN-138)
+
+[33mcommit 6804b082864fff5e047f205696d8e828b7c493d1[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 18 16:02:16 2026 +0900
+
+    feat: sse 재 연결시 누락 알림 전송하는 로직 추가
+
+[33mcommit 57b1db823018ca0a9c18228a7dbcc07b85283c52[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 18 15:10:57 2026 +0900
+
+    feat: sse 연결 계정당 브라우저 1개 제한
+
+[33mcommit c2a71bd556bba456d785db9b82ef9e092a345da0[m[33m ([m[1;31morigin/refactor/recommendation[m[33m, [m[1;32mrefactor/recommendation[m[33m)[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Fri Sep 18 14:11:18 2026 +0900
+
+    fix: profile 수정 및 인증/인가 권한 수정
+
+[33mcommit cecdd19abcdc97a441940928808e823a0087ae61[m
+Merge: 0463098 0eb694e
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 18 13:39:31 2026 +0900
+
+    Merge branch 'dev' into feat/monitoring
+
+[33mcommit 0463098596dd8de9e6346b4b409aafed318a104a[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 18 13:39:00 2026 +0900
+
+    feat: sse 연결 수립 확인을 위한 로깅 추가
+
+[33mcommit a1131b4ad2dacd5f1670997ff5391abc4e6b1a62[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Fri Sep 18 13:16:38 2026 +0900
+
+    feat: 전체 의상 카테고리 기반 랭킹 지원(#KAN-130)
+
+[33mcommit 613deeab9467a4ded275463fbffdfb05aeb30ef5[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 18 13:10:40 2026 +0900
+
+    feat: batch 서버 actuator 커스텀 메트릭 노출 및 prometheus 와 grafana 연동
+
+[33mcommit 701653e45669d471baf58b636511a759295286ed[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Fri Sep 18 11:16:35 2026 +0900
+
+    fix: 응답 이미지 URL을 S3 presigned URL로 변환(#KAN-134)
+
+[33mcommit f88ddb10988804698d949865449c731c63b6ae0e[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Fri Sep 18 11:09:24 2026 +0900
+
+    refactor: recommendation 관련 service 클래스 폴더로 이동
+
+[33mcommit 0eb694e0c613de4c72bf53467bd15c2df0b12d68[m[33m ([m[1;32mfeat/clothes[m[33m)[m
+Merge: 1f33e3f 34af434
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Fri Sep 18 09:11:06 2026 +0900
+
+    Merge pull request #34 from codeit-bootcamp-sb12-finalproject-team5/chore/clothes-data-load
+    
+    chore: Clothes Data Collect & Load
+
+[33mcommit 1f33e3faa3e855f7be6e25123410e6d1aabf952b[m
+Merge: 4976a5f 5f94f05
+Author: SeoHyeon <hyeon99@ajou.ac.kr>
+Date:   Fri Sep 18 09:08:57 2026 +0900
+
+    Merge pull request #33 from codeit-bootcamp-sb12-finalproject-team5/feat/outfit
+    
+    feat: Outfit CRUD 구현
+
+[33mcommit 34af434af5f6757acfc3c44e1adba5e6aba8b2c1[m[33m ([m[1;31morigin/chore/clothes-data-load[m[33m, [m[1;32mchore/clothes-data-load[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Thu Sep 17 18:53:47 2026 +0900
+
+    chore: Clothes Data Collect & Load
+            - V6__load_clothes_data_fst.sql 추가
+
+[33mcommit 5f94f05efd28f3abc33c3be46a352b30a113090a[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 17:35:24 2026 +0900
+
+    feat: outfit api 인가 추가
+
+[33mcommit 97c85d7af28dd5107ddfad010493c0a367fe1466[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 17:31:17 2026 +0900
+
+    feat: outfit 목록 조회 api 구현(#KAN-95)
+
+[33mcommit 2209ddba6dd1560c88099e25936f186e13e6de8e[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 17:14:44 2026 +0900
+
+    feat: outfit 단건조회 api 구현(#KAN-95)
+
+[33mcommit 10d4f8b3dc1acea40fef580565656ba135efb643[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 17:02:14 2026 +0900
+
+    feat: outfit 삭제 api 구현(#KAN-95)
+
+[33mcommit 9df06d4c3417f5306b4be7cff239a183334292e2[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 16:58:16 2026 +0900
+
+    feat: outfit t 수정 api 구현(#KAN-95)
+
+[33mcommit 5227f71a8e58f8ea3f0c2bd62dc9261c27c77b73[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 16:17:56 2026 +0900
+
+    feat: outfit 등록 구현(#KAN-95)
+
+[33mcommit 4976a5fc124cb5c23d8f200132347028c89cc10f[m
+Merge: 312ed8c b03303c
+Author: SeoHyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 15:22:26 2026 +0900
+
+    Merge pull request #32 from codeit-bootcamp-sb12-finalproject-team5/feat/recommendation
+    
+    feat: outfit 추천 기능 구현
+
+[33mcommit b03303c9789b41aa8080434d8ddaffb9ba12f2a8[m[33m ([m[1;31morigin/feat/recommendation[m[33m, [m[1;32mfeat/recommendation[m[33m)[m
+Merge: 6320b1a 312ed8c
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 15:18:13 2026 +0900
+
+    fix: merge conflict 해결
+
+[33mcommit 6320b1ae3698168d08b9a457ca5e3d7467941e11[m
+Merge: a8a9e00 d7e45d5
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 15:07:54 2026 +0900
+
+    Merge branch 'feat/recommendation' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/recommendation
+
+[33mcommit a8a9e001730c6be598e5f1c27ef5f35509ccedd9[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 15:06:11 2026 +0900
+
+    chore: 필터링, 랭킹화에 로그 추가
+
+[33mcommit 5293cd760c6d50e7df531ed8e766aefbbfd76bc4[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Thu Sep 17 14:37:21 2026 +0900
+
+    chore: Spring Boot BOM 버전 통일 및 실행 모듈에 Actuator·Prometheus 의존성 추가
+
+[33mcommit 3a0b96c0990889497861f4186693f4e1bb86d8b4[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 14:11:49 2026 +0900
+
+    feat: rule-based filtering에 성별 outfit 추천 시터링 추가
+
+[33mcommit 7b319ba715624881e1807cac19e726c7ab2e7c03[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 14:06:43 2026 +0900
+
+    feat: recommendation api 인가 설정 추가
+
+[33mcommit d7e45d579a6ac761159cf9bd38addde4b74a142d[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Thu Sep 17 11:34:46 2026 +0900
+
+    chore: minor update
+
+[33mcommit 9386c741137cce412859e8d4a14cf6baa5316ced[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 11:14:14 2026 +0900
+
+    feat: 일단 push
+
+[33mcommit 02ba70180d042a96abfa9c15d62b4c5963bc5927[m
+Merge: 9e1c211 312ed8c
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Thu Sep 17 11:12:05 2026 +0900
+
+    Merge branch 'dev' into feat/notification-api
+
+[33mcommit 5230bc9a78482a8355c1465189a53d51b1dbdddb[m
+Merge: ba9a15b 575e321
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 11:09:32 2026 +0900
+
+    Merge branch 'feat/recommendation' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/recommendation
+
+[33mcommit 575e3211b970619d978c0644959bc357827a3068[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Thu Sep 17 11:08:54 2026 +0900
+
+    chore: merge 오류 수정중
+
+[33mcommit ba9a15b1c890e7ca0df2fd96fb7502d7737b4660[m
+Merge: 467661d 1e4f78a
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 11:07:49 2026 +0900
+
+    Merge branch 'feat/recommendation' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/recommendation
+
+[33mcommit 1e4f78acf61b043d6840fc0adffbc2073cdab340[m
+Merge: f2d41d6 26f3e9f
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Thu Sep 17 10:55:47 2026 +0900
+
+    Merge pull request #31 from codeit-bootcamp-sb12-finalproject-team5/feat/recommendation-user-prefvector
+    
+    Feat/recommendation user prefvector
+
+[33mcommit 26f3e9f1863c732e98fccce9480934113d664b8d[m[33m ([m[1;31morigin/feat/recommendation-user-prefvector[m[33m)[m
+Merge: dc19081 f2d41d6
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Thu Sep 17 10:55:25 2026 +0900
+
+    Merge branch 'feat/recommendation' into feat/recommendation-user-prefvector
+
+[33mcommit 312ed8cb3ca6cf308aafcc4ac1a370300c4ed129[m
+Merge: 6c7f710 a4b0a62
+Author: yecoder514 <cjstk9081@gmail.com>
+Date:   Thu Sep 17 10:48:08 2026 +0900
+
+    Merge pull request #30 from codeit-bootcamp-sb12-finalproject-team5/feature/profile
+    
+    회원가입 시 기본 프로필 생성 구현 및 프로필 이미지 S3 연동
+
+[33mcommit dc1908136f428c508089bae2dab0941ddc98175b[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Thu Sep 17 10:45:39 2026 +0900
+
+    feat: Recommendation 사용자 선호벡터 초기화기능 API 테스트완료
+
+[33mcommit 9e1c2113cefe5dda6e4e632dcc8f8a24a4da5260[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Thu Sep 17 10:26:51 2026 +0900
+
+    chore: Kafka 헬스체크 주기를 30초로 조정해 CPU 부하 완화
+
+[33mcommit 467661d4032a4a885f947562781d52482208def5[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 10:23:28 2026 +0900
+
+    fix: 사용자 속성 벡터 자료형  변경
+
+[33mcommit a4b0a62e02d8384570071f99fea352de27880647[m[33m ([m[1;31morigin/feature/profile[m[33m)[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Thu Sep 17 10:17:44 2026 +0900
+
+    fix: PostgreSQL vector 매핑 오류 해결을 위해 preferenceVector를 Float[]에서 float[]로 변경
+
+[33mcommit 6c7f71014ddd681eaa8f862ebe70ee710e74caf5[m
+Merge: 01a8c2a 63f1bd1
+Author: Kyeong Hun Lee <kyhun1007@naver.com>
+Date:   Thu Sep 17 09:42:20 2026 +0900
+
+    Merge pull request #29 from codeit-bootcamp-sb12-finalproject-team5/feat/notification-api
+    
+    feat: 알림 시스템 구현, 날씨 알림 배치 구현
+
+[33mcommit f2d41d6cc33bf0680ce7bae3e047b075eda656b1[m
+Merge: 1cfa3d1 e9b3641
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 17 09:13:16 2026 +0900
+
+    fix: merge conflict 해결
+
+[33mcommit 4b2a5c488d24cde0cb96a45d2e458770bdc685c9[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Thu Sep 17 06:05:58 2026 +0900
+
+    feat: Recommendation 사용자 선호벡터 초기화 API 구현
+            - 사용자 프로필부분 연동 및 테스트 예정
+
+[33mcommit e9b3641683054c1e6d8482c3bf148dbd1fbe2d54[m
+Merge: 27e5743 c4fd711
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Thu Sep 17 04:27:54 2026 +0900
+
+    Merge pull request #28 from codeit-bootcamp-sb12-finalproject-team5/feat/recommendation-data-collection
+    
+    feat: Clothes LLM기반 의상 데이터 수집 최적화 & 벌크수집 진행
+
+[33mcommit c4fd711c4edac76fa36af336bc0011d408d7e126[m[33m ([m[1;31morigin/feat/recommendation-data-collection[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Thu Sep 17 04:23:00 2026 +0900
+
+    feat: Clothes LLM기반 의상 데이터 수집 최적화 & 벌크수집 진행
+            - gemini-flash-lite-3.5 도입
+            - clothes/bulk 대규모 링크수집용 API 구현
+            - 384개 의상(상의) 데이터 SQL 작성 (api모듈/resource/data.sql)
+
+[33mcommit 13691a6a8f6b6ec3cafbbfd76f915a206cb8483d[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Thu Sep 17 02:42:02 2026 +0900
+
+    feat: 현재 위치 저장 방식 수정
+    
+    - ProfileUpdateRequest에서 LocationSource locationSource 제거
+    - 위도·경도 입력 시 현재 위치를 GPS로 저장
+    - profile.updateLocation()에 LocationSource.GPS 적용
+
+[33mcommit 716c2e761fb1306a0aabff329fdce792ec35186c[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Thu Sep 17 00:52:44 2026 +0900
+
+    fix: preferenceVector를 1536차원 벡터로 변경
+
+[33mcommit 0b2355567cc333c10be2d601b7754642a1956047[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Thu Sep 17 00:42:29 2026 +0900
+
+    feat: 프로필 조회 및 수정 API 본인 확인 추가
+    
+    - ProfileController에 @AuthenticationPrincipal 적용
+    - URL userId와 로그인 userId 일치 여부 검증
+    - 본인이 아닌 경우 403 ACCESS_DENIED 처리
+    - 프로필 조회 및 수정 API 정상/권한 검증 테스트 완료
+
+[33mcommit 1cfa3d1d9a158b0432f93c711d4a1104ef95117f[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 16 19:28:20 2026 +0900
+
+    feat: OOTD 및 Outfit 추천 API Pipeline 연결(#KAN-114)
+
+[33mcommit 63f1bd16fea4e1ab4fa6a8a45931944d993f3d7b[m[33m ([m[1;31morigin/feat/notification-api[m[33m)[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 18:23:21 2026 +0900
+
+    fix: 날씨 알림 배치 중복 실행을 정상 건너뛰기로 처리
+
+[33mcommit e5c7777c4c0a4601d4ad324f37ac3a44b94fcb38[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 17:22:10 2026 +0900
+
+    feat: 일단 날씨 예보 알림 기능 추가
+
+[33mcommit 51df925c9013642873457cc9d9a221551cda2ea1[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 17:22:10 2026 +0900
+
+    feat: 일단 날씨 예보 알림 기능 추가
+
+[33mcommit c1ae22ece8674ab7939d10803721af81c85115f7[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 17:09:19 2026 +0900
+
+    feat: 비 알림을 내일 날씨 요약 알림으로 변경에 따른 스키마 변경 작업
+
+[33mcommit 0e31bc0389e068c899125dfaeaa3293b38b7352b[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Wed Sep 16 16:40:45 2026 +0900
+
+    feat: 프로필 이미지 S3 연동 및 ProfileDto 변환 메서드 추가
+    - ProfileDto: Profile → DTO 변환 메서드 추가
+    - ProfileController: MultipartFile image를 ProfileService로 전달
+    - ProfileService: 프로필 이미지 업로드 및 교체 처리(S3StorageService의 saveProfile(), deleteOne(), getPresignedUrl() 활용)
+
+[33mcommit d29dd99a39fd91c73f29a77ac9a20bc0b1707b96[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 15:38:59 2026 +0900
+
+    refactor: kafka cleanup scheduler를 배치 모듈로 이동
+
+[33mcommit cef12a0b02a5894abdf39effd721afe664fa58f6[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 15:28:03 2026 +0900
+
+    feat: sse수신용 kafka consumer group 정리하는 로직 추가
+
+[33mcommit f1832caba9811b6caae1c9626b9b57bd9c6fa608[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 16 14:17:21 2026 +0900
+
+    feat: Gemini 추천 응답 검증 및 재시도 처리 추가(#KAN-114)
+    
+    - 후보 ID와 카테고리 기반 Outfit semantic validation 추가
+    - timeout, 연결 오류, 429, 5xx에 대한 1회 technical retry 적용
+    - validation 실패 시 correction context를 통한 1회 재생성 적용
+
+[33mcommit f1876bd84b9f3dc93b409077b445436d3681f565[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 14:02:15 2026 +0900
+
+    feat: notification이벤트 네이밍 정리
+
+[33mcommit c32f13ce4ebd0198c6bd7b99df4f0476e0bd4d0b[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 13:50:00 2026 +0900
+
+    faet: api에서 알림 생성부분에 비동기 처리 적용
+
+[33mcommit 256cf3a763d5818c2c6ec6fe3c7335aedc6147fd[m
+Merge: 94e5331 01a8c2a
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 13:25:50 2026 +0900
+
+    Merge branch 'dev' into feat/notification-api
+
+[33mcommit 94e533195e9545c9efdac8adfce00d8495a230e8[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 13:25:20 2026 +0900
+
+    faet: DM 서비스에 메세지 수신 알림 전송 이벤트 추가
+
+[33mcommit 2d40e475dff4b7182c00040f489067d0b3b25859[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 16 13:11:16 2026 +0900
+
+    feat: Gemini Structured Output 기반 Outfit 생성 연동 추가
+    
+    - Gemini WebClient 호출 및 Structured Output JSON Schema 구성
+    - 랭킹 후보와 날씨 정보를 LLM 요청 DTO로 변환
+    - Outfit 응답을 Java DTO로 파싱하고 모델/토큰 메타데이터 보존
+    - GEMINI_MODEL 기본값 gemini-3.1-flash-lite로 설정
+
+[33mcommit c91edfa062e69574f54a6280c0b1b71a5446949e[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 10:57:30 2026 +0900
+
+    style: 알림 생성 dto 컨벤션 통일
+
+[33mcommit 292b9819a5e6139f7ae318de280a32979c790980[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 10:22:03 2026 +0900
+
+    fix: SSE 연결 heartbeat 간격을 25초로 조정
+
+[33mcommit ba738e0cb27f0a41f336eb2061c8cb96aedcbf89[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 16 10:07:26 2026 +0900
+
+    setting: webclient 의존성 추가 및 gemini 연동 세팅(#KAN-114)
+
+[33mcommit f832e05f1724876a95311cd48085b86fa92d69d7[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Wed Sep 16 09:40:35 2026 +0900
+
+    feat: 회원가입 시 기본 프로필 생성 구현
+    
+    - 회원가입 완료 후 Profile 자동 생성
+    - 온도 민감도 기본값 0 설정
+    - 선호 벡터 1536차원 0 벡터로 초기화
+    - 기본 프로필 이미지 Object Key 설정
+    - 생성된 Profile DB 저장
+    - UserServiceTest에 ProfileService 의존성 반영
+
+[33mcommit 0735e9784a0590d51ede2c91c381d05b6c273b50[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 16 09:32:56 2026 +0900
+
+    feat: 피드 좋아요 알림 양식 수정
+
+[33mcommit 2a16e2f221c1152595be53a23cc1b0a3d85ca750[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Wed Sep 16 09:21:13 2026 +0900
+
+    fix: 온도 민감도 범위를 -5~5로 변경
+     - 엔티티 도메인 메서드의 온도 민감도 검증 범위 수정
+     - 요청 DTO의 @Min 값을 1에서 -5로 변경
+
+[33mcommit bae59051c73b8f46d96bc0667d434026e3ce96fe[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 15 19:53:16 2026 +0900
+
+    feat: 알림 조합 부분 worker로 이동
+
+[33mcommit c17db0cf7c140f3e8f21a487e5c8733511eb5157[m
+Merge: 89cab73 01a8c2a
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 15 18:22:20 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/recommendation
+
+[33mcommit 89cab73a19f180fd22b11a52897c6b8691d2bb1f[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 15 16:12:11 2026 +0900
+
+    feat: Content-based Ranking 및 카테고리별 TopK 구현(#KAN-112, #KAN-113)
+    
+    - Profile preference vector 차원을 1536으로 정렬
+    - rule-based filtering 결과 기반 ranking 파이프라인 연결
+    - consine similarity와 OOTD explicit preference 점수 반영
+    - Top, Bottom, Outer, Shoes 별 TopK 후보 반환
+    - 유효하지 않은 vector 제외 및 Outfit 선호 벡터 예외 처리
+
+[33mcommit 01a8c2a8b672fd684f5467e3fdf2db5ca8cf8f07[m
+Merge: 01ea188 ece47b4
+Author: Kyeong Hun Lee <kyhun1007@naver.com>
+Date:   Tue Sep 15 15:12:17 2026 +0900
+
+    Merge pull request #25 from codeit-bootcamp-sb12-finalproject-team5/feat/notification-api
+    
+    Feat/notification api
+
+[33mcommit ece47b4d1d55d459871ec81d6e76c2ade21ddd32[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 15 15:09:54 2026 +0900
+
+    refactor: sse 알림 실시간 전송 시 별도 sender 대신 동기로 알림 전송하도록 임시 변경
+
+[33mcommit c93ed0d7d66094d49ba82e5d20755b16323b5078[m
+Merge: 5c28fb0 27e5743
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 15 13:43:30 2026 +0900
+
+    Merge branch 'feat/recommendation' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/recommendation
+
+[33mcommit 27e574305b836eac3ecf061b1f684991452ef7bc[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Tue Sep 15 13:41:04 2026 +0900
+
+    chore: dev rebase & application run test
+
+[33mcommit 5c28fb01942304dae54487db297d855f2effcc3d[m
+Merge: c15bc7a 3704a21
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 15 13:28:43 2026 +0900
+
+    fix: merge conflict 해결
+
+[33mcommit 3704a21bb28023b0cbe975280398d30a9280055e[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 15 11:14:44 2026 +0900
+
+    feat: Profile 부분 예외 처리 추가
+
+[33mcommit 87fa6dab09c3a835401ab20059308569bb345cbd[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 15 11:08:44 2026 +0900
+
+    feat: 의상 추천 Rule-based filtering 구현(#KAN-111)
+    
+    - OOTD/Outfit 후보 Clothes 조회 Provider 분리
+    - 온도 민감도 범위 -5 ~ 5로 수정
+    - 계절 기반 Filtering Rule 및 공통 Filter 구현
+    - weatherId 기반 현재 기온 및 Profile 민감도 조회 연동
+
+[33mcommit e1d50e71585a70bada04043f532667970ec2dc64[m
+Merge: 834be1d 01ea188
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 15 13:11:27 2026 +0900
+
+    Merge branch 'dev' into feat/notification-api
+
+[33mcommit 834be1dcdd60870a05f962649985c37de4cee95f[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 15 13:10:07 2026 +0900
+
+    feat: 관리자 변경 시 알림 DB저장 및 실시간 전송 기능 구현
+
+[33mcommit 01ea188f27bb63d1916d4ede9ab5943844d2fb8b[m
+Merge: 33603e5 ff6c871
+Author: yecoder514 <cjstk9081@gmail.com>
+Date:   Tue Sep 15 11:37:08 2026 +0900
+
+    Merge pull request #27 from codeit-bootcamp-sb12-finalproject-team5/feature/profile
+    
+    프로필 조회 및 수정 기능 구현
+
+[33mcommit c15bc7af625515a10932438a2868378280fcf473[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 15 11:14:44 2026 +0900
+
+    feat: Profile 부분 예외 처리 추가
+
+[33mcommit 04473d5aa0c7d94497eb7a7abee9c7d15a8f2794[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 15 11:08:44 2026 +0900
+
+    feat: 의상 추천 Rule-based filtering 구현(#KAN-111)
+    
+    - OOTD/Outfit 후보 Clothes 조회 Provider 분리
+    - 온도 민감도 범위 -5 ~ 5로 수정
+    - 계절 기반 Filtering Rule 및 공통 Filter 구현
+    - weatherId 기반 현재 기온 및 Profile 민감도 조회 연동
+
+[33mcommit 33603e52a7033abcef3dcdb84970696accc7a584[m
+Merge: 9354b73 b70324a
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Tue Sep 15 10:46:16 2026 +0900
+
+    Merge pull request #26 from codeit-bootcamp-sb12-finalproject-team5/feat/clothes
+    
+    feat: Clothes 의상데이터 벌크수집 API & AWS S3 연동
+
+[33mcommit b70324a8d52aa7a4936d5d7df96abd02fd82a562[m[33m ([m[1;31morigin/feat/clothes[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Tue Sep 15 10:32:04 2026 +0900
+
+    feat: Clothes 의상데이터 벌크수집 API & AWS S3 연동
+            - 의상데이터 수집로직 점검 및 수정
+            - 의상데이터 벌크수집 비동기API 구현
+            - AWS S3 연동으로 의상이미지 & 프로필이미지 저장
+
+[33mcommit 9354b73c50de7ace25d052f1956b754dd3b8f242[m
+Merge: fd60e64 74281db
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Mon Sep 14 11:30:24 2026 +0900
+
+    Merge pull request #24 from codeit-bootcamp-sb12-finalproject-team5/feat/clothes
+    
+    feat: Clothes AsyncVectorEmbedding 구현
+
+[33mcommit 74281dbbdb1540e01ce2c27d78e6b27da4672b43[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Mon Sep 14 11:15:19 2026 +0900
+
+    feat: Clothes AsyncVectorEmbedding 구현
+            - 의상 Entity & DTO 수정
+                    - 일부 속성 attributes 제외 / attributeText 단순화
+            - 비동기 attributeText Embedding 구현
+            - 스키마 V4 적용
+                    - 프로필테이블 온도민감도 제약변경
+                    - 의상테이블 속성추가
+
+[33mcommit 44d89d567f38b4c575e0188123a19c1aec973886[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Sun Sep 13 14:52:48 2026 +0900
+
+    style: 배치 모듈 코드 가독성 향상 작업
+
+[33mcommit ac762ef1d232dcc8d2b97a077542f45b92732e50[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Sun Sep 13 12:30:56 2026 +0900
+
+    refactor: 날씨 예외 클래스 api에서 domain으로 이동
+
+[33mcommit 3c12eefa8a50ec8948f3d3148ca9230c05dbecd0[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Sun Sep 13 12:28:17 2026 +0900
+
+    style: 날씨·위치·알림 DTO 인자 줄바꿈 및 들여쓰기 통일
+
+[33mcommit a8768d91c39bf8c7b25aa44dbe16328ce3880873[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Sun Sep 13 05:50:51 2026 +0900
+
+    fix: 카카오 행정명 조회 실패시 재수집 하지 않고 캐시에 공백으로 남아있는 문제 수정
+
+[33mcommit 7f9c0d875e7f919f38e2bc8d7f160a5ccdfd32c2[m[33m ([m[1;31morigin/feature/follow[m[33m)[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Sun Sep 13 03:54:47 2026 +0900
+
+    feat: 팔로우 요청 및 응답 DTO 구현
+
+[33mcommit ff6c871d69acc75fdff9a4dcf60b8b76ac9e0e06[m[33m ([m[1;32mfeature/profile[m[33m)[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Sun Sep 13 02:35:20 2026 +0900
+
+    feat: 프로필 컨트롤러 구현
+
+[33mcommit cfc6096a62f1f9c89d8f6f21b06f3620b114c0af[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Sun Sep 13 01:13:45 2026 +0900
+
+    feat: 프로필 서비스 추가 및 WeatherGrid 연동 구현
+    
+    - ProfileService 클래스 추가
+    - 프로필 조회 및 수정 기능 구현
+    - WeatherServie에 findGrid() 메서드 추가
+    - WeatherServiceImpl의 findGrid() 메서드를 public으로 변경하여 ProfileService에서 사용
+    - 프로필 위치 수정 시 WeatherGrid 연동
+    - WeatherGrid 조회 실패 시 ProfileException으로 예외 처리
+
+[33mcommit 96b8f4cb0638e7bae5156baaa90ffe1003a2fd96[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Sat Sep 12 20:39:20 2026 +0900
+
+    refactor: 코드 정리 작업
+
+[33mcommit bbe2936fa4d0b5ecedcb1fd9299669330522a61b[m
+Merge: 51927c7 fd60e64
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Sat Sep 12 15:48:28 2026 +0900
+
+    Merge branch 'dev' into feat/notification-api
+
+[33mcommit 51927c7fcdc901c48528f90cce7fa6069df59e5d[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Sat Sep 12 15:42:03 2026 +0900
+
+    feat: sse 및 알림조회 엔드포인트 구현
+
+[33mcommit fd60e6494d98ef8fc5a9f271aa0f093f2a93282d[m
+Merge: ab31344 d8d90e8
+Author: SeoHyeon <hyeon99@ajou.ac.kr>
+Date:   Fri Sep 11 22:20:55 2026 +0900
+
+    Merge pull request #19 from codeit-bootcamp-sb12-finalproject-team5/feat/dm
+    
+    feat: dm 방 나가기/재입장, 메세지 조회, 메세지 읽음 처리 기능 구현
+
+[33mcommit d8d90e8356a36e8460f62e4d7fc1669211bb5c79[m[33m ([m[1;31morigin/feat/dm[m[33m)[m
+Merge: 0a7e3be ab31344
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Fri Sep 11 22:12:19 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/dm
+
+[33mcommit 6a688b7d6622b68df34bdcab2ee2f227a6358244[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Fri Sep 11 18:25:54 2026 +0900
+
+    feat: 프로필 예외 처리 추가
+
+[33mcommit 1117b35f8a4af2995841c8fbe629ca437ce128a0[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Fri Sep 11 18:01:53 2026 +0900
+
+    feat: 사용자 ID로 프로필 조회 메서드 추가
+
+[33mcommit 5dca90f57be2799a47504da3b9be38fcdb599016[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Fri Sep 11 17:27:13 2026 +0900
+
+    feat: 프로필 요청 및 응답 DTO 구현
+    - Gender Enum을 OTHER로 변경
+    - ProfileUpdateRequest 구현
+    - ProfileDto 구현
+
+[33mcommit ab313443f8c5726a7d761292717701627b958131[m
+Merge: 4857b5e 7b41c1f
+Author: Kyeong Hun Lee <kyhun1007@naver.com>
+Date:   Fri Sep 11 17:00:46 2026 +0900
+
+    Merge pull request #23 from codeit-bootcamp-sb12-finalproject-team5/feat/notification-api
+    
+    Feat: notification 테이블 컬럼 2종 추가
+
+[33mcommit 7b41c1f79a2817768055f3a4818d50de3e8985d2[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 11 16:35:45 2026 +0900
+
+    feat: 알림 테이블 컬럼 2종 추가
+
+[33mcommit b1c88b8f5e844cc96c509c2df9b14d6b9202e007[m
+Merge: f51933f 4857b5e
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 11 16:23:18 2026 +0900
+
+    Merge branch 'dev' into feat/weather-batch
+
+[33mcommit 4857b5e50f5e237350beebb1c763d62f6ee5d5df[m
+Merge: fc0dbd6 dc3addc
+Author: yecoder514 <cjstk9081@gmail.com>
+Date:   Fri Sep 11 16:20:57 2026 +0900
+
+    Merge pull request #21 from codeit-bootcamp-sb12-finalproject-team5/feature/profile
+    
+    V2_update_schema.sql 추가 및 Profile/outfit 엔티티 수정
+
+[33mcommit fc0dbd67be88c06db4fa0c99e02f37b1bb7dd3b5[m
+Merge: 89cf465 ffc48ed
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Fri Sep 11 16:16:21 2026 +0900
+
+    Merge pull request #22 from codeit-bootcamp-sb12-finalproject-team5/feat/clothes
+    
+    feat: 의상도메인 CRUD 기능구현_fin
+
+[33mcommit ffc48ede4193126b7aa3ea166a12dff40da89647[m
+Merge: 38766ed 89cf465
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Fri Sep 11 16:16:09 2026 +0900
+
+    Merge branch 'dev' into feat/clothes
+
+[33mcommit 38766edd089cdc5659d546ab856c11e9a7db048b[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Fri Sep 11 16:03:56 2026 +0900
+
+    feat: 의상도메인 CRUD 기능구현_fin
+
+[33mcommit 89cf465576841e7822fbc8cb39e445d2fd1e0063[m
+Merge: e8f7d10 8e51480
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Fri Sep 11 16:03:17 2026 +0900
+
+    Merge pull request #20 from codeit-bootcamp-sb12-finalproject-team5/feat/clothes
+    
+    feat: Clothes CRUD 구현
+
+[33mcommit 8e51480cbb5256591652453059e6ee20050d01cd[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Fri Sep 11 15:41:35 2026 +0900
+
+    feat: Clothes CRUD 기능구현
+            - Clothes Create / Read / Update / SoftDelete API 구현
+
+[33mcommit f51933ff5ce5cfd5d9247983600db161ece994a4[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 11 10:32:25 2026 +0900
+
+    fix: 일간 날씨 데이터 수집시간 string 과 실제 실행시각 불일치 수정
+
+[33mcommit e8f7d107805fa52865d851d74eaa97a35a685873[m
+Merge: b8bc8e5 7b83e91
+Author: Kyeong Hun Lee <kyhun1007@naver.com>
+Date:   Fri Sep 11 09:03:13 2026 +0900
+
+    Merge pull request #18 from codeit-bootcamp-sb12-finalproject-team5/feat/weather-batch
+    
+    Feat: 날씨 데이터 일간 수집, 주간 정리 배치 작업 추가
+
+[33mcommit 7b83e91776cd28ecf94cf95488eb6686ed179ad2[m[33m ([m[1;31morigin/feat/weather-batch[m[33m)[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Fri Sep 11 09:02:37 2026 +0900
+
+    feat: grid 에 캐시 도입하여 응답속도 개선
+
+[33mcommit 0a7e3bee9e67ee9955f230e32e992db422aac9e9[m
+Merge: 68849d9 b8bc8e5
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 10 22:18:14 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/dm
+
+[33mcommit 68849d91dbe867718c7131dc73c30259c4cbd190[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 10 22:15:37 2026 +0900
+
+    chore: 코드 컨벤션 적용
+
+[33mcommit b8bc8e5282bbf7ede54a19f120434e3a620c8d79[m
+Merge: d2dc923 9eb6051
+Author: SeoHyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 10 22:03:03 2026 +0900
+
+    Merge pull request #16 from codeit-bootcamp-sb12-finalproject-team5/feat/dm-websocket
+    
+    feat: 메세지 전송 기능 구현
+
+[33mcommit 3bb3aa02fc819ccb3feb88b423b508db5ea96921[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Thu Sep 10 20:07:49 2026 +0900
+
+    feat: Clothes 등록기능 구현
+
+[33mcommit 7ddcd55b35d489359a54f9fdaeca9a38d4eba0a4[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Thu Sep 10 17:14:55 2026 +0900
+
+    feat: 주간 날씨 데이터 정리 tasklet 추가
+
+[33mcommit 86fd9f16f1aaffda8aee4781496b3b22eb93e8f8[m
+Merge: d17fbca d2dc923
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Thu Sep 10 15:46:45 2026 +0900
+
+    Merge branch 'dev' into feat/weather-batch
+
+[33mcommit d2dc923b2578de1a5f273c87f5aa8c8cbdb8755b[m
+Merge: 33aa4c2 8323676
+Author: SeoHyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 10 15:36:12 2026 +0900
+
+    Merge pull request #17 from codeit-bootcamp-sb12-finalproject-team5/refactor/login
+    
+    refactor: 로그인 응답바디 프론트와 통일
+
+[33mcommit 83236768f5e65b5da4bbaf148fc43ef401c7b4d9[m[33m ([m[1;31morigin/refactor/login[m[33m)[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 10 15:19:45 2026 +0900
+
+    refactor: 로그인 응답바디 프론트와 통일(#KAN-45)
+
+[33mcommit 9eb60517a2d255c146a31d41a5a69159adb200c7[m[33m ([m[1;31morigin/feat/dm-websocket[m[33m)[m
+Merge: d07087f 33aa4c2
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 10 15:05:17 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/dm-websocket
+
+[33mcommit 8c40a4d4273624c37001022499fac8e6ed57e999[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 10 15:03:43 2026 +0900
+
+    feat: DM 목록 조회 및 실시간 메세지 처리 개선(#KAN-57)
+
+[33mcommit b7a0a234885b45027a7320b8e98e0233cd0eb3c7[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 10 13:28:56 2026 +0900
+
+    fix: dm메세지 불러오는 기능 커서 리팩토링(#KAN-59)
+
+[33mcommit d17fbcaae7842338113e9a844f3fe4219c7b065c[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Thu Sep 10 11:24:58 2026 +0900
+
+    feat: batch 일간 날씨 데이터 수집 기능 구현
+
+[33mcommit 33aa4c2ef5f4936f426ea80d2ae88215310d3149[m
+Merge: b12c19d 5e30c1c
+Author: Kyeong Hun Lee <kyhun1007@naver.com>
+Date:   Thu Sep 10 09:13:15 2026 +0900
+
+    Merge pull request #15 from codeit-bootcamp-sb12-finalproject-team5/feat/weather-api
+    
+    Feat/날씨 조회 기능 구현 및 캐시 도입
+
+[33mcommit 384db63b4e1844313dc910b4ecef3de2b8052949[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 21:39:19 2026 +0900
+
+    feat: DM방 나가기 및 재입장 lifecycle 구현(#KAN-63)
+
+[33mcommit 9d68fb9122d00389b13d6b806e56741b40f41a5b[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 21:27:07 2026 +0900
+
+    feat: 메세지 읽음 처리 및 unreadCount 계산 추가(#KAN-62)
+
+[33mcommit 91aff0f676f70c674c86e67469095a76ac193082[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 21:08:15 2026 +0900
+
+    feat: DM 채팅방 이전 메세지 커서 조회 API 구현(#KAN-59)
+
+[33mcommit 9f459c10967dbedfe3c286826914f69b1483b17f[m
+Merge: b12c19d 4227fe1
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 17:22:58 2026 +0900
+
+    Merge branch 'feat/dm-websocket' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/dm
+
+[33mcommit d07087f88c2cd2977f6dfda4860068585a8314d4[m
+Merge: 4227fe1 b12c19d
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 15:24:13 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/dm-websocket
+
+[33mcommit 4227fe1054c38d3d6fa0072d2910cbe3b1ecf70a[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 15:14:11 2026 +0900
+
+    refactor: STOMP 예외 응답 공통 ErrorCode로 통일(#KAN-60)
+
+[33mcommit b12c19da2d40be0baf902bb720c887dfaa3d2b56[m
+Merge: 25e0794 4c216fa
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Wed Sep 9 14:39:19 2026 +0900
+
+    Merge pull request #14 from codeit-bootcamp-sb12-finalproject-team5/feat/clothes
+    
+    feat: Clothes - 의상데이터 웹링크LLM수집 API구현
+
+[33mcommit a979dfde6e922fbad0b0768c194b52136dc11de5[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 14:28:52 2026 +0900
+
+    feat: SockJS 기반 DM 웹소켓 연결 및 인증 설정 추가(#KAN-60)
+
+[33mcommit 25e07946b48b6f92d1c2e73b147fc3b24572f293[m
+Merge: 90e8e40 2a17ec2
+Author: SeoHyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 14:19:22 2026 +0900
+
+    Merge pull request #12 from codeit-bootcamp-sb12-finalproject-team5/test/controller
+    
+    Test/controller
+
+[33mcommit 90e8e407fc2fa39925092aa221f97bf288001cf5[m
+Merge: 334d6ad 2c754f8
+Author: SeoHyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 14:19:03 2026 +0900
+
+    Merge pull request #13 from codeit-bootcamp-sb12-finalproject-team5/feat/dm
+    
+    feat: DM 방 목록 조회 API 구현
+
+[33mcommit dc3addc053050042e6910de4cf5ef0dde6ead325[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Wed Sep 9 13:27:35 2026 +0900
+
+    fix: V2 스키마 및 아웃핏 수정
+            - 아웃핏 테이블 category 속성추가
+            - 아웃핏 엔티티 category 필드추가
+            - 프로필 엔티티 preference_vector nullable=false 추가
+
+[33mcommit c3b441486aaf139e7a74f543bf275aaa82f5cb7b[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Wed Sep 9 13:15:14 2026 +0900
+
+    fix: V2 스키마 및 프로필/팔로우 수정
+    
+    - 기존 V1 유지 및 V2_update_schema.sql 추가
+    - Profile weather_grid_id NULL 허용으로 변경
+    - Profile 위치 정보 CHECK 제약조건 추가
+    - Follow followee_id 인덱스 추가
+    - Profile Entity 수정
+
+[33mcommit 4c216fa18e20d5db3551b04882eca2359aa029c3[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Wed Sep 9 13:03:09 2026 +0900
+
+    feat: 의상 - 웹링크 의상정보 수집기능 & 의상 속성목록 조회기능
+                - /api/clothes/weblink-extractions 완료
+                - /api/clothes/attribute-defs 완료
+                - /domain/clothes/enums 의상속성집합 열거형 명세
+
+[33mcommit d542221694cea0d133638a9a51377b8589140a2d[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Wed Sep 9 11:26:26 2026 +0900
+
+    feat: 의상 - 웹링크 의상정보 수집기능 & 의상 속성목록 조회기능
+            - /api/clothes/weblink-extractions 완료
+            - /api/clothes/attribute-defs 완료
+            - /domain/clothes/enums 의상속성집합 열거형 명세
+
+[33mcommit 2c754f8eeab675be0addbaeb4dbff1915a930d3e[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 11:26:02 2026 +0900
+
+    refactor: import문 수정
+
+[33mcommit 67debf394d089773eab208b6031ea3f46f25f63b[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 11:24:18 2026 +0900
+
+    fix: User엔티티 @Setter 추가
+
+[33mcommit 5e30c1c8ea36e8329ffd4d332fd1d9c95dfa7987[m[33m ([m[1;31morigin/feat/weather-api[m[33m)[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 9 11:19:04 2026 +0900
+
+    feat: api 날씨 조회 기능 추가 및 redis 도입하여 응답속도 개선
+
+[33mcommit 543cbbb78c92f7ecce6b2c8d4907987800738da0[m
+Merge: 7f2c00b 334d6ad
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 10:12:42 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/dm-websocket
+
+[33mcommit 5b05db58a5761bd035d27ae1f637025bcff22c35[m
+Merge: cb1158d 334d6ad
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 9 09:40:08 2026 +0900
+
+    merge: 변경사항 통합
+
+[33mcommit 168dc0c6febf1eed626859f2a0a8991c69d5e793[m
+Merge: 4a25095 334d6ad
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 09:38:33 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/dm
+
+[33mcommit cb1158d62608938276ef0d2dce9fdf462418140a[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Wed Sep 9 09:38:01 2026 +0900
+
+    merge: 변경사항 통합
+
+[33mcommit 7f2c00b0fb90f8dcdfbd7e7dc4236b43bf9ff7ce[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Wed Sep 9 09:35:43 2026 +0900
+
+    feat:  DM방DM ëㄴìSTOMP 기반 실시간 DM 전송 및 구독 권한 검증 구현(#KAN-58)
+
+[33mcommit 2a17ec28f1ca471de6713e72c996cc2a6137dc20[m[33m ([m[1;31morigin/test/controller[m[33m)[m
+Merge: b3bac1e 334d6ad
+Author: kyle081 <tiamo220@gmail.com>
+Date:   Wed Sep 9 09:35:41 2026 +0900
+
+    Merge remote-tracking branch 'origin/dev' into test/controller
+
+[33mcommit b3bac1e8530a78935f72861c28afb4e2f8140c20[m
+Author: kyle081 <tiamo220@gmail.com>
+Date:   Wed Sep 9 09:34:04 2026 +0900
+
+    test: 컨트롤러 계층 MockMvc 테스트 추가
+    
+    - UserControllerTest: 회원가입 201, 검증 실패 400, 이메일 중복 409
+    - AuthControllerTest: 로그인 200 및 Refresh Token 쿠키, 401/403, 토큰 재발급
+    - AdminControllerTest: 목록 조회 커서 응답, 권한 변경, 계정 잠금, 404
+    - api 모듈 LINE 커버리지 51.3% -> 57.3%
+
+[33mcommit 334d6ad10acdc1320af8a6ca7f0b16927668b38e[m
+Merge: 780a79f 65b2cfb
+Author: kyle0817 <tiamo220@gmail.com>
+Date:   Wed Sep 9 09:29:08 2026 +0900
+
+    Merge pull request #11 from codeit-bootcamp-sb12-finalproject-team5/test/auth-admin
+    
+    test: 인증/관리자 기능 단위 테스트 및 JaCoCo 설정 추가
+
+[33mcommit 65b2cfba6dcb10d4ce17b109112f10e2cc01ce8e[m[33m ([m[1;31morigin/test/auth-admin[m[33m)[m
+Author: kyle081 <tiamo220@gmail.com>
+Date:   Tue Sep 8 18:56:59 2026 +0900
+
+    test: 인증/관리자 기능 단위 테스트 및 JaCoCo 설정 추가
+    
+    - JaCoCo 플러그인 설정 (DTO/엔티티/설정 클래스는 측정 제외)
+    - UserServiceTest: 회원가입, 이메일 중복, 비밀번호 변경 시 임시 비밀번호 파기
+    - AuthServiceTest: 로그인, tokenVersion 증가, 잠긴 계정, 임시 비밀번호 검증
+    - AdminServiceTest: 권한 변경/계정 잠금 시 세션 무효화
+    - JwtTokenProviderTest: 토큰 발급/검증, 위조·만료 토큰 거부
+    - TempPasswordGeneratorTest: 길이 및 문자 종류 검증
+
+[33mcommit 780a79f3d4a8712507b00b4b7b2e9e919bf11768[m
+Merge: 47456f9 e1f01e6
+Author: kyle0817 <tiamo220@gmail.com>
+Date:   Tue Sep 8 18:27:08 2026 +0900
+
+    Merge pull request #9 from codeit-bootcamp-sb12-finalproject-team5/feat/reset-password
+    
+    feat: 회원가입, 로그인, 비밀번호 초기화 API 구현
+
+[33mcommit e1f01e648b79ac6b22099b0cd397359d9719daec[m[33m ([m[1;31morigin/feat/reset-password[m[33m)[m
+Merge: c45021d 47456f9
+Author: kyle081 <tiamo220@gmail.com>
+Date:   Tue Sep 8 18:25:52 2026 +0900
+
+    merge: dev 브랜치 병합 및 충돌 해결
+    
+    - ApiApplication의 JPA 설정이 dev에서 PersistenceConfig로 분리되어 dev 버전 채택
+    - PersistenceConfig에 dateTimeProviderRef 추가 (OffsetDateTime Auditing 적용)
+
+[33mcommit 47456f99fd110f0b69db77319e253fbfc1ff256a[m
+Merge: a3c54f2 d1e0a04
+Author: SeoHyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 8 18:16:21 2026 +0900
+
+    Merge pull request #7 from codeit-bootcamp-sb12-finalproject-team5/feat/dm
+    
+    feat: DM 방 조회/생성 기능 구현
+
+[33mcommit 17cdfe489ccb91e5c797e9c02da25a09d33ee876[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 8 15:13:08 2026 +0900
+
+    feat:  DM방DM 메세지 저장 서비스 구현(#KAN-58)
+
+[33mcommit 769d578d037c1595ac2c0145e6a3a23447b97548[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 8 14:44:09 2026 +0900
+
+    feat:  DM방 WebSocket STOMP 기본 설정 추가(#KAN-58)
+
+[33mcommit 8262fc527c180fc3d9544f312b9f45260c9d2557[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 8 14:22:47 2026 +0900
+
+    refactor: KMA Client 예보 시간 계산 로직을 util 클래스로 분리
+
+[33mcommit 4a250951a966d1f6a6730dcfc399148c17ebc7a6[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Tue Sep 8 11:21:10 2026 +0900
+
+    feat:  DM방 목록 조회 구현(#KAN-58)
+
+[33mcommit aabdca50652aead34ab92ae9b6e3509d1f7fbcf7[m
+Merge: f3e4009 a3c54f2
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 8 10:37:46 2026 +0900
+
+    Merge branch 'dev' into feat/weather-api
+
+[33mcommit f3e4009fc4ff439d4dfe90f84649e8b2e30667a3[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Tue Sep 8 10:37:43 2026 +0900
+
+    feat: Kma Client 구성
+
+[33mcommit c45021dd46b875f149053ff108a68107553d935c[m
+Author: kyle081 <tiamo220@gmail.com>
+Date:   Tue Sep 8 09:51:47 2026 +0900
+
+    feat: 회원가입, 로그인, 비밀번호 초기화 API 구현
+    
+    - 회원가입(POST /api/users): 이메일 중복 검사, BCrypt 암호화
+    - 로그인(POST /api/auth/sign-in): JWT 발급, tokenVersion 증가로 동시 로그인 차단
+    - 로그아웃(POST /api/auth/sign-out): 기존 토큰 즉시 무효화
+    - 토큰 재발급(POST /api/auth/refresh): Refresh Token 쿠키 기반
+    - 임시 비밀번호 발급(POST /api/auth/reset-password): 3분 만료
+    - 비밀번호 변경(PATCH /api/users/{userId}/password): 임시 비밀번호 파기
+    - EmailSender 인터페이스 분리, 개발용 콘솔 구현체 제공
+    - fix: CSRF 토큰 조회 시 쿠키가 발급되지 않던 문제 수정
+    - fix: CsrfTokenRequestAttributeHandler 등록으로 CSRF 검증 실패 해결
+    - fix: JPA Auditing의 LocalDateTime과 엔티티 OffsetDateTime 불일치 해결
+
+[33mcommit a3c54f2e42c6dc9e77bd6ae065ef36a153306278[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Tue Sep 8 09:22:15 2026 +0900
+
+    chore: springboot v3.5.16 update
+
+[33mcommit 079dcb651c4a95b8e2383100cb844d7249e797d9[m[33m ([m[1;31morigin/feat/auth-signup-signin[m[33m)[m
+Merge: 43a03f4 aa07c52
+Author: kyle081 <tiamo220@gmail.com>
+Date:   Tue Sep 8 09:15:12 2026 +0900
+
+    Merge remote-tracking branch 'origin/dev' into feat/auth-signup-signin
+
+[33mcommit d1e0a0434cec171c5be3a0eb19a73f4f11541b77[m
+Merge: 630408f aa07c52
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 7 19:45:12 2026 +0900
+
+    Merge branch 'dev' of https://github.com/codeit-bootcamp-sb12-finalproject-team5/sb12-otboo-team5-backend into feat/dm
+
+[33mcommit 630408f7ceb415be5d0a980cd160f15efd7b6b8d[m
+Merge: 95bdb90 aec6b73
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 7 19:35:47 2026 +0900
+
+    fix: solve merge conflict
+
+[33mcommit 3e044d0680d998ddf9523a01bc8332464ecb4ea9[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 18:56:41 2026 +0900
+
+    refactor: weatherClientConfig 분리 후 설정 클래스명 prefix를 Kakao로 변경
+
+[33mcommit aa07c5299e43a6fd9681e4b437784bb022c61c6c[m
+Merge: aec6b73 25b14f7
+Author: Kyeong Hun Lee <kyhun1007@naver.com>
+Date:   Mon Sep 7 18:48:32 2026 +0900
+
+    Feat: 경/위도 기반 Kakao API 행정명 조회 기능 추가
+    
+    - 행정명 조회 기능 추가
+    - support 모듈 분리
+
+[33mcommit 25b14f72b7f117070d32fbc4aa595141112f565b[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 18:47:27 2026 +0900
+
+    refactor: support 모듈 추가 및 Kakao 클라이언트 이동
+
+[33mcommit 151e8be9ab63aabcd0767a7037199e6a48b81a82[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 18:27:39 2026 +0900
+
+    merge: dev 브랜치 변경사항 통합
+
+[33mcommit 9c1f115b878520365a0d5936e4d5b977e847c777[m
+Merge: 1d9f3bb aec6b73
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 18:27:12 2026 +0900
+
+    Merge branch 'dev' into feat/weather-api
+
+[33mcommit 95bdb90ca86375bf47cc11a1888d032f643c7cf4[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 7 18:16:26 2026 +0900
+
+    refactor: 도메인 모듈 설정 리팩토링
+
+[33mcommit aec6b73a7f32267176ff54be8aa27d3df24e45bc[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Mon Sep 7 17:54:36 2026 +0900
+
+    hotfix: clothes table update
+            - 의상 테이블 name속성 추가
+            - flyway 버전업 없이 postgresql 초기화 후 실행 부탁드립니다
+
+[33mcommit 9ceb031292d2df6c9b712f4ec3c15839b35a24d7[m
+Author: Jiye-Lee <cjstk9081@gmail.com>
+Date:   Mon Sep 7 17:05:38 2026 +0900
+
+    refactor: Profile 및 Follow 엔티티 보완
+    
+    - Gender Enum을 DB 스키마와 일치하도록 수정
+    - Follow 엔티티의 연관관계 필드를 ToString 대상에서 제외
+    - Profile 엔티티의 도메인 메서드 추가
+
+[33mcommit 1d9f3bb9f2aceeebec2b4e3d213d6bde7c9671de[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 16:11:09 2026 +0900
+
+    merge: dev 브랜치 flyway 도입 변경사항 통합
+
+[33mcommit 37257cb40ccc99d6976e5f8251b257e02af3eb1c[m
+Merge: d24f4c6 caa3a5a
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 16:09:54 2026 +0900
+
+    Merge branch 'dev' into feat/weather-api
+
+[33mcommit 738bd3276d6f147d3a14213f99d288e42457c855[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 7 16:08:11 2026 +0900
+
+    refactor: DM방 생성/조회 api userId CustomUserDetails에서 추출해 사용하는 걸로 수정 (KAN-61)
+
+[33mcommit caa3a5a49b86802f336d12e4bb02a56c27580cdb[m
+Merge: 204c546 148448b
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Mon Sep 7 16:02:57 2026 +0900
+
+    Merge pull request #6 from codeit-bootcamp-sb12-finalproject-team5/chore/flyway
+    
+    Setting: Flyway Migration 적용
+
+[33mcommit 148448b908d0591b6b110f4057f6994374c6220c[m[33m ([m[1;31morigin/chore/flyway[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Mon Sep 7 15:55:12 2026 +0900
+
+    setting: Flyway Migration 적용
+            - Flyway 의존성 이동: domain > api
+            - Flyway 스키마 적용:
+              domain/src/main/resources/db/migration/V1__init_schema.sql
+            - jpa.hibernate.ddl-auto: validate 테스트완료
+
+[33mcommit 158c2c75fa1bfb6b180a0655df80ebe0020b8684[m
+Merge: 55a6ec8 204c546
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 7 15:37:55 2026 +0900
+
+    fix: fix merge conflict
+
+[33mcommit d24f4c63bdc1f9a4d16771768bb59a15daa5fa41[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 15:35:46 2026 +0900
+
+    refactor: 위치 입력 오류 전용 ErrorCode 적용
+
+[33mcommit 55a6ec8a7183f45134730b80eee3652c5f0983d3[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Mon Sep 7 15:26:01 2026 +0900
+
+    feat: dm 방 조회 및 생성 구현(#KAN-61)
+    
+    - dm 방 없다면 생성 있다면 기존 방 반환 로직 구현
+
+[33mcommit 410e98939a066389c230cfd76135fa08d1ab5185[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 15:10:52 2026 +0900
+
+    refactor: 날씨 요청 DTO 검증 적용 및 요청·응답 패키지 분리
+
+[33mcommit 5bbf7655bb2ea0b18e3842d78608bdb7418af5b0[m
+Merge: 84eab2e 204c546
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 14:17:36 2026 +0900
+
+    feat: 위치 조회 API 기능 구현
+
+[33mcommit 84eab2e926ee6efdb15125abe649afeb0fd53f68[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 14:14:57 2026 +0900
+
+    feat: 위치 조회 API 기능 구현
+
+[33mcommit 204c5467593a3e86ed07335d49a118869f25ddf3[m[33m ([m[1;32mfeat/jwt-auth[m[33m)[m
+Merge: 2b9fb30 97f0553
+Author: kyle0817 <tiamo220@gmail.com>
+Date:   Mon Sep 7 13:49:22 2026 +0900
+
+    Merge pull request #4 from codeit-bootcamp-sb12-finalproject-team5/feat/jwt-auth
+    
+    feat: JWT 기반 인증/인가 기반 구현
+
+[33mcommit 43a03f49405df3196e7a6fa78200b7957d193eb8[m
+Merge: 97f0553 2b9fb30
+Author: kyle081 <tiamo220@gmail.com>
+Date:   Mon Sep 7 13:32:47 2026 +0900
+
+    Merge remote-tracking branch 'origin/dev' into feat/jwt-auth
+
+[33mcommit 5e304f7e3a5787e17828e3d992236c2711ce4ce4[m
+Merge: e826e2f 2b9fb30
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 13:14:29 2026 +0900
+
+    Merge branch 'dev' into feat/weather-api
+
+[33mcommit e826e2f0cb0e3a79dd0d8d26235f9dc30b0209e9[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 13:14:29 2026 +0900
+
+    feat: JPA의존성 롤백 및 날씨 Jpa 레포지토리 추가
+
+[33mcommit 2b9fb3037bc1c4ea99761cf6f472db7796c0d134[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Mon Sep 7 11:58:38 2026 +0900
+
+    fix: vector field 타입수정
+            - hibernate-vector 의존성추가
+
+[33mcommit 97f0553da42d1b1d70ac3d39a62c15bb2da0195f[m[33m ([m[1;31morigin/feat/jwt-auth[m[33m)[m
+Merge: edc977f 2a4d2ac
+Author: kyle081 <tiamo220@gmail.com>
+Date:   Mon Sep 7 11:42:41 2026 +0900
+
+    merge: dev 브랜치 병합 및 충돌 해결
+
+[33mcommit f468657e278d9d43e87449f44cf1db37d40ee474[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 11:37:19 2026 +0900
+
+    feat: 위경도로 격자 좌표 변환 메서드 구현
+
+[33mcommit 391b69f964a74a66d0d31e1b4b1cdc9e8f4265ad[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 11:35:42 2026 +0900
+
+    build: Spring Data JPA 의존성 추가
+
+[33mcommit edc977f34267a18ce3a95da86f439e623cb42e15[m
+Author: kyle081 <tiamo220@gmail.com>
+Date:   Mon Sep 7 11:22:32 2026 +0900
+
+    feat: JWT 기반 인증/인가 기반 구현
+    
+    - JwtTokenProvider: Access/Refresh 토큰 발급 및 검증
+    - JwtAuthenticationFilter: tokenVersion 대조로 강제 로그아웃 지원
+    - SecurityConfig: URL별 인증 규칙, CSRF 쿠키 방식 설정
+    - SecurityExceptionHandler: 401/403을 공통 ErrorResponse 형식으로 응답
+    - UserRepository 추가
+    - GlobalExceptionHandler에 404/405 처리 추가
+
+[33mcommit 445cc9bd3c729a5f2dd49b47782a235244b5391b[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 11:22:14 2026 +0900
+
+    feat: 컨트롤러 구현 및 응답, 요청 Dto 작성
+
+[33mcommit fb351c934f7b05434210f30e294b5f1cbe56cff8[m
+Author: kyle081 <tiamo220@gmail.com>
+Date:   Fri Sep 4 13:49:47 2026 +0900
+
+    feat: 공통 예외 처리 및 요청 추적 로깅 구현
+
+[33mcommit 69abae8fd0af11c0ac287289245666779970580d[m
+Author: kyhun1007 <kyhun1007@naver.com>
+Date:   Mon Sep 7 10:58:06 2026 +0900
+
+    feat: 외부 API 클라이언트 및 설정 코드 추가
+
+[33mcommit 2a4d2ac08a565cb7af1c91ca7f726fc1f72eb619[m
+Merge: 9a4f8d0 1e1da7e
+Author: Kw-jinwoo <146600126+Kw-jinwoo@users.noreply.github.com>
+Date:   Mon Sep 7 10:46:43 2026 +0900
+
+    Merge pull request #3 from codeit-bootcamp-sb12-finalproject-team5/feat/common-exception
+    
+    feat: 공통 예외 처리 및 요청 추적 로깅 구현
+
+[33mcommit 9a4f8d0426a19b6b8fb94e98e72200d4cc00c9f6[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Mon Sep 7 03:31:40 2026 +0900
+
+    setting: Implement domain entity classes
+
+[33mcommit 1e1da7e31411e313ee20b90e360bcfe8151e0a46[m[33m ([m[1;31morigin/feat/common-exception[m[33m)[m
+Author: kyle081 <tiamo220@gmail.com>
+Date:   Fri Sep 4 13:49:47 2026 +0900
+
+    feat: 공통 예외 처리 및 요청 추적 로깅 구현
+
+[33mcommit e2e5717d95d519e7875e56913e79c2f5e4ba1d71[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Fri Sep 4 09:40:42 2026 +0900
+
+    refactor: schema.sql 수정 및 postgresql 설정
+                - domain/src/main/resources/schema.sql 작성
+                - docker-compose.yml postgresql 볼륨 프로젝트내부 postgresql 디렉토리로 마운팅
+
+[33mcommit f5bbeb75977fc1e2ecb4ec3d98da32297f9fabac[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Thu Sep 3 17:06:01 2026 +0900
+
+    refactor: schema.sql 수정
+            - domain/src/main/resources/schema.sql 작성
+            - docker-compose.yml postgresql 볼륨 프로젝트내부 postgresql 디렉토리로 마운팅
+
+[33mcommit 658b2b27cb7fa7f865be86b9582d2fbabbf2f09a[m
+Author: 99hyeon <hyeon99@ajou.ac.kr>
+Date:   Thu Sep 3 10:05:57 2026 +0900
+
+    setting: gradle 버전 수정
+
+[33mcommit 0cf27df95695060a41f885c799c78f26231170c2[m[33m ([m[1;32mmain[m[33m)[m
+Author: Kw-jinwoo <woodykwon01@gmail.com>
+Date:   Wed Sep 2 17:28:50 2026 +0900
+
+    chore: SpringBoot Initialize
+            - otboo(root) / api / batch / domain 모듈구조 구축 및 의존성 설정 (*.build.gradle)
+            - docker-complse.yml 환경 postgreSQL 설정
+            - github PR, Commit 템플릿 적용
+            - domain/src/main/resources/schema.sql 기초DDL 작성
+    
+            #KAN-19 https://codeitclosetteam5.atlassian.net/browse/KAN-19?atlOrigin=eyJpIjoiODU4YzE2NWEzMjQxNDJlMmJlNDU3NzNiMDQxMWViOWIiLCJwIjoiaiJ9

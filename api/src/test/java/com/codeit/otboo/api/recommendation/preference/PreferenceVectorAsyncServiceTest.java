@@ -11,7 +11,6 @@ import com.codeit.otboo.domain.clothes.repository.OutfitClothesRepository;
 import com.codeit.otboo.domain.clothes.repository.OutfitClothesUsageCount;
 import com.codeit.otboo.domain.profile.entity.Profile;
 import com.codeit.otboo.domain.profile.repository.ProfileRepository;
-import com.codeit.otboo.support.llm.clothes.ClothesAnalysisService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,13 +19,13 @@ import org.mockito.ArgumentCaptor;
 
 class PreferenceVectorAsyncServiceTest {
 
-    private final ClothesAnalysisService clothesAnalysisService = mock(ClothesAnalysisService.class);
+
     private final ClothesRepository clothesRepository = mock(ClothesRepository.class);
     private final OutfitClothesRepository outfitClothesRepository = mock(OutfitClothesRepository.class);
     private final ProfileRepository profileRepository = mock(ProfileRepository.class);
     private final PreferenceVectorAsyncService service =
         new PreferenceVectorAsyncService(
-            clothesAnalysisService,
+
             clothesRepository,
             outfitClothesRepository,
             profileRepository
@@ -44,14 +43,14 @@ class PreferenceVectorAsyncServiceTest {
         OutfitClothesUsageCount secondUsageCount = usageCount(secondClothesId, 20);
         Profile profile = mock(Profile.class);
 
-        when(clothesAnalysisService.embed("survey")).thenReturn(surveyVector);
+
         when(clothesRepository.findAllByUser_IdAndDeletedAtIsNull(userId))
             .thenReturn(List.of(firstClothes, secondClothes));
         when(outfitClothesRepository.countActiveOutfitUsageByUserId(userId))
             .thenReturn(List.of(firstUsageCount, secondUsageCount));
         when(profileRepository.findByUser_Id(userId)).thenReturn(Optional.of(profile));
 
-        service.initialize(userId, "survey");
+        service.initialize(userId, surveyVector);
 
         ArgumentCaptor<float[]> vectorCaptor = ArgumentCaptor.forClass(float[].class);
         verify(profile).updatePreferenceVector(vectorCaptor.capture());
