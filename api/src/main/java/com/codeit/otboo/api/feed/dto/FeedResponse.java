@@ -31,13 +31,13 @@ public record FeedResponse(
         String profileImageUrl,
         Ootd ootd,
         boolean likedByMe,
-        Function<String, String> imageUrlResolver,
+        String imageUrl,
         Function<Clothes, String> clothesImageUrlResolver
     ) {
         return new FeedResponse(
             feed.getId(), feed.getCreatedAt(), feed.getUpdatedAt(),
             new AuthorResponse(feed.getUser().getId(), feed.getUser().getName(), profileImageUrl),
-            imageUrlResolver.apply(feed.getOutfit().getImageKey()),
+            imageUrl,
             OotdWeatherResponse.of(ootd),
             clothes.stream()
                 .map(clothesItem -> ClothesSimpleResponse.of(

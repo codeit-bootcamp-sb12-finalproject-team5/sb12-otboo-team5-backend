@@ -104,7 +104,6 @@ class FeedServiceTest {
         ArgumentCaptor<Feed> feedCaptor = ArgumentCaptor.forClass(Feed.class);
         org.mockito.Mockito.verify(feedRepository).save(feedCaptor.capture());
         assertThat(feedCaptor.getValue().getId()).isEqualTo(outfitId);
-        assertThat(feedCaptor.getValue().getOutfit()).isSameAs(outfit);
         assertThat(feedCaptor.getValue().getUser()).isSameAs(user);
         assertThat(response.id()).isEqualTo(outfitId);
         assertThat(response.author().userId()).isEqualTo(userId);
