@@ -4,17 +4,11 @@ spring:
   main:
     web-application-type: servlet
     keep-alive: true
-  config:
-    import: optional:dotenv:../
-
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  profiles:
+    default: dev
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:otboo}
-    username: ${POSTGRES_USER:admin}
-    password: ${POSTGRES_PASSWORD:secret}
 
   jpa:
     hibernate:
@@ -37,8 +31,6 @@ spring:
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
       timeout: 300ms
       connect-timeout: 200ms
 
@@ -52,10 +44,6 @@ kma:
 weather:
   cache:
     ttl: PT3H
-
-notification:
-  kafka:
-    enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
 
 server:
   # 외부에 제공하는 API가 없다. -1은 일반 웹 서버를 띄우지 않는다는 뜻이다.

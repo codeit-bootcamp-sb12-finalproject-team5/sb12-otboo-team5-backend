@@ -2,17 +2,11 @@ spring:
   application:
     name: notification-worker
 
-  config:
-    import: optional:dotenv:../
+  profiles:
+    default: dev
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB}}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
-
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
   flyway:
     enabled: false
@@ -26,9 +20,6 @@ spring:
         transcription: none
         speech: none
       moderation: none
-notification:
-  kafka:
-    enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
 
 server:
   port: ${SERVER_PORT:-1}

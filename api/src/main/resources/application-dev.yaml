@@ -1,0 +1,33 @@
+spring:
+  config:
+    import: optional:dotenv:../
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+notification:
+  kafka:
+    enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
+
+oauth:
+  frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI:http://localhost:5173/#/auth/oauth/callback}
+
+admin:
+  password: ${ADMIN_PASSWORD:otboo1!}
+
+cloud:
+  aws:
+    s3:
+      clothes-prefix: otboo-clothes-dev
+      profile-prefix: otboo-profile-dev
+      outfit-prefix: otboo-outfit-dev

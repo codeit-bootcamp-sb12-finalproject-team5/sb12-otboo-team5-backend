@@ -1,0 +1,15 @@
+spring:
+  config:
+    import: optional:dotenv:../
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+  datasource:
+    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB}}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+notification:
+  kafka:
+    enabled: ${NOTIFICATION_KAFKA_ENABLED:false}

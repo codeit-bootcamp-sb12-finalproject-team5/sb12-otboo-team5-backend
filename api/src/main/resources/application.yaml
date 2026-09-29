@@ -1,22 +1,14 @@
 spring:
   application:
     name: api
-  config:
-    import: optional:dotenv:../
-
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  profiles:
+    default: dev
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
       timeout: 300ms
       connect-timeout: 200ms
 
@@ -67,7 +59,6 @@ spring:
           kakao:
             issuer-uri: https://kauth.kakao.com
 
-
 server:
   port: ${SERVER_PORT:8080}
 
@@ -100,9 +91,6 @@ jwt:
   access-token-validity-seconds: 1800
   refresh-token-validity-seconds: 1209600
 
-oauth:
-  frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI:http://localhost:5173/#/auth/oauth/callback}
-
 kakao:
   rest-api-key: ${KAKAO_REST_API_KEY:}
 
@@ -116,24 +104,16 @@ weather:
 admin:
   id: ${ADMIN_ID:01a0a35e-1c51-76f2-82a1-6b87eab6ccfa}
   email: ${ADMIN_EMAIL:system@otboo.io}
-  password: ${ADMIN_PASSWORD:otboo1!}
   name: ${ADMIN_NAME:system}
 
 cloud:
   aws:
     s3:
       bucket: ${AWS_S3_BUCKET}
-      clothes-prefix: otboo-clothes-dev
-      profile-prefix: otboo-profile-dev
-      outfit-prefix: otboo-outfit-dev
     region: ${AWS_REGION}
     credentials:
       access-key: ${AWS_ACCESS_KEY_ID}
       secret-key: ${AWS_SECRET_ACCESS_KEY}
-
-notification:
-  kafka:
-    enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
 
 recommendation:
   ranking:

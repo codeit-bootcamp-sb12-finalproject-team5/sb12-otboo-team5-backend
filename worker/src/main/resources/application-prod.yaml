@@ -1,0 +1,12 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
+  datasource:
+    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT:5432}/${POSTGRES_DB}}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+notification:
+  kafka:
+    enabled: ${NOTIFICATION_KAFKA_ENABLED:true}
