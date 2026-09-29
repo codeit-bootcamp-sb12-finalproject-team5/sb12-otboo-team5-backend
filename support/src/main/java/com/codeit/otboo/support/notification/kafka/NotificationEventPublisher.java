@@ -3,14 +3,12 @@ package com.codeit.otboo.support.notification.kafka;
 import com.codeit.otboo.domain.notification.event.NotificationBroadcastEvent;
 import com.codeit.otboo.domain.notification.event.NotificationCreateMessage;
 import java.util.concurrent.CompletableFuture;
+import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 
+@RequiredArgsConstructor
 public class NotificationEventPublisher {
     private final KafkaTemplate<String, Object> template;
-
-    public NotificationEventPublisher(KafkaTemplate<String, Object> template) {
-        this.template = template;
-    }
 
     public CompletableFuture<Void> publishCreate(String key, NotificationCreateMessage<?> message) {
         return send(NotificationTopics.CREATE, key, message);

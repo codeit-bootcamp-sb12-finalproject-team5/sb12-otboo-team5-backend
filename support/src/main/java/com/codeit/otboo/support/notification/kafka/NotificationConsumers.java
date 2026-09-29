@@ -1,13 +1,13 @@
 package com.codeit.otboo.support.notification.kafka;
 
+import lombok.experimental.UtilityClass;
+
 import com.codeit.otboo.domain.notification.exception.NotificationException;
 import com.fasterxml.jackson.databind.JavaType;
 import java.util.HashMap;
 import java.util.function.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -20,10 +20,10 @@ import org.springframework.util.backoff.FixedBackOff;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class NotificationConsumers {
-    private NotificationConsumers() {}
+@UtilityClass
+public class NotificationConsumers {
 
-    public static <T> ConcurrentKafkaListenerContainerFactory<String, T> factory(
+    public <T> ConcurrentKafkaListenerContainerFactory<String, T> factory(
         KafkaProperties properties,
         JavaType type,
         String group,
@@ -38,7 +38,7 @@ public final class NotificationConsumers {
         );
     }
 
-    public static <T> ConcurrentKafkaListenerContainerFactory<String, T> factory(
+    public <T> ConcurrentKafkaListenerContainerFactory<String, T> factory(
         KafkaProperties properties,
         JavaType type,
         String group,

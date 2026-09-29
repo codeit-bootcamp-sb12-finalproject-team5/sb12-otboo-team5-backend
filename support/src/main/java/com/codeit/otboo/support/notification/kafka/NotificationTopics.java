@@ -1,9 +1,11 @@
 package com.codeit.otboo.support.notification.kafka;
 
-public final class NotificationTopics {
+import lombok.experimental.UtilityClass;
 
-    public static final String CREATE = "notification-create";
-    public static final String BROADCAST = "notification-broadcasting";
+@UtilityClass
+public class NotificationTopics {
 
-    private NotificationTopics() {}
+    public final String CREATE = "notification-create";
+    public final String BROADCAST = "notification-broadcasting";
+
 }
