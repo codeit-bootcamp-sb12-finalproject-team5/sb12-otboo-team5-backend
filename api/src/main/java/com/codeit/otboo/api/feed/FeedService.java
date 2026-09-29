@@ -71,6 +71,7 @@ public class FeedService {
 
         Feed feed = feedRepository.save(Feed.builder()
             .id(outfit.getId())
+            .outfit(outfit)
             .user(outfit.getUser())
             .content(request.content())
             .isVisible(true)

@@ -76,6 +76,10 @@ class FeedServiceTest {
         UUID outfitId = UUID.randomUUID();
         User user = User.builder().id(userId).name("author").build();
         Outfit outfit = Outfit.builder().id(outfitId).user(user).category("OOTD").build();
+        outfit.updateImageKey("outfits/generated.png");
+        when(s3StorageService.getPresignedUrl(null)).thenReturn(null);
+        when(s3StorageService.getPresignedUrl("outfits/generated.png"))
+            .thenReturn("https://example.com/generated.png");
         Ootd ootd = Ootd.builder()
             .id(outfitId)
             .outfit(outfit)
@@ -100,9 +104,11 @@ class FeedServiceTest {
         ArgumentCaptor<Feed> feedCaptor = ArgumentCaptor.forClass(Feed.class);
         org.mockito.Mockito.verify(feedRepository).save(feedCaptor.capture());
         assertThat(feedCaptor.getValue().getId()).isEqualTo(outfitId);
+        assertThat(feedCaptor.getValue().getOutfit()).isSameAs(outfit);
         assertThat(feedCaptor.getValue().getUser()).isSameAs(user);
         assertThat(response.id()).isEqualTo(outfitId);
         assertThat(response.author().userId()).isEqualTo(userId);
+        assertThat(response.imageUrl()).isEqualTo("https://example.com/generated.png");
         assertThat(response.ootds()).isEmpty();
         assertThat(response.likedByMe()).isFalse();
         assertThat(response.weather().skyStatus()).isEqualTo(SkyStatus.CLEAR);
