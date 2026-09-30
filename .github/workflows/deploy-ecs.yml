@@ -1,0 +1,125 @@
+name: Deploy backend to ECS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: otboo-production-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECR_API_REPOSITORY: finalproject/otboo-api
+  ECR_WORKER_REPOSITORY: finalproject/otboo-worker
+  ECR_BATCH_REPOSITORY: finalproject/otboo-batch
+
+jobs:
+  deploy:
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Build executable JARs
+        run: |
+          chmod +x gradlew
+          ./gradlew :api:bootJar :worker:bootJar :batch:bootJar
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push container images
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          api_jar=$(find api/build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-plain.jar' -print -quit)
+          worker_jar=$(find worker/build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-plain.jar' -print -quit)
+          batch_jar=$(find batch/build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-plain.jar' -print -quit)
+
+          test -n "$api_jar"
+          test -n "$worker_jar"
+          test -n "$batch_jar"
+
+          docker build -f api/Dockerfile --build-arg JAR_FILE="$api_jar" -t "$REGISTRY/$ECR_API_REPOSITORY:$IMAGE_TAG" .
+          docker build -f worker/Dockerfile --build-arg JAR_FILE="$worker_jar" -t "$REGISTRY/$ECR_WORKER_REPOSITORY:$IMAGE_TAG" .
+          docker build -f batch/Dockerfile --build-arg JAR_FILE="$batch_jar" -t "$REGISTRY/$ECR_BATCH_REPOSITORY:$IMAGE_TAG" .
+
+          docker push "$REGISTRY/$ECR_API_REPOSITORY:$IMAGE_TAG"
+          docker push "$REGISTRY/$ECR_WORKER_REPOSITORY:$IMAGE_TAG"
+          docker push "$REGISTRY/$ECR_BATCH_REPOSITORY:$IMAGE_TAG"
+
+      - name: Render API task definition
+        id: render-api
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition-family: ${{ vars.ECS_API_TASK_DEFINITION }}
+          container-name: ${{ vars.ECS_API_CONTAINER_NAME }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_API_REPOSITORY }}:${{ github.sha }}
+
+      - name: Deploy API service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-api.outputs.task-definition }}
+          service: ${{ vars.ECS_API_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          wait-max-delay-seconds: 15
+
+      - name: Render Worker task definition
+        id: render-worker
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition-family: ${{ vars.ECS_WORKER_TASK_DEFINITION }}
+          container-name: ${{ vars.ECS_WORKER_CONTAINER_NAME }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_WORKER_REPOSITORY }}:${{ github.sha }}
+
+      - name: Deploy Worker service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-worker.outputs.task-definition }}
+          service: ${{ vars.ECS_WORKER_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          wait-max-delay-seconds: 15
+
+      - name: Render Batch task definition
+        id: render-batch
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition-family: ${{ vars.ECS_BATCH_TASK_DEFINITION }}
+          container-name: ${{ vars.ECS_BATCH_CONTAINER_NAME }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_BATCH_REPOSITORY }}:${{ github.sha }}
+
+      - name: Deploy Batch service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-batch.outputs.task-definition }}
+          service: ${{ vars.ECS_BATCH_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          wait-max-delay-seconds: 15
