@@ -1,4 +1,13 @@
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            redirect-uri: "https://otboo.online/login/oauth2/code/google"
+          kakao:
+            redirect-uri: "https://otboo.online/login/oauth2/code/kakao"
+
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
 
