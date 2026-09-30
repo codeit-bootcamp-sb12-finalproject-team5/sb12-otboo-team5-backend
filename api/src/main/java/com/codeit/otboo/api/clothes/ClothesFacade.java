@@ -1,0 +1,102 @@
+package com.codeit.otboo.api.clothes;
+
+import com.codeit.otboo.api.clothes.dto.ClothesRequest;
+import com.codeit.otboo.api.clothes.dto.ClothesResponse;
+import com.codeit.otboo.api.clothes.dto.ClothesUpdateRequest;
+import com.codeit.otboo.domain.clothes.entity.Clothes;
+import com.codeit.otboo.support.llm.clothes.dto.ClothesAnalysisResult;
+import com.codeit.otboo.support.llm.clothes.ClothesAnalysisService;
+import com.codeit.otboo.support.storage.S3StorageService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.mock.web.MockMultipartFile;
+
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ClothesFacade {
+    private final ClothesService clothesService;
+    private final ClothesAnalysisService clothesAnalysisService;
+    private final S3StorageService s3StorageService;
+    private final RestClient restClient;
+
+    public ClothesResponse create(ClothesRequest req, MultipartFile image) {
+        Clothes clothes = clothesService.create(req, image);
+        return ClothesResponse.of(clothes, clothes.getUser().getId(), s3StorageService.getPresignedUrl(clothes.getImageUrl()));
+    }
+
+    public ClothesResponse update(UUID clothesId, ClothesUpdateRequest req, MultipartFile image) {
+        Clothes clothes = clothesService.update(clothesId, req, image);
+        return ClothesResponse.of(clothes, clothes.getUser().getId(), s3StorageService.getPresignedUrl(clothes.getImageUrl()));
+    }
+
+    @Async("bulkExecutor")
+    public CompletableFuture<BulkClothesProcessResult> process(UUID userId, String url, int index, int total) {
+        try {
+            log.info("[{}/{}] WebSearch 시작", index, total);
+
+            ClothesAnalysisResult analysis = clothesAnalysisService.analyze(url);
+
+            log.info("[{}/{}] WebSearch 완료", index, total);
+
+            ResponseEntity<byte[]> response = downloadImage(analysis.imageUrl());
+            byte[] image = response.getBody();
+            String contentType = Optional.ofNullable(response.getHeaders().getContentType())
+                    .map(MediaType::toString).orElse("image/webp");
+            String extension = contentType.equals("image/webp") ? ".webp" : ".jpg";
+
+            log.info("[{}/{}] 이미지 다운로드 완료", index, total);
+
+            ClothesRequest request = ClothesRequest.of(userId, analysis);
+
+            MultipartFile multipartFile =
+                    new MockMultipartFile(
+                            "image",
+                            "clothes" + extension,
+                            contentType,
+                            image
+                    );
+
+            create(request, multipartFile);
+
+            log.info("[{}/{}] CREATE 완료", index, total);
+
+            return CompletableFuture.completedFuture(BulkClothesProcessResult.success(index, url));
+        } catch (RuntimeException e) {
+            String reason = rootMessage(e);
+            log.warn("[{}/{}] 의류 적재 실패: url={}, reason={}", index, total, url, reason);
+            return CompletableFuture.completedFuture(BulkClothesProcessResult.failure(index, url, reason));
+        }
+    }
+
+    private ResponseEntity<byte[]> downloadImage(String imageUrl) {
+        ResponseEntity<byte[]> response = restClient.get()
+                .uri(imageUrl)
+                .retrieve()
+                .toEntity(byte[].class);
+        MediaType contentType = response.getHeaders().getContentType();
+        if (contentType == null || !"image".equalsIgnoreCase(contentType.getType())) {
+            throw new IllegalStateException("이미지 응답이 아닙니다: " + contentType);
+        }
+        return response;
+    }
+
+    private String rootMessage(Throwable throwable) {
+        Throwable cause = throwable;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage();
+    }
+
+}

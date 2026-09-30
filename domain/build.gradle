@@ -5,18 +5,22 @@ plugins {
 description = 'domain'
 
 dependencies {
-    // Lombok
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
-
-    testCompileOnly 'org.projectlombok:lombok'
-    testAnnotationProcessor 'org.projectlombok:lombok'
-
     // JPA / Database
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    api 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // QueryDSL
+    implementation "com.querydsl:querydsl-jpa:5.1.0:jakarta"
+    annotationProcessor "com.querydsl:querydsl-apt:5.1.0:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+    // Flyway
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
+
+    // Postgres
     runtimeOnly 'org.postgresql:postgresql'
+    implementation 'org.hibernate.orm:hibernate-vector:6.6.53.Final'
 
     // Elasticsearch
     implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
@@ -24,9 +28,12 @@ dependencies {
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // UUID v7
+    implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
+
     // Test
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-redis-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+//    testImplementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch-test'
+//    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+//    testImplementation 'org.springframework.boot:spring-boot-starter-data-redis-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

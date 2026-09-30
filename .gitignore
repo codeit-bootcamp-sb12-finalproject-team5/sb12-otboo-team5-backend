@@ -57,3 +57,11 @@ $RECYCLE.BIN/
 ### env file ###
 .env
 *.env.local
+
+### PostgreSQL ###
+postgresql
+api/.env
+
+### Generated files ###
+**/generated/
+

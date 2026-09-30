@@ -1,0 +1,2 @@
+ALTER TABLE outfit
+    ADD COLUMN image_key VARCHAR(1000);

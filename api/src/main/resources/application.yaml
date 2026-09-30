@@ -1,20 +1,129 @@
 spring:
   application:
     name: api
-
-  config:
-    import: optional:file:../.env
+  profiles:
+    default: dev
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:otboo}
-    username: ${POSTGRES_USER:admin}
-    password: ${POSTGRES_PASSWORD:secret}
 
-#  flyway:
-#    enabled: true
-#    locations: classpath:db/migration
+  data:
+    redis:
+      timeout: 300ms
+      connect-timeout: 200ms
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
   ai:
     openai:
       api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-5-mini
+      embedding:
+        options:
+          model: text-embedding-3-small
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - openid
+              - profile_nickname
+        provider:
+          kakao:
+            issuer-uri: https://kauth.kakao.com
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9101}
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  recommendation:
+    model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
+    timeout-seconds: ${GEMINI_TIMEOUT_SECONDS:10}
+  clothes-analysis:
+    model: ${GEMINI_CLOTHES_ANALYSIS_MODEL:gemini-3.5-flash-lite}
+    timeout: ${GEMINI_CLOTHES_ANALYSIS_TIMEOUT:90s}
+    min-request-interval: ${GEMINI_CLOTHES_ANALYSIS_MIN_REQUEST_INTERVAL:6s}
+  outfit-look:
+    model: ${GEMINI_OUTFIT_LOOK_MODEL:gemini-3.1-flash-image}
+    timeout: ${GEMINI_OUTFIT_LOOK_TIMEOUT:120s}
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-validity-seconds: 1800
+  refresh-token-validity-seconds: 1209600
+
+kakao:
+  rest-api-key: ${KAKAO_REST_API_KEY:}
+
+kma:
+  service-key: ${KMA_API_KEY:}
+
+weather:
+  cache:
+    ttl: PT3H
+
+admin:
+  id: ${ADMIN_ID:01a0a35e-1c51-76f2-82a1-6b87eab6ccfa}
+  email: ${ADMIN_EMAIL:system@otboo.io}
+  name: ${ADMIN_NAME:system}
+
+cloud:
+  aws:
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+    region: ${AWS_REGION}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID}
+      secret-key: ${AWS_SECRET_ACCESS_KEY}
+
+recommendation:
+  ranking:
+    top-k:
+      top: 4
+      pants: 3
+      skirt: 3
+      outer: 4
+      dress: 4
+      shoes: 4
+      hat: 2
+      bag: 2
+      accessory: 2
