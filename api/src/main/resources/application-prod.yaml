@@ -1,0 +1,39 @@
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            redirect-uri: "https://otboo.online/login/oauth2/code/google"
+          kakao:
+            redirect-uri: "https://otboo.online/login/oauth2/code/kakao"
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+
+notification:
+  kafka:
+    enabled: ${NOTIFICATION_KAFKA_ENABLED:true}
+
+oauth:
+  frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI}
+
+admin:
+  password: ${ADMIN_PASSWORD}
+
+cloud:
+  aws:
+    s3:
+      clothes-prefix: otboo-clothes-prod
+      profile-prefix: otboo-profile-prod
+      outfit-prefix: otboo-outfit-prod
